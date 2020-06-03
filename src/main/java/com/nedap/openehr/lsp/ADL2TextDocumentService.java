@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ADL2TextDocumentService implements TextDocumentService {
 
     private LanguageClient remoteProxy;
-    private ArchetypeStorage storage = new ArchetypeStorage();
+    private ArchetypeStorage storage = new ArchetypeStorage(this);
 
     @Override
     public void didOpen(DidOpenTextDocumentParams params) {
@@ -42,58 +42,61 @@ public class ADL2TextDocumentService implements TextDocumentService {
                 throw new UnsupportedOperationException("RangeLength should be null for full document update.");
             }
 
-            ProcessableDocument document = storage.updateDocument(uri, changeEvent.getText());
+            ProcessableDocument document = storage.updateDocument(uri, params.getTextDocument().getVersion(), changeEvent.getText());
 
             document.getSymbols();
 
-            PublishDiagnosticsParams diagnosticsParams = new PublishDiagnosticsParams();
-            List<Diagnostic> diagnostics = new ArrayList<>();
-            for(ANTLRParserMessage warning:document.getErrors().getWarnings()) {
-                diagnostics.add(createParserDiagnostic(warning, DiagnosticSeverity.Warning));
-            }
-            for(ANTLRParserMessage error:document.getErrors().getErrors()) {
-                diagnostics.add(createParserDiagnostic(error, DiagnosticSeverity.Error));
-            }
-            if(document.getExceptionDuringProcessing() != null) {
-                //TODO: stacktrace? some extra message to indicate context?
-                String message = document.getExceptionDuringProcessing().getMessage() == null ? document.getExceptionDuringProcessing().toString() : document.getExceptionDuringProcessing().getMessage();
-                diagnostics.add(new Diagnostic(new Range(new Position(0, 1), new Position(0, 50)), message));
-            }
-            ValidationResult validationResult = document.getValidationResult();
-            if(validationResult != null) {
-                if(validationResult.hasWarningsOrErrors()) {
-                    for(ValidationMessage message:validationResult.getErrors()) {
-                        ArchetypeModelObject withLocation = null;
-                        if(message.getPathInArchetype() != null) {
-                            try {
-                                withLocation = new AOMPathQuery(message.getPathInArchetype()).findMatchingPredicate(validationResult.getSourceArchetype().getDefinition(),
-                                        (o) -> o instanceof ArchetypeModelObject && ((ArchetypeModelObject) o).getStartLine() != null);
-                            } catch (Exception e) {
-                                //we really don't care, but log just in case
-                                e.printStackTrace();
-                            }
+        }
+    }
+
+    public void pushDiagnostics(String uri, Integer version, ProcessableDocument document) {
+        PublishDiagnosticsParams diagnosticsParams = new PublishDiagnosticsParams();
+        List<Diagnostic> diagnostics = new ArrayList<>();
+        for(ANTLRParserMessage warning:document.getErrors().getWarnings()) {
+            diagnostics.add(createParserDiagnostic(warning, DiagnosticSeverity.Warning));
+        }
+        for(ANTLRParserMessage error:document.getErrors().getErrors()) {
+            diagnostics.add(createParserDiagnostic(error, DiagnosticSeverity.Error));
+        }
+        if(document.getExceptionDuringProcessing() != null) {
+            //TODO: stacktrace? some extra message to indicate context?
+            String message = document.getExceptionDuringProcessing().getMessage() == null ? document.getExceptionDuringProcessing().toString() : document.getExceptionDuringProcessing().getMessage();
+            diagnostics.add(new Diagnostic(new Range(new Position(0, 1), new Position(0, 50)), message));
+        }
+        ValidationResult validationResult = document.getValidationResult();
+        if(validationResult != null) {
+            if(validationResult.hasWarningsOrErrors()) {
+                for(ValidationMessage message:validationResult.getErrors()) {
+                    ArchetypeModelObject withLocation = null;
+                    if(message.getPathInArchetype() != null) {
+                        try {
+                            withLocation = new AOMPathQuery(message.getPathInArchetype()).findMatchingPredicate(validationResult.getSourceArchetype().getDefinition(),
+                                    (o) -> o instanceof ArchetypeModelObject && ((ArchetypeModelObject) o).getStartLine() != null);
+                        } catch (Exception e) {
+                            //we really don't care, but log just in case
+                            e.printStackTrace();
                         }
-                        if(withLocation != null) {
-                            Range range = new Range(
-                                    new Position(withLocation.getStartLine()-1, withLocation.getStartCharInLine()),
-                                    new Position(withLocation.getStartLine()-1, withLocation.getStartCharInLine() + withLocation.getTokenLength())
-                            );
-                            diagnostics.add(new Diagnostic(range, toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
-                        } else {
-                            Range range = new Range(
-                                    new Position(0, 1),
-                                    new Position(0, 50)
-                            );
-                            diagnostics.add(new Diagnostic(range, toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
-                        }
+                    }
+                    if(withLocation != null) {
+                        Range range = new Range(
+                                new Position(withLocation.getStartLine()-1, withLocation.getStartCharInLine()),
+                                new Position(withLocation.getStartLine()-1, withLocation.getStartCharInLine() + withLocation.getTokenLength())
+                        );
+                        diagnostics.add(new Diagnostic(range, toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
+                    } else {
+                        Range range = new Range(
+                                new Position(0, 1),
+                                new Position(0, 50)
+                        );
+                        diagnostics.add(new Diagnostic(range, toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
                     }
                 }
             }
-            diagnosticsParams.setDiagnostics(diagnostics);
-            diagnosticsParams.setUri(uri);
-            diagnosticsParams.setVersion(params.getTextDocument().getVersion());
-            remoteProxy.publishDiagnostics(diagnosticsParams);
         }
+        diagnosticsParams.setDiagnostics(diagnostics);
+        diagnosticsParams.setUri(uri);
+        diagnosticsParams.setVersion(version);
+        remoteProxy.publishDiagnostics(diagnosticsParams);
     }
 
     private String toMessage(ValidationMessage message) {

@@ -14,13 +14,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ArchetypeStorage {
 
+    private final ADL2TextDocumentService textDocumentService;
     private InMemoryFullArchetypeRepository repository;
 
     Map<String, ProcessableDocument> documents = new ConcurrentHashMap<>();
     Map<String, ProcessableDocument> documentsByArchetypeId = new ConcurrentHashMap<>();
 
-    public ArchetypeStorage() {
+    public ArchetypeStorage(ADL2TextDocumentService service) {
         repository = new InMemoryFullArchetypeRepository();
+        this.textDocumentService = service;
     }
 
     public void invalidateArchetypes(Archetype newArchetype) {
@@ -49,6 +51,17 @@ public class ArchetypeStorage {
         }
         for(String archetypeId: archetypesToInvalidate) {
             repository.removeValidationResult(archetypeId);
+
+        }
+
+        for(String archetypeId: archetypesToInvalidate) {
+            ProcessableDocument processableDocument = documentsByArchetypeId.get(archetypeId);
+            if (processableDocument != null) {
+                processableDocument.setDocumentText(processableDocument.getDocument().getText(), processableDocument.getDocument().getVersion());
+                processableDocument.getSymbols();
+                textDocumentService.pushDiagnostics(processableDocument.getDocument().getUri(),
+                        processableDocument.getDocument().getVersion(), processableDocument);
+            }
         }
     }
 
@@ -72,26 +85,32 @@ public class ArchetypeStorage {
         return documents.get(uri);
     }
 
-    public ProcessableDocument updateDocument(String uri, String text) {
+    public ProcessableDocument updateDocument(String uri, Integer version, String text) {
         //TODO: add a proper different save and update?
-        return updateDocument(uri, new TextDocumentItem(uri, "language", 1, text));
+        return updateDocument(uri, new TextDocumentItem(uri, "language", version, text));
     }
 
     public ProcessableDocument updateDocument(String uri, TextDocumentItem text) {
         ProcessableDocument processableDocument = documents.get(uri);
         if(processableDocument != null) {
-            Archetype archetype = processableDocument.getArchetype();
+
             String oldArchetypeId = processableDocument.getArchetypeId();
+
+            processableDocument.setDocumentText(text.getText(), text.getVersion());
+            documentsByArchetypeId.remove(oldArchetypeId);
+            documentsByArchetypeId.put(processableDocument.getArchetypeId(), processableDocument);
+            Archetype archetype = processableDocument.getArchetype();
             if (archetype != null) {
                 invalidateArchetypes(archetype);
             }
-            processableDocument.setDocumentText(text.getText());
-            documentsByArchetypeId.remove(oldArchetypeId);
-            documentsByArchetypeId.put(processableDocument.getArchetypeId(), processableDocument);
         } else {
             ProcessableDocument document = new ProcessableDocument(text, repository);
             documents.put(uri, document);
             documentsByArchetypeId.put(document.getArchetypeId(), document);
+            Archetype archetype = document.getArchetype();
+            if (archetype != null) {
+                invalidateArchetypes(archetype);
+            }
         }
         return documents.get(uri);
     }

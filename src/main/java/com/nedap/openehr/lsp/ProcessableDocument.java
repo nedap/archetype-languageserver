@@ -106,8 +106,9 @@ public class ProcessableDocument {
         return document;
     }
 
-    public synchronized void setDocumentText(String text) {
+    public synchronized void setDocumentText(String text, Integer version) {
         document.setText(text);
+        document.setVersion(version);
         lexer = null;
         parser = null;
         symbols = null;
