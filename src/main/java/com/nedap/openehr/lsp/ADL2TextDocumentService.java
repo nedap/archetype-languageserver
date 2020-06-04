@@ -62,7 +62,7 @@ public class ADL2TextDocumentService implements TextDocumentService {
                 new Position(error.getLineNumber()-1, error.getColumnNumber() + error.getLength())//TODO: archie errors do not keep the position properly
         );
 
-        return new Diagnostic(range, error.getMessage(), warning, "ADL2 syntax");
+        return new Diagnostic(range, error.getShortMessage(), warning, "ADL2 syntax");
     }
 
     @Override
