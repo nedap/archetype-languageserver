@@ -21,6 +21,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -75,9 +76,9 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                 Archetype archetype = adlParser.parse(textDocumentItem.getText());
                 addArchetype(archetype);
                 //perform incremental compilation here
-                if(compile) {
-                    invalidateAndRecompileArchetypes(archetype);
-                }
+
+                invalidateAndRecompileArchetypes(archetype);
+
                 //diagnostics will now be pushed from within the invalidateArchetypesAndRecompile method
             } else {
                 textDocumentService.pushDiagnostics(textDocumentItem, documentInformation.getErrors());
@@ -126,11 +127,13 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
         }
         //this should recompile the archetype plus any parents
         //TODO: for operational templates we need to scan way more, all archetype roots as well. future addition
-        for(String archetypeId: archetypesToInvalidate) {
-            Archetype archetype = getArchetype(archetypeId);
-            if(archetype != null && getValidationResult(archetypeId) == null) {
-                System.out.println("validating " + archetypeId);
-                validator.validate(archetype, this);
+        if(compile) {
+            for (String archetypeId : archetypesToInvalidate) {
+                Archetype archetype = getArchetype(archetypeId);
+                if (archetype != null && getValidationResult(archetypeId) == null) {
+                    System.out.println("validating " + archetypeId);
+                    validator.validate(archetype, this);
+                }
             }
         }
     }
@@ -172,11 +175,21 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
         }
     }
 
-    private void addFile(String uri, File file) {
+    public void addFile(String uri, File file) {
         try {
             TextDocumentItem adl = new TextDocumentItem(uri, "adl", 0, new String(Files.readAllBytes(file.toPath()), Charsets.UTF_8));
             addDocument(adl);
         } catch (IOException e) {
+            //TODO: send diagnostics
+            e.printStackTrace();
+        }
+    }
+
+    public void fileChanged(String uri, File file) {
+        try {
+            updateDocument(uri, 0, new String(Files.readAllBytes(file.toPath()), Charsets.UTF_8));
+        } catch (IOException e) {
+            //TODO: send diagnostics
             e.printStackTrace();
         }
     }
@@ -190,4 +203,25 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
         this.compile = compile;
     }
 
+    public void compile() {
+        compile(validator);
+    }
+
+    public void fileRemoved(String uri) {
+        documents.remove(uri);
+        DocumentInformation removedDocumentInfo = symbolsByUri.remove(uri);
+        if(removedDocumentInfo != null && removedDocumentInfo.getArchetypeId() != null) {
+            this.documentsByArchetypeId.remove(removedDocumentInfo.getArchetypeId());
+            super.removeArchetype(removedDocumentInfo.getArchetypeId());
+        }
+        //incremental compile on remove is just remove all for now
+        //TODO: replace with invalidate(archetype) only IF the archetype is available?
+        invalidateAll();
+    }
+
+    private void invalidateAll() {
+        for(ValidationResult result:new ArrayList<>(getAllValidationResults())) {
+            removeValidationResult(result.getArchetypeId());
+        }
+    }
 }

@@ -12,12 +12,15 @@ import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
+import org.eclipse.lsp4j.services.WorkspaceService;
 
+import java.io.File;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class ADL2TextDocumentService implements TextDocumentService {
+public class ADL2TextDocumentService implements TextDocumentService, WorkspaceService {
 
     private LanguageClient remoteProxy;
     private BroadcastingArchetypeRepository storage = new BroadcastingArchetypeRepository(this);
@@ -174,5 +177,27 @@ public class ADL2TextDocumentService implements TextDocumentService {
 
     public BroadcastingArchetypeRepository getStorage() {
         return storage;
+    }
+
+    @Override
+    public void didChangeConfiguration(DidChangeConfigurationParams params) {
+        System.out.println("CONFIG CHANGE");
+    }
+
+    @Override
+    public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
+        System.out.println("WATCHED FILES CHANGE");
+        storage.setCompile(false);
+        for(FileEvent event:params.getChanges()) {
+            if(event.getType() == FileChangeType.Created) {
+                storage.addFile(event.getUri(), new File(URI.create(event.getUri())));
+            } else if (event.getType() == FileChangeType.Changed) {
+                storage.fileChanged(event.getUri(), new File(URI.create(event.getUri())));
+            } else if (event.getType() == FileChangeType.Deleted) {
+                storage.fileRemoved(event.getUri());
+            }
+        }
+        storage.setCompile(true);
+        storage.compile();
     }
 }

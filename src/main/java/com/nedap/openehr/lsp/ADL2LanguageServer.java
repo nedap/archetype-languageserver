@@ -7,6 +7,8 @@ import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.ServerInfo;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.WorkspaceFolder;
+import org.eclipse.lsp4j.WorkspaceFoldersOptions;
+import org.eclipse.lsp4j.WorkspaceServerCapabilities;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageServer;
 import org.eclipse.lsp4j.services.TextDocumentService;
@@ -19,7 +21,6 @@ public class ADL2LanguageServer implements LanguageServer {
 
     private InitializeParams clientParams;
     private ADL2TextDocumentService textDocumentService = new ADL2TextDocumentService();;
-    private ADL2WorkspaceService workspaceService = new ADL2WorkspaceService();
     private LanguageClient remoteProxy;
 
     @Override
@@ -28,6 +29,12 @@ public class ADL2LanguageServer implements LanguageServer {
         this.clientParams = params;
         CompletableFuture<InitializeResult> completableFuture = new CompletableFuture<InitializeResult>();
         ServerCapabilities capabilities = new ServerCapabilities();
+        WorkspaceServerCapabilities workspaceServerCapabilities = new WorkspaceServerCapabilities();
+        WorkspaceFoldersOptions workspaceFoldersOptions = new WorkspaceFoldersOptions();
+        workspaceFoldersOptions.setChangeNotifications(true);
+        workspaceFoldersOptions.setSupported(true);
+        workspaceServerCapabilities.setWorkspaceFolders(workspaceFoldersOptions);
+        capabilities.setWorkspace(workspaceServerCapabilities);
         capabilities.setDocumentSymbolProvider(true);
         capabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
         ServerInfo serverInfo = new ServerInfo();
@@ -67,7 +74,7 @@ public class ADL2LanguageServer implements LanguageServer {
 
     @Override
     public WorkspaceService getWorkspaceService() {
-        return workspaceService;
+        return textDocumentService;
     }
 
     public void connect(LanguageClient remoteProxy) {
