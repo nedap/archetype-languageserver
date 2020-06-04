@@ -131,7 +131,6 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
             for (String archetypeId : archetypesToInvalidate) {
                 Archetype archetype = getArchetype(archetypeId);
                 if (archetype != null && getValidationResult(archetypeId) == null) {
-                    System.out.println("validating " + archetypeId);
                     validator.validate(archetype, this);
                 }
             }

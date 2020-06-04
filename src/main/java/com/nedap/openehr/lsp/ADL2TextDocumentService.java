@@ -27,13 +27,11 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
 
     @Override
     public void didOpen(DidOpenTextDocumentParams params) {
-        System.out.println("FILE OPENEND");
         storage.addDocument(params.getTextDocument());
     }
 
     @Override
     public void didChange(DidChangeTextDocumentParams params) {
-        System.out.println("FILE CHANGED");
         String uri = params.getTextDocument().getUri();
         for (TextDocumentContentChangeEvent changeEvent : params.getContentChanges()) {
             // Will be full update because we specified that is all we support
@@ -70,7 +68,6 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
 
     @Override
     public void didClose(DidCloseTextDocumentParams params) {
-        System.out.println("FILE CLOSED");
         String uri = params.getTextDocument().getUri();
         storage.closeDocument(uri);
     }
@@ -99,7 +96,6 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
      */
     @Override
     public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(DocumentSymbolParams params) {
-        System.out.println("GETTING SYMBOLS");
         CompletableFuture future = new CompletableFuture();
         future.complete(storage.getSymbols(params.getTextDocument().getUri()));
 
@@ -181,12 +177,10 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
 
     @Override
     public void didChangeConfiguration(DidChangeConfigurationParams params) {
-        System.out.println("CONFIG CHANGE");
     }
 
     @Override
     public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
-        System.out.println("WATCHED FILES CHANGE");
         storage.setCompile(false);
         for(FileEvent event:params.getChanges()) {
             if(event.getType() == FileChangeType.Created) {

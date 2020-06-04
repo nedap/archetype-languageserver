@@ -44,7 +44,6 @@ public class App {
                         }
                     }
             }).start();
-            System.out.println("started app");
 
         } catch (IOException e) {
             e.printStackTrace();

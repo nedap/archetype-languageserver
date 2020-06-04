@@ -25,7 +25,6 @@ public class ADL2LanguageServer implements LanguageServer {
 
     @Override
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
-        System.out.println("INITIALIZING CLIENT");
         this.clientParams = params;
         CompletableFuture<InitializeResult> completableFuture = new CompletableFuture<InitializeResult>();
         ServerCapabilities capabilities = new ServerCapabilities();
