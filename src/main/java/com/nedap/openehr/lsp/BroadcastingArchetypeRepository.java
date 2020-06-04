@@ -1,5 +1,6 @@
 package com.nedap.openehr.lsp;
 
+import com.google.common.base.Charsets;
 import com.nedap.archie.adlparser.ADLParser;
 import com.nedap.archie.aom.Archetype;
 import com.nedap.archie.aom.Template;
@@ -14,7 +15,12 @@ import org.eclipse.lsp4j.TextDocumentItem;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.openehr.referencemodels.BuiltinReferenceModels;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +34,8 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
     Map<String, DocumentInformation> symbolsByUri = new ConcurrentHashMap<>();
     Map<String, TextDocumentItem> documentsByArchetypeId = new ConcurrentHashMap<>();
     private ArchetypeValidator validator = new ArchetypeValidator(BuiltinReferenceModels.getMetaModels());
+    private boolean compile = true;
+
 
     public BroadcastingArchetypeRepository(ADL2TextDocumentService textDocumentService) {
         this.textDocumentService = textDocumentService;
@@ -59,14 +67,17 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
             ADL2SymbolExtractor adl2SymbolExtractor = new ADL2SymbolExtractor();
             DocumentInformation documentInformation = adl2SymbolExtractor.extractSymbols(textDocumentItem.getUri(), textDocumentItem.getText());
             symbolsByUri.put(textDocumentItem.getUri(), documentInformation);
-
-            documentsByArchetypeId.put(documentInformation.getArchetypeId(), textDocumentItem);
+            if(documentInformation.getArchetypeId() != null) {
+                documentsByArchetypeId.put(documentInformation.getArchetypeId(), textDocumentItem);
+            }
             if (documentInformation.getErrors().hasNoErrors()) {
                 ADLParser adlParser = new ADLParser(BuiltinReferenceModels.getMetaModels());
                 Archetype archetype = adlParser.parse(textDocumentItem.getText());
                 addArchetype(archetype);
                 //perform incremental compilation here
-                invalidateAndRecompileArchetypes(archetype);
+                if(compile) {
+                    invalidateAndRecompileArchetypes(archetype);
+                }
                 //diagnostics will now be pushed from within the invalidateArchetypesAndRecompile method
             } else {
                 textDocumentService.pushDiagnostics(textDocumentItem, documentInformation.getErrors());
@@ -147,4 +158,36 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
     public List<Either<SymbolInformation, DocumentSymbol>> getSymbols(String uri) {
         return this.symbolsByUri.get(uri).getSymbols();
     }
+
+    public void addFolder(String uri) {
+        //add a folder of files to watch
+        File directory = new File(URI.create(uri));
+        if(directory.isDirectory()) {
+            File[] files = directory.listFiles();
+            for(File file:files) {
+                addFile("file://" + file.getAbsolutePath(), file);
+            }
+        } else {
+            addFile(uri, directory);
+        }
+    }
+
+    private void addFile(String uri, File file) {
+        try {
+            TextDocumentItem adl = new TextDocumentItem(uri, "adl", 0, new String(Files.readAllBytes(file.toPath()), Charsets.UTF_8));
+            addDocument(adl);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public boolean isCompile() {
+        return compile;
+    }
+
+    public void setCompile(boolean compile) {
+        this.compile = compile;
+    }
+
 }

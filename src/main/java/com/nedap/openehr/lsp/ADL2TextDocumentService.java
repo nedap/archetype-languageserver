@@ -164,7 +164,15 @@ public class ADL2TextDocumentService implements TextDocumentService {
         }
         diagnosticsParams.setDiagnostics(diagnostics);
         diagnosticsParams.setUri(textDocumentItem.getUri());
-        diagnosticsParams.setVersion(textDocumentItem.getVersion());
+       // diagnosticsParams.setVersion(textDocumentItem.getVersion());
         remoteProxy.publishDiagnostics(diagnosticsParams);
+    }
+
+    public void addFolder(String uri) {
+        storage.addFolder(uri);
+    }
+
+    public BroadcastingArchetypeRepository getStorage() {
+        return storage;
     }
 }

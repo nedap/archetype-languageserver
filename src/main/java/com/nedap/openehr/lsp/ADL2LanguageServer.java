@@ -2,13 +2,16 @@ package com.nedap.openehr.lsp;
 
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
+import org.eclipse.lsp4j.InitializedParams;
 import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.ServerInfo;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
+import org.eclipse.lsp4j.WorkspaceFolder;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageServer;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
+import org.openehr.referencemodels.BuiltinReferenceModels;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -33,6 +36,18 @@ public class ADL2LanguageServer implements LanguageServer {
         completableFuture.complete(new InitializeResult(capabilities, serverInfo));
 
         return completableFuture;
+    }
+
+    @Override
+    public void initialized(InitializedParams params) {
+        if(clientParams.getWorkspaceFolders() != null && clientParams.getCapabilities().getWorkspace().getWorkspaceFolders()) {
+            textDocumentService.getStorage().setCompile(false);
+            for(WorkspaceFolder folder:clientParams.getWorkspaceFolders()) {
+                textDocumentService.addFolder(folder.getUri());
+            }
+            textDocumentService.getStorage().setCompile(true);
+            textDocumentService.getStorage().compile(BuiltinReferenceModels.getMetaModels());
+        }
     }
 
     @Override
