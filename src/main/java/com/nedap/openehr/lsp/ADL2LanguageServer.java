@@ -1,14 +1,6 @@
 package com.nedap.openehr.lsp;
 
-import org.eclipse.lsp4j.InitializeParams;
-import org.eclipse.lsp4j.InitializeResult;
-import org.eclipse.lsp4j.InitializedParams;
-import org.eclipse.lsp4j.ServerCapabilities;
-import org.eclipse.lsp4j.ServerInfo;
-import org.eclipse.lsp4j.TextDocumentSyncKind;
-import org.eclipse.lsp4j.WorkspaceFolder;
-import org.eclipse.lsp4j.WorkspaceFoldersOptions;
-import org.eclipse.lsp4j.WorkspaceServerCapabilities;
+import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageServer;
 import org.eclipse.lsp4j.services.TextDocumentService;
@@ -26,6 +18,7 @@ public class ADL2LanguageServer implements LanguageServer {
     @Override
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
         this.clientParams = params;
+
         CompletableFuture<InitializeResult> completableFuture = new CompletableFuture<InitializeResult>();
         ServerCapabilities capabilities = new ServerCapabilities();
         WorkspaceServerCapabilities workspaceServerCapabilities = new WorkspaceServerCapabilities();
@@ -40,6 +33,8 @@ public class ADL2LanguageServer implements LanguageServer {
         serverInfo.setName("ADL 2 Archetype language server");
         serverInfo.setVersion("0.0.1-alpha");
         completableFuture.complete(new InitializeResult(capabilities, serverInfo));
+        System.err.println(params.getRootUri());
+        System.err.println(params.getWorkspaceFolders());
 
         return completableFuture;
     }
@@ -51,6 +46,11 @@ public class ADL2LanguageServer implements LanguageServer {
             for(WorkspaceFolder folder:clientParams.getWorkspaceFolders()) {
                 textDocumentService.addFolder(folder.getUri());
             }
+            textDocumentService.getStorage().setCompile(true);
+            textDocumentService.getStorage().compile(BuiltinReferenceModels.getMetaModels());
+        } else if (clientParams.getRootUri() != null) {
+            textDocumentService.getStorage().setCompile(false);
+            textDocumentService.addFolder(clientParams.getRootUri());
             textDocumentService.getStorage().setCompile(true);
             textDocumentService.getStorage().compile(BuiltinReferenceModels.getMetaModels());
         }
@@ -79,5 +79,6 @@ public class ADL2LanguageServer implements LanguageServer {
     public void connect(LanguageClient remoteProxy) {
         this.remoteProxy = remoteProxy;
         textDocumentService.setRemoteProxy(remoteProxy);
+        remoteProxy.semanticHighlighting(new SemanticHighlightingParams());
     }
 }

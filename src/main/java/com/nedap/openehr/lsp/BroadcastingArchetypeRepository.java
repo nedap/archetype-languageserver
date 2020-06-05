@@ -73,6 +73,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
             }
             if (documentInformation.getErrors().hasNoErrors()) {
                 ADLParser adlParser = new ADLParser(BuiltinReferenceModels.getMetaModels());
+                adlParser.setLogEnabled(false);//no console output please :)
                 Archetype archetype = adlParser.parse(textDocumentItem.getText());
                 addArchetype(archetype);
                 //perform incremental compilation here
@@ -163,33 +164,53 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
 
     public void addFolder(String uri) {
         //add a folder of files to watch
-        File directory = new File(URI.create(uri));
+        addDirectory(new File(URI.create(uri)));
+
+    }
+
+    private void addDirectory(File directory) {
         if(directory.isDirectory()) {
             File[] files = directory.listFiles();
             for(File file:files) {
-                addFile("file://" + file.getAbsolutePath(), file);
+                if(file.isDirectory()) {
+                    addDirectory(file);
+                } else {
+                    addFile("file://" + file.getAbsolutePath(), file);
+                }
             }
         } else {
-            addFile(uri, directory);
+            addFile("file://" + directory.getAbsolutePath(), directory);
         }
     }
 
     public void addFile(String uri, File file) {
-        try {
-            TextDocumentItem adl = new TextDocumentItem(uri, "adl", 0, new String(Files.readAllBytes(file.toPath()), Charsets.UTF_8));
-            addDocument(adl);
-        } catch (IOException e) {
-            //TODO: send diagnostics
-            e.printStackTrace();
+        if (hasAdlsExtension(file)) {
+            try {
+                TextDocumentItem adl = new TextDocumentItem(uri, "adl", 0, new String(Files.readAllBytes(file.toPath()), Charsets.UTF_8));
+                addDocument(adl);
+            } catch (IOException e) {
+                //TODO: send diagnostics
+                e.printStackTrace();
+            }
         }
     }
 
+    private boolean hasAdlsExtension(File file) {
+        return file.getName().toLowerCase().endsWith(".adls")
+                || file.getName().toLowerCase().endsWith(".adl")
+                || file.getName().toLowerCase().endsWith(".adlt")
+                || file.getName().toLowerCase().endsWith(".adl2")
+                || file.getName().toLowerCase().endsWith(".adlf");
+    }
+
     public void fileChanged(String uri, File file) {
-        try {
-            updateDocument(uri, 0, new String(Files.readAllBytes(file.toPath()), Charsets.UTF_8));
-        } catch (IOException e) {
-            //TODO: send diagnostics
-            e.printStackTrace();
+        if(hasAdlsExtension(file)) {
+            try {
+                updateDocument(uri, 0, new String(Files.readAllBytes(file.toPath()), Charsets.UTF_8));
+            } catch (IOException e) {
+                //TODO: send diagnostics
+                e.printStackTrace();
+            }
         }
     }
 

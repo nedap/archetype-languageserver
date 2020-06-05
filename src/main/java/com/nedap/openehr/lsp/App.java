@@ -16,11 +16,27 @@ import java.net.Socket;
 public class App {
 
     public static void main(String[] args) {
-        new App().startLanguageServer();
+        if(args.length > 0) {
+            new App().startNetworkedLanguageServer();
+        } else {
+            new App().startCommandLineServer();
+        }
 
     }
 
-    private void startLanguageServer() {
+    private void startCommandLineServer() {
+
+        InputStream in = System.in;
+        OutputStream out = System.out;
+
+        ADL2LanguageServer server = new ADL2LanguageServer();
+        Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
+        server.connect(launcher.getRemoteProxy());
+
+        launcher.startListening();
+    }
+
+    private void startNetworkedLanguageServer() {
         int port = 1278;
         try {
             final ServerSocket serversocket = new ServerSocket(port);
