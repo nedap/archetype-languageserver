@@ -12,7 +12,9 @@ plugins {
 
     // Apply the application plugin to add support for building a CLI application.
     id 'application'
+    id "com.github.johnrengelman.shadow" version "5.2.0"
 }
+
 
 repositories {
     // Use jcenter for resolving dependencies.
@@ -44,3 +46,14 @@ test {
     // Use junit platform for unit tests
     useJUnitPlatform()
 }
+
+//jar {
+//    manifest {
+//        attributes(
+//                'Main-Class': 'com.nedap.openehr.lsp.App'
+//        )
+//    }
+//    from {
+//        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+//    }
+//}
