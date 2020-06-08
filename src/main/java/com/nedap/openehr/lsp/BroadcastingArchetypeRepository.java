@@ -85,7 +85,16 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                 //perform incremental compilation here
 
                 invalidateAndRecompileArchetypes(archetype);
-                documentInformation.setHoverInfo(new HoverInfo(archetype));
+                ValidationResult result = getValidationResult(archetype.getArchetypeId().toString());
+                Archetype archetypeForTerms = archetype;
+                if(result != null && result.getFlattened() != null) {
+                    archetypeForTerms = result.getFlattened();
+                }
+                String language = archetype.getOriginalLanguage() != null ? archetype.getOriginalLanguage().getCodeString() : null;
+                if(language == null) {
+                    language = "en";
+                }
+                documentInformation.setHoverInfo(new HoverInfo(archetype, archetypeForTerms, language));
 
                 //diagnostics will now be pushed from within the invalidateArchetypesAndRecompile method
             } else {
