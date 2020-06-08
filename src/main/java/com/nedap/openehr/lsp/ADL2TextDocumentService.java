@@ -10,6 +10,7 @@ import com.nedap.archie.query.AOMPathQuery;
 
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
@@ -47,25 +48,6 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
         }
     }
 
-
-
-    private String toMessage(ValidationMessage message) {
-        if(message.getMessage() != null) {
-            return message.getMessage();
-        } else {
-            return message.getType().getDescription();
-        }
-    }
-
-    private Diagnostic createParserDiagnostic(ANTLRParserMessage error, DiagnosticSeverity warning) {
-        Range range = new Range(
-                new Position(error.getLineNumber()-1, error.getColumnNumber()),
-                new Position(error.getLineNumber()-1, error.getColumnNumber() + error.getLength())//TODO: archie errors do not keep the position properly
-        );
-
-        return new Diagnostic(range, error.getShortMessage(), warning, "ADL2 syntax");
-    }
-
     @Override
     public void didClose(DidCloseTextDocumentParams params) {
         String uri = params.getTextDocument().getUri();
@@ -96,10 +78,7 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
      */
     @Override
     public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(DocumentSymbolParams params) {
-        CompletableFuture future = new CompletableFuture();
-        future.complete(storage.getSymbols(params.getTextDocument().getUri()));
-
-        return future;
+        return CompletableFuture.completedFuture(storage.getSymbols(params.getTextDocument().getUri()));
     }
 
     public void setRemoteProxy(LanguageClient remoteProxy) {
@@ -107,65 +86,19 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
     }
 
     public void pushDiagnostics(TextDocumentItem document, ANTLRParserErrors errors) {
-        PublishDiagnosticsParams diagnosticsParams = new PublishDiagnosticsParams();
-        List<Diagnostic> diagnostics = new ArrayList<>();
-        for(ANTLRParserMessage warning:errors.getWarnings()) {
-            diagnostics.add(createParserDiagnostic(warning, DiagnosticSeverity.Warning));
-        }
-        for(ANTLRParserMessage error:errors.getErrors()) {
-            diagnostics.add(createParserDiagnostic(error, DiagnosticSeverity.Error));
-        }
-//TODO: replace ANTLRParserErrors with a better class
-// if(document.getExceptionDuringProcessing() != null) {
-//            //TODO: stacktrace? some extra message to indicate context?
-//            String message = document.getExceptionDuringProcessing().getMessage() == null ? document.getExceptionDuringProcessing().toString() : document.getExceptionDuringProcessing().getMessage();
-//            diagnostics.add(new Diagnostic(new Range(new Position(0, 1), new Position(0, 50)), message));
-//        }
-
-        diagnosticsParams.setDiagnostics(diagnostics);
-        diagnosticsParams.setUri(document.getUri());
-        diagnosticsParams.setVersion(document.getVersion());
+        PublishDiagnosticsParams diagnosticsParams = DiagnosticsConverter.createDiagnostics(document, errors);
         remoteProxy.publishDiagnostics(diagnosticsParams);
     }
+
+
 
     public void pushDiagnostics(TextDocumentItem textDocumentItem, ValidationResult validationResult) {
-        PublishDiagnosticsParams diagnosticsParams = new PublishDiagnosticsParams();
-        List<Diagnostic> diagnostics = new ArrayList<>();
-
-        if(validationResult != null) {
-            if(validationResult.hasWarningsOrErrors()) {
-                for(ValidationMessage message:validationResult.getErrors()) {
-                    ArchetypeModelObject withLocation = null;
-                    if(message.getPathInArchetype() != null) {
-                        try {
-                            withLocation = new AOMPathQuery(message.getPathInArchetype()).findMatchingPredicate(validationResult.getSourceArchetype().getDefinition(),
-                                    (o) -> o instanceof ArchetypeModelObject && ((ArchetypeModelObject) o).getStartLine() != null);
-                        } catch (Exception e) {
-                            //we really don't care, but log just in case
-                            e.printStackTrace();
-                        }
-                    }
-                    if(withLocation != null) {
-                        Range range = new Range(
-                                new Position(withLocation.getStartLine()-1, withLocation.getStartCharInLine()),
-                                new Position(withLocation.getStartLine()-1, withLocation.getStartCharInLine() + withLocation.getTokenLength())
-                        );
-                        diagnostics.add(new Diagnostic(range, toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
-                    } else {
-                        Range range = new Range(
-                                new Position(0, 1),
-                                new Position(0, 50)
-                        );
-                        diagnostics.add(new Diagnostic(range, toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
-                    }
-                }
-            }
-        }
-        diagnosticsParams.setDiagnostics(diagnostics);
-        diagnosticsParams.setUri(textDocumentItem.getUri());
-       // diagnosticsParams.setVersion(textDocumentItem.getVersion());
+        PublishDiagnosticsParams diagnosticsParams = DiagnosticsConverter.createDiagnosticsFromValidationResult(textDocumentItem, validationResult);
+        // diagnosticsParams.setVersion(textDocumentItem.getVersion());
         remoteProxy.publishDiagnostics(diagnosticsParams);
     }
+
+
 
     public void addFolder(String uri) {
         storage.addFolder(uri);
@@ -193,5 +126,22 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
         }
         storage.setCompile(true);
         storage.compile();
+    }
+
+
+    @Override
+    public CompletableFuture<Hover> hover(HoverParams params) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * The folding range request is sent from the client to the server to return all folding
+     * ranges found in a given text document.
+     *
+     * Since version 3.10.0
+     */
+    @Override
+    public CompletableFuture<List<FoldingRange>> foldingRange(FoldingRangeRequestParams params) {
+        return CompletableFuture.completedFuture(storage.getFoldingRanges(params.getTextDocument()));
     }
 }

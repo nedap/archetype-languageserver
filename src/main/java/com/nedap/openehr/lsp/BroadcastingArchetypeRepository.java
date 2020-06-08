@@ -10,7 +10,9 @@ import com.nedap.archie.archetypevalidator.ValidationResult;
 import com.nedap.archie.flattener.InMemoryFullArchetypeRepository;
 import com.nedap.openehr.lsp.symbolextractor.ADL2SymbolExtractor;
 import org.eclipse.lsp4j.DocumentSymbol;
+import org.eclipse.lsp4j.FoldingRange;
 import org.eclipse.lsp4j.SymbolInformation;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentItem;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.openehr.referencemodels.BuiltinReferenceModels;
@@ -26,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeRepository {
@@ -162,6 +165,10 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
         return this.symbolsByUri.get(uri).getSymbols();
     }
 
+    public List<FoldingRange> getFoldingRanges(TextDocumentIdentifier textDocument) {
+        return this.symbolsByUri.get(textDocument.getUri()).getFoldingRanges();
+    }
+
     public void addFolder(String uri) {
         //add a folder of files to watch
         addDirectory(new File(URI.create(uri)));
@@ -244,4 +251,5 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
             removeValidationResult(result.getArchetypeId());
         }
     }
+
 }

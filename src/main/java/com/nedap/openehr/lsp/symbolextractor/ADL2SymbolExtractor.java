@@ -31,7 +31,9 @@ public class ADL2SymbolExtractor {
         //DocumentSymbolExtractingListener symbolExtractingListener = new DocumentSymbolExtractingListener();
         new ParseTreeWalker().walk(symbolExtractingListener, parser.adl());
         archetypeId = symbolExtractingListener.getArchetypeId();
-        return new DocumentInformation(archetypeId, listener.getErrors(), symbolExtractingListener.getSymbols());
+        return new DocumentInformation(archetypeId, listener.getErrors(),
+                symbolExtractingListener.getSymbols(),
+                symbolExtractingListener.getFoldingRanges());
     }
 
     public String getArchetypeId() {

@@ -8,6 +8,7 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.eclipse.lsp4j.DocumentSymbol;
+import org.eclipse.lsp4j.FoldingRange;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.Position;
@@ -28,6 +29,8 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     private final Set<Token> visitedTokens = new LinkedHashSet<>();
     private final AdlLexer lexer;
 
+    private List<FoldingRange> foldingRanges = new ArrayList<>();
+
     private final String documentUri;
 
 
@@ -40,6 +43,10 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
 
     public List<Either<SymbolInformation, DocumentSymbol>> getSymbols() {
         return this.symbols;
+    }
+
+    public List<FoldingRange> getFoldingRanges() {
+        return foldingRanges;
     }
 
     /**
@@ -112,6 +119,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     @Override public void enterTemplate_overlay(AdlParser.Template_overlayContext ctx) {
         addSymbol(ctx.SYM_TEMPLATE_OVERLAY(), "archetype", SymbolKind.Constant);
         addSymbol(ctx.ARCHETYPE_HRID(), "archetype id", SymbolKind.Class);
+        addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
 
     @Override public void exitTemplate_overlay(AdlParser.Template_overlayContext ctx) {
@@ -142,7 +150,10 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      *
      * <p>The default implementation does nothing.</p>
      */
-    @Override public void enterSpecialization_section(AdlParser.Specialization_sectionContext ctx) { }
+    @Override public void enterSpecialization_section(AdlParser.Specialization_sectionContext ctx) {
+        addSymbol(ctx.SYM_SPECIALIZE(), "specialization section", SymbolKind.Module);
+        addFoldingRange(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -151,6 +162,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      */
     @Override public void enterLanguage_section(AdlParser.Language_sectionContext ctx) {
         addSymbol(ctx.SYM_LANGUAGE(), "language section", SymbolKind.Module);
+        addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
     /**
      * {@inheritDoc}
@@ -167,8 +179,17 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      */
     @Override public void enterDescription_section(AdlParser.Description_sectionContext ctx) {
         addSymbol(ctx.SYM_DESCRIPTION(), "description section", SymbolKind.Module);
-
+        addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
+
+    private void addFoldingRange(ParserRuleContext ctx) {
+        foldingRanges.add(new FoldingRange(ctx.getStart().getLine()-1, ctx.getStop().getLine()-1));
+    }
+
+    private void addFoldingRange(int start, ParserRuleContext stop) {
+        foldingRanges.add(new FoldingRange(start, stop.getStop().getLine()-1));
+    }
+
     /**
      * {@inheritDoc}
      *
@@ -184,6 +205,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      */
     @Override public void enterDefinition_section(AdlParser.Definition_sectionContext ctx) {
         addSymbol(ctx.SYM_DEFINITION(), "definition section", SymbolKind.Module);
+        addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
     /**
      * {@inheritDoc}
@@ -200,6 +222,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      */
     @Override public void enterRules_section(AdlParser.Rules_sectionContext ctx) {
         addSymbol(ctx.SYM_RULES(), "rules section", SymbolKind.Module);
+        addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
 
     /**
@@ -209,6 +232,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      */
     @Override public void enterTerminology_section(AdlParser.Terminology_sectionContext ctx) {
         addSymbol(ctx.SYM_TERMINOLOGY(), "terminology section", SymbolKind.Module);
+        addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
 
     }
 
@@ -219,6 +243,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      */
     @Override public void enterAnnotations_section(AdlParser.Annotations_sectionContext ctx) {
         addSymbol(ctx.SYM_ANNOTATIONS(), "annotations section", SymbolKind.Module);
+        addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
 
     @Override public void enterC_complex_object(AdlParser.C_complex_objectContext ctx) {
@@ -232,10 +257,18 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
         if(ctx.SYM_MATCHES() != null) {
             addSymbol(ctx.SYM_MATCHES(), ctx.SYM_MATCHES().getText(), SymbolKind.Operator);
         }
+        addFoldingRange(ctx);
     }
 
     @Override public void enterC_attribute(AdlParser.C_attributeContext ctx) {
+        addFoldingRange(ctx);
+    }
 
+    /**
+     * An odin &lt; ... &gt; block
+     */
+    @Override public void enterObject_value_block(AdlParser.Object_value_blockContext ctx) {
+        addFoldingRange(ctx);
     }
 
     private void addSymbol(TerminalNode node, String tokenName, SymbolKind symbolKind) {
