@@ -9,8 +9,11 @@ import com.nedap.archie.archetypevalidator.ArchetypeValidator;
 import com.nedap.archie.archetypevalidator.ValidationResult;
 import com.nedap.archie.flattener.InMemoryFullArchetypeRepository;
 import com.nedap.openehr.lsp.symbolextractor.ADL2SymbolExtractor;
+import com.nedap.openehr.lsp.symbolextractor.HoverInfo;
 import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.FoldingRange;
+import org.eclipse.lsp4j.Hover;
+import org.eclipse.lsp4j.HoverParams;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentItem;
@@ -82,6 +85,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                 //perform incremental compilation here
 
                 invalidateAndRecompileArchetypes(archetype);
+                documentInformation.setHoverInfo(new HoverInfo(archetype));
 
                 //diagnostics will now be pushed from within the invalidateArchetypesAndRecompile method
             } else {
@@ -163,6 +167,10 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
 
     public List<Either<SymbolInformation, DocumentSymbol>> getSymbols(String uri) {
         return this.symbolsByUri.get(uri).getSymbols();
+    }
+
+    public Hover getHover(HoverParams params) {
+        return this.symbolsByUri.get(params.getTextDocument().getUri()).getHoverInfo(params);
     }
 
     public List<FoldingRange> getFoldingRanges(TextDocumentIdentifier textDocument) {

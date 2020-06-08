@@ -131,7 +131,7 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
 
     @Override
     public CompletableFuture<Hover> hover(HoverParams params) {
-        throw new UnsupportedOperationException();
+        return CompletableFuture.completedFuture(storage.getHover(params));
     }
 
     /**
