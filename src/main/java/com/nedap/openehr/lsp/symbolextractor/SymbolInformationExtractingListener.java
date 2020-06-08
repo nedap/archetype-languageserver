@@ -264,6 +264,14 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
         addFoldingRange(ctx);
     }
 
+    @Override public void enterArchetype_slot(AdlParser.Archetype_slotContext ctx) {
+        addFoldingRange(ctx);
+    }
+
+    @Override public void enterC_archetype_root(AdlParser.C_archetype_rootContext ctx) {
+        addFoldingRange(ctx);
+    }
+
     /**
      * An odin &lt; ... &gt; block
      */
