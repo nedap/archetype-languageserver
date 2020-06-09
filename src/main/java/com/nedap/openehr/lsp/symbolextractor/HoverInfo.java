@@ -1,10 +1,14 @@
 package com.nedap.openehr.lsp.symbolextractor;
 
 import com.nedap.archie.ArchieLanguageConfiguration;
+import com.nedap.archie.adlparser.modelconstraints.BMMConstraintImposer;
 import com.nedap.archie.aom.Archetype;
+import com.nedap.archie.aom.ArchetypeModelObject;
+import com.nedap.archie.aom.ArchetypeSlot;
 import com.nedap.archie.aom.CAttribute;
 import com.nedap.archie.aom.CComplexObject;
 import com.nedap.archie.aom.CObject;
+import com.nedap.archie.aom.CPrimitiveObject;
 import com.nedap.archie.aom.Template;
 import com.nedap.archie.aom.TemplateOverlay;
 import com.nedap.archie.aom.primitives.CTerminologyCode;
@@ -13,13 +17,17 @@ import com.nedap.archie.aom.terminology.ArchetypeTerminology;
 import com.nedap.archie.aom.terminology.TerminologyCodeWithArchetypeTerm;
 import com.nedap.archie.aom.terminology.ValueSet;
 import com.nedap.archie.aom.utils.AOMUtils;
+import com.nedap.archie.base.Cardinality;
 import com.nedap.archie.base.MultiplicityInterval;
+import com.nedap.archie.query.APathQuery;
 import com.nedap.archie.rminfo.MetaModels;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.HoverParams;
 import org.eclipse.lsp4j.MarkedString;
 import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.Position;
+import org.openehr.bmm.core.BmmClass;
+import org.openehr.bmm.core.BmmProperty;
 import org.openehr.referencemodels.BuiltinReferenceModels;
 
 import java.util.ArrayList;
@@ -54,23 +62,32 @@ public class HoverInfo {
     }
 
     private void extractHoverInfo(CComplexObject definition, Archetype archetypeForTerms) {
+        getHoverInfoForCObject(definition, archetypeForTerms);
+
+        for(CAttribute attribute:definition.getAttributes()) {
+            extractHoverInfo(attribute, archetypeForTerms);
+        }
+    }
+
+    private void getHoverInfoForCObject(CObject definition, Archetype archetypeForTerms) {
         ArchetypeTerm term = archetypeForTerms.getTerm(definition, language);
         if(term != null) {
             String content = "### " + definition.getRmTypeName() + ": " + term.getText() + "\n\n\t" + term.getDescription();
-            MultiplicityInterval occurrences = definition.effectiveOccurrences(metaModels::referenceModelPropMultiplicity);
+            CObject flattenedObject = (definition instanceof CPrimitiveObject) ? definition : archetypeForTerms.itemAtPath(definition.getPath());
+            if(flattenedObject == null) {
+                //fallback if something went wrong
+                flattenedObject = definition;
+            }
+            MultiplicityInterval occurrences = flattenedObject.effectiveOccurrences(metaModels::referenceModelPropMultiplicity);
             content += "\n occurrences: " + occurrences.toString();
 
             Hover hover = new Hover();
-            hover.setContents(new MarkupContent(MARKDOWN, content));
+            hover.setContents(new MarkupContent(MARKDOWN, content.toString()));
             hoverRanges.addRange(
                     new Position(definition.getStartLine()-1, definition.getStartCharInLine()),
                     new Position(definition.getStartLine()-1, definition.getStartCharInLine() + definition.getTokenLength()),
                     hover);
 
-        }
-
-        for(CAttribute attribute:definition.getAttributes()) {
-            extractHoverInfo(attribute, archetypeForTerms);
         }
     }
 
@@ -80,8 +97,47 @@ public class HoverInfo {
                 extractHoverInfo((CComplexObject) object, archetypeForTerms);
             } else if (object instanceof CTerminologyCode) {
                 extractHoverInfo((CTerminologyCode) object, archetypeForTerms);
+            } else if (object instanceof ArchetypeSlot) {
+                getHoverInfoForCObject( object, archetypeForTerms);
+            }//for the other primitives, hovers should not be important
+        }
+
+        if(attribute.getStartLine() == null) {
+            return;
+        }
+        CAttribute flatAttribute = archetypeForTerms.itemAtPath(attribute.getPath());
+        if(flatAttribute == null) {
+            flatAttribute = attribute;
+        }
+        CAttribute defaults = new BMMConstraintImposer(metaModels.getSelectedBmmModel()).getDefaultAttribute(flatAttribute.getParent().getRmTypeName(), flatAttribute.getRmAttributeName());
+        Cardinality cardinality = flatAttribute.getCardinality() == null ?  defaults.getCardinality() : flatAttribute.getCardinality();
+        MultiplicityInterval existence = flatAttribute.getExistence() == null ? defaults.getExistence() : flatAttribute.getExistence();
+        boolean multiple = flatAttribute.isMultiple();
+        StringBuilder content = new StringBuilder();
+        if(cardinality != null) {
+            content.append("Cardinality: ");
+            content.append(cardinality.toString());
+        }
+        if(existence != null) {
+            content.append(", existence: " + existence.toString());
+        }
+        content.append(multiple ? "\n multiple valued attribute" : "\n single valued attribute");
+
+
+        BmmClass classDefinition = metaModels.getSelectedBmmModel().getClassDefinition(flatAttribute.getParent().getRmTypeName());
+        if(classDefinition != null) {
+            BmmClass flatClass = classDefinition.flattenBmmClass();
+            BmmProperty bmmProperty = flatClass.getProperties().get(flatAttribute.getRmAttributeName());
+            if(bmmProperty != null) {
+                content.append("\n\nRM type name: *" + bmmProperty.getType().toDisplayString() + "*");
             }
         }
+        Hover hover = new Hover();
+        hover.setContents(new MarkupContent(MARKDOWN, content.toString()));
+        hoverRanges.addRange(
+                new Position(attribute.getStartLine()-1, attribute.getStartCharInLine()),
+                new Position(attribute.getStartLine()-1, attribute.getStartCharInLine() + attribute.getTokenLength()),
+                hover);
     }
 
     private void extractHoverInfo(CTerminologyCode object, Archetype archetypeForTerms) {
