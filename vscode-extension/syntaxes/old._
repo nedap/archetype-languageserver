@@ -1,0 +1,177 @@
+"constant.language": "concept|original_language|original_author|occurrences|cardinality|existence",
+"keyword.operator": "matches"
+}
+
+
+let definitionKeywordMapper = this.createKeywordMapper(keywords, "keyword.class")
+let attributesKeywordMapper = this.createKeywordMapper(keywords, "identifier")
+
+this.$rules = {
+"start": [{
+	token: "comment",
+	regex: "--.*$"
+}, {
+	token: "string",
+	regex: '".*?"'
+}, {
+	token: "entity.name.function",
+	regex: "definition",
+	next: "definition"
+}, {
+	token: "entity.name.function",
+	regex: "(description|terminology|language)",
+	next: "odin"
+}, {
+	token: "entity.name.function", 
+	regex: "archetype"
+}, {
+	token: "constant.language",
+	regex: "adl_version|rm_release"
+}],
+"odin": [{
+	token: "comment",
+	regex: "--.*$"
+}, {
+	token : "string", // single line
+	regex : '"',
+	next  : "odin_string"
+}, {
+	token : "paren.lparen",
+	regex : "\\<|\\["
+}, {
+	token : "paren.rparen",
+	regex : "\\>|\\]"
+}, {
+	token: "keyword.operator",
+	regex: "="      
+}, {
+	token: "identifier",
+	regex: "concept|original_language|original_author|term_definitions|term_bindings"
+}, {
+	token: "entity.name.function",
+	regex: "definition",
+	next: "definition"
+}, {
+	token: "entity.name.function",
+	regex: "(terminology|language)",
+	next: "odin"
+}, 
+}],
+"odin_string" : [
+	{
+		token : "constant.language.escape",
+		regex : /\\(?:x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|["\\\/bfnrt])/
+	}, {
+		token : "string",
+		regex : '"',
+		next  : "odin"
+	}, {
+		defaultToken : "string"
+	}
+],
+"definition": [{
+	token: "comment",
+	regex: "--.*$"
+}, {
+	token: "string",
+	regex: '".*?"'
+}, {
+	token : "paren.lparen",
+	regex : "{",
+	next: "attributes"
+}, {
+	token : "paren.rparen",
+	regex : "}",
+	next: "attributes"
+}, {
+	token : "support.variable",
+	regex : "\\[id[0-9]+(.[0-9]+)*\\]"
+}, {
+	token: "entity.name.function",
+	regex: "terminology",
+	next: "odin"
+}, {
+	token: "entity.name.function",
+	regex: "rules",
+	next: "rules"
+}, {
+	token: definitionKeywordMapper,
+	regex: "[a-zA-Z_$][a-zA-Z0-9_$]*"
+}],
+"attributes": [{
+	token: "comment",
+	regex: "--.*$"
+}, {
+	token: "string",
+	regex: '".*?"'
+}, {
+	token : "paren.lparen",
+	regex : "{",
+	next: "definition"
+}, {
+	token : "paren.rparen",
+	regex : "}",
+	next: "definition"
+}, {
+	token : "support.variable",
+	regex : "\\[id[0-9]+(.[0-9]+)*\\]"
+}, {
+	token: "entity.name.function",
+	regex: "terminology",
+	next: "odin"
+}, {
+	token: "entity.name.function",
+	regex: "rules",
+	next: "start"
+}, {
+	token: attributesKeywordMapper,
+	regex: "[a-zA-Z_$][a-zA-Z0-9_$]*"
+}],
+"rules": [{
+	token: "comment",
+	regex: "--.*$"
+}, {
+	token: "string",
+	regex: '".*?"'
+}, {
+	token : "paren.lparen",
+	regex : "\\(",
+	next: "definition"
+}, {
+}, {
+	token : "support.operator",
+	regex : "=|\\!\\=|≠|<=|≤|<|>=|≥|>|matches|∈|is_in|not|\\!|∼|¬|and|∧|or|∨|xor|⊻|implies|⇒|for_all|∀|every|exists|∃|\\+|-|\\*|/|\\%|\\^",
+	next: "definition"
+}, {
+	token : "paren.rparen",
+	regex : "\\)",
+	next: "definition"
+}, {
+	token : "support.variable",
+	regex : "\\[id[0-9]+(.[0-9]+)*\\]"
+}, {
+	token: "entity.name.function",
+	regex: "terminology",
+	next: "odin"
+}, {
+	token: "entity.name.function",
+	regex: "rules",
+	next: "start"
+}, {
+	token: attributesKeywordMapper,
+	regex: "[a-zA-Z_$][a-zA-Z0-9_$]*"
+}]
+};
+}
+
+
+}
+
+export default class AdlMode extends window.ace.acequire('ace/mode/text').Mode {
+
+constructor(){
+super();
+this.HighlightRules = AdlHighlightRules;
+// Your code goes here
+}
+}*/

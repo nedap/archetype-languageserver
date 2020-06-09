@@ -1,0 +1,50 @@
+{
+	"scopeName": "source.test",
+	"patterns": [{ "include": "#basics" }],
+	"repository": {
+		"basics": {
+			"patterns": [
+				{ "include": "#comment" },			
+				{ "include": "#odinStart"  }
+			]
+		},
+	  	"comment": {
+			"name": "comment",
+			"match": "--.*$"
+		},
+		"string": {
+			"name": "string.doubleQuoted",
+			"match": "\"[^\"]*?\""
+		},
+
+		"odinStart": {
+			"name": "meta.odin.start",
+			"begin": "<",
+			"end": ">",
+			"beginCaptures": {
+				"0": "punctuation.start"
+			},
+			"endCaptures": {
+				"0": "punctuation.end"
+			},
+			"patterns": [{"include": "#odinPrimitive"}, {"match": ",", "name":"operator"}]
+		},
+		"odin": {
+			"patterns": [
+				{ "include": "#comment" },
+				{ "include": "#odinStart" }				
+				
+			]
+		},
+		"odinPrimitive": {			
+			"patterns": [
+				{"include": "#string"},
+				{"include": "#comment"}
+				
+			]
+		}
+	}
+}
+	  
+  
+	
