@@ -1,6 +1,6 @@
 {
 	"scopeName": "source.adl",
-	"patterns": [{ "include": "#basics" }],
+	"patterns": [{ "include": "#odinField" }],
 	"repository": {
 		"basics": {
 			"patterns": [
@@ -31,16 +31,18 @@
 			"begin": "([a-zA-Z_$][a-zA-Z0-9_$]+)(\\s)*=(\\s)*<",
 			"end": ">",
 			"beginCaptures": {
-				"1": "entity.name.tag"
+				"1": {"name": "support.type.property.name"}
 			},
-			"patterns": [{"include": "#odin"}]
+			"endCaptures": {
+				"0": {"name":"punctuation.odin.object.end"}
+			},
+			"patterns": [{"include": "#odinContent"}]
 		},
 		"odin": {
 			"patterns": [
 				{ "include": "#comment" },
 				{ "include": "#odinHash" },
-				{ "include": "#odinField" },				
-				{ "include": "#odinArray" },
+				{ "include": "#odinField" },
 				{ "include": "#odinPrimitive" }
 				
 			]
@@ -51,34 +53,24 @@
 		},
 		"odinHash": {
 			"name": "meta.odin.hash",
-			"match": "\\[\\s*\"[^\\}\"\\s*\\]\\s*=\\s*<",
+			"begin": "\\[(\".*\")]\\s*=\\s*<",
 			"end": ">",
 			"beginCaptures": {
-				"0": {"name":"punctuation.odin.hash.start"}
+				"1": {"name":"string.odin support.variable.property.name"}
 			},
 			"endCaptures": {
 				"0": {"name":"punctuation.odin.hash.end"}
 			},
-			"patterns": [
-				{ "include": "#odinPrimitive" }
-			]
+			"patterns": [{"include": "#odinContent"}]
 		},
-		"odinArray": {
-			"name": "entity.name.type",
-			"begin": "\\[",
-			"end": "\\]",						
-			"patterns": [
-				{ "include": "#odin_primitives" },
-				{"name": "punctiation.odin.array.separator", "match": ","}
-			]
-		},
-		"odinPrimitive": {
+		"odinContent": {
 			"name": "string.odin.primitive",
 			"patterns": [
-				{"include": "#string"},
-				{"include": "#comment"},
-				{"include": "#number"}
-			]
+				{"include": "#string"}, 
+				{"include": "#number"}, 
+				{"include": "#comment"}, 
+				{ "include": "#odinHash" }, 
+				{ "include": "#odinField" }]
 		},
 		"definition": {
 			"begin": "(definition)(\\s\\n)*",
