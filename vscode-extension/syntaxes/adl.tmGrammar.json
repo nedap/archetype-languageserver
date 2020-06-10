@@ -1,11 +1,11 @@
 {
 	"scopeName": "source.adl",
-	"patterns": [{ "include": "#odinField" }],
+	"patterns": [{ "include": "#basics" }],
 	"repository": {
 		"basics": {
 			"patterns": [
 				{ "include": "#comment" },			
-				{ "include": "#odinField"  },
+				{ "include": "#odinStart"  },
 				{ "include": "#definition"  },
 				{ "include": "#sections"  }
 			]
@@ -26,12 +26,13 @@
 			"name": "keyword",
 			"match": "(archetype|template|operational_template|template_overlay|terminology|definition|language|specialise|description)"
 		},
-		"odinField": {
-			"name": "meta.odin.start",
-			"begin": "([a-zA-Z_$][a-zA-Z0-9_$]+)(\\s)*=(\\s)*<",
+		"odinStart": {
+			"name": "meta.structure.odin.start",
+			"begin": "([a-zA-Z_$][a-zA-Z0-9_$]+)(\\s)*=(\\s)*(<)",
 			"end": ">",
 			"beginCaptures": {
-				"1": {"name": "support.type.property.name"}
+				"1": {"name": "support.type.property.name"},
+				"4": {"name": "punctuation.odin.object.start"}
 			},
 			"endCaptures": {
 				"0": {"name":"punctuation.odin.object.end"}
@@ -41,27 +42,44 @@
 		"odin": {
 			"patterns": [
 				{ "include": "#comment" },
-				{ "include": "#odinHash" },
+				{ "include": "#odinObject" },
+				{ "include": "#odinHashKey" },
+				{ "include": "#odinEquals" },
 				{ "include": "#odinField" },
-				{ "include": "#odinPrimitive" }
 				
+				{ "include": "#odinPrimitive" }
 			]
 		},
-		"odinEquals": {
-			"match": "=",
-			"name": "keyword.operator.equals"
-		},
-		"odinHash": {
-			"name": "meta.odin.hash",
-			"begin": "\\[(\".*\")]\\s*=\\s*<",
+		"odinObject": {
+			"name": "meta.structure.odin.object",
+			"begin": "<",
 			"end": ">",
 			"beginCaptures": {
-				"1": {"name":"string.odin support.variable.property.name"}
+				"0": {"name":"punctuation.odin.object.start"}
 			},
 			"endCaptures": {
 				"0": {"name":"punctuation.odin.hash.end"}
 			},
 			"patterns": [{"include": "#odinContent"}]
+		},
+		"odinField": {
+			"name": "support.type.property.name",
+			"match": "([a-zA-Z_$][a-zA-Z0-9_$]+)"
+		},
+		"odinEquals": {
+			"match": "=",
+			"name": "keyword.operator.equals"
+		},
+		"odinDots": {
+			"match": "\\.\\.\\.",
+			"name": "keyword.operator.list"
+		},
+		"odinHashKey": {
+			"name": "meta.odin.hashKey",
+			"match": "\\[(\"[^\\]]*\")\\]",
+			"captures": {
+				"1": {"name": "support.type.property.name"}
+			}
 		},
 		"odinContent": {
 			"name": "string.odin.primitive",
@@ -74,11 +92,44 @@
 		},
 		"definition": {
 			"begin": "(definition)(\\s\\n)*",
-			"end": "[a-zA-Z]",
+			"end": "(rules|terminology)",
 			"beginCaptures": {
 				"0": "keyword"
-			}
+			},
+			"patterns": [
+				{"include": "#comments"},
+				{"include": "#cComplexobject"}
+			]
+		},
+		"cComplexobject": {
+			"begin": "([A-Z_$][a-zA-Z0-9_$]+)\\[[a-zA-Z]{2}\\d+(\\.\\d+)*\\](.*)\\{",
+			"end": "\\}",
+			"name": "meta.structure.cComplexObject",
+			"comment": "TODO: fix beginCaptures",
+			"beginCaptures": {
+				"1": {"name" : "entity.name.type"},
+				"2": {"name" : "entity.name.tag"},
+				"3": {"name": "constant.language"} 				
+			},
+			"patterns": [
+				{"include": "#comment"},
+				{"include": "#cAttribute"}
+			]
+		},
+		"cAttribute": {
+			"begin": "([a-zA-Z_$][a-zA-Z0-9_$]*)(.*)\\{",
+			"end": "\\}",
+			"name": "meta.structure.cAttribute",
+			"beginCaptures": {
+				"1": {"name" : "entity.name.type"},
+				"2": {"name": "constant.language"} 				
+			},
+			"patterns": [
+				{"include": "#comment"},
+				{"include": "#cComplexObject"}
+			]
 		}
+
 	}
 }
 	  
