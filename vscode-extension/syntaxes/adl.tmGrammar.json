@@ -15,15 +15,23 @@
 			"match": "--.*$"
 		},
 		"string": {
+			"patterns": [{"include": "#multiLineString"}, {"include": "#singleLineString"}]
+		},
+		"multiLineString": {
+			"begin": "\"[^\"]*$",
+			"end": "\"",
+			"name": "string.doubleQuoted"
+		},		
+		"singleLineString": {
 			"name": "string.doubleQuoted",
-			"match": "\"[^\"]*?\""
+			"match": "\"[^\"]*\""
 		},
 		"number": {
 			"name": "constant.numeric",
 			"match": "-?\\d+\\.(\\d+([eE][-+]?\\d+)?)?"
 		},
 		"sections": {
-			"name": "entity.name.section",
+			"name": "markup.heading",
 			"match": "(archetype|template|operational_template|template_overlay|terminology|language|specialise|description)"
 		},
 		"odinStart": {
@@ -71,7 +79,7 @@
 			}
 		},
 		"odinContent": {
-			"name": "string.odin.primitive",
+			"name": "meta.odin.content",
 			"patterns": [				
 				{"include": "#comment"}, 
 				{ "include": "#odinHashKey" }, 
@@ -87,7 +95,7 @@
 			"begin": "(definition)(\\s\\n)*",
 			"end": "(rules|terminology)",
 			"beginCaptures": {
-				"1": {"name": "entity.name.section"}
+				"1": {"name": "markup.heading.definition"}
 			},
 			"patterns": [
 				{"include": "#cComplexObjectContainer"}
@@ -102,7 +110,7 @@
 			}
 		},
 		"matches": {
-			"match": "matches",
+			"match": "(matches|∈)",
 			"name": "keyword.matches"
 		},
 		"occurrences": {
@@ -140,6 +148,7 @@
 				{"include": "#comment"},
 				{"include": "#cardinality"},
 				{"include": "#existence"},
+				{"include": "#matches"},
 				{"include": "#multiplicityInterval"},
 				{"include": "#cAttributeName"},
 				{"include": "#cAttribute"}
@@ -147,7 +156,7 @@
 		},
 		"cAttributeName": {
 			"match": "([a-zA-Z_$][a-zA-Z0-9_$]*)",
-			"name": "entity.name.attribute-name"
+			"name": "entity.other.attribute-name"
 		},
 		"cAttribute": {
 			"begin": "\\{",
