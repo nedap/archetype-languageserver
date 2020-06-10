@@ -27,20 +27,12 @@
 			"endCaptures": {
 				"0": "punctuation.end"
 			},
-			"patterns": [{"include": "#odinPrimitive"}, {"match": ",", "name":"operator"}]
-		},
-		"odin": {
-			"patterns": [
-				{ "include": "#comment" },
-				{ "include": "#odinStart" }				
-				
-			]
-		},
+			"patterns": [{"include": "#odinPrimitive"}, {"include": "#odinStart"}, {"match": ",", "name":"operator"}]
+		},		
 		"odinPrimitive": {			
 			"patterns": [
-				{"include": "#string"},
-				{"include": "#comment"}
-				
+				{"include": "#comment"},
+				{"include": "#string"}			
 			]
 		}
 	}
