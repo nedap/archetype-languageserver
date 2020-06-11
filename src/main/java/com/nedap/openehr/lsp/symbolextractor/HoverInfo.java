@@ -109,9 +109,24 @@ public class HoverInfo {
         if(flatAttribute == null) {
             flatAttribute = attribute;
         }
+        Cardinality cardinality = null;
+        MultiplicityInterval existence = null;
+        //TODO: do a proper path lookup thorugh the RM model?
         CAttribute defaults = new BMMConstraintImposer(metaModels.getSelectedBmmModel()).getDefaultAttribute(flatAttribute.getParent().getRmTypeName(), flatAttribute.getRmAttributeName());
-        Cardinality cardinality = flatAttribute.getCardinality() == null ?  defaults.getCardinality() : flatAttribute.getCardinality();
-        MultiplicityInterval existence = flatAttribute.getExistence() == null ? defaults.getExistence() : flatAttribute.getExistence();
+        if(flatAttribute.getCardinality() != null) {
+            cardinality = flatAttribute.getCardinality();
+        } else {
+            if(defaults != null) {
+                cardinality = defaults.getCardinality();
+            }
+        }
+        if(flatAttribute.getExistence() != null) {
+            existence = flatAttribute.getExistence();
+        } else {
+            if(defaults != null) {
+                existence = flatAttribute.getExistence();
+            }
+        }
         boolean multiple = flatAttribute.isMultiple();
         StringBuilder content = new StringBuilder();
         if(cardinality != null) {
