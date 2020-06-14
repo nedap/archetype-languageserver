@@ -31,18 +31,18 @@ export function activate(context: ExtensionContext) {
     // Create the language client and start the client.
     let lc = new LanguageClient('ADL Server', serverOptions, clientOptions);
 
-    var disposable2 =commands.registerCommand("adl.a.proxy", async () => {
-        let activeEditor = window.activeTextEditor;
-        if (!activeEditor || !activeEditor.document || activeEditor.document.languageId !== 'plaintext') {
-            return;
-        }
+    // var disposable2 =commands.registerCommand("adl.a.proxy", async () => {
+    //     let activeEditor = window.activeTextEditor;
+    //     if (!activeEditor || !activeEditor.document || activeEditor.document.languageId !== 'plaintext') {
+    //         return;
+    //     }
 
-        if (activeEditor.document.uri instanceof Uri) {
-            commands.executeCommand("adl.a", activeEditor.document.uri.toString());
-        }
-    })
+    //     if (activeEditor.document.uri instanceof Uri) {
+    //         commands.executeCommand("adl.a", activeEditor.document.uri.toString());
+    //     }
+    // })
 
-    context.subscriptions.push(disposable2);
+   // context.subscriptions.push(disposable2);
 
     // enable tracing (.Off, .Messages, Verbose)
     lc.trace = Trace.Verbose;
