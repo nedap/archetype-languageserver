@@ -1,3 +1,4 @@
+vscode-extension/archie-lsp-shadow/
 vscode-extension/client/out
 *.vsix
 .idea
