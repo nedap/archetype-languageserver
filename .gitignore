@@ -1,3 +1,4 @@
+vscode-extension/client/out
 .vsix
 .idea
 .gradle
