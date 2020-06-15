@@ -1,5 +1,5 @@
 vscode-extension/client/out
-.vsix
+*.vsix
 .idea
 .gradle
 /build/
