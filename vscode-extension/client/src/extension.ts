@@ -4,27 +4,36 @@ import * as net from 'net';
 
 import {Trace} from 'vscode-jsonrpc';
 import { window, workspace, commands, ExtensionContext, Uri } from 'vscode';
-import { LanguageClient, LanguageClientOptions, StreamInfo, Position as LSPosition, Location as LSLocation } from 'vscode-languageclient';
+import { LanguageClient, LanguageClientOptions, ExecutableOptions, Executable, StreamInfo, Position as LSPosition, Location as LSLocation, TransportKind } from 'vscode-languageclient';
 
 export function activate(context: ExtensionContext) {
     // The server is a started as a separate app and listens on port 1278
     let connectionInfo = {
         port: 1278
     };
-    let serverOptions = () => {
-        // Connect to language server via socket
-        let socket = net.connect(connectionInfo);
-        let result: StreamInfo = {
-            writer: socket,
-            reader: socket
-        };
-        return Promise.resolve(result);
-    };
+    // let serverOptions = () => {
+    //     // Connect to language server via socket
+    //     let socket = net.connect(connectionInfo);
+    //     let result: StreamInfo = {
+    //         writer: socket,
+    //         reader: socket
+    //     };
+    //     return Promise.resolve(result);
+    // };
+
+    let serverOptions = { 
+        run: {  
+            command: context.extensionPath + '/archie-lsp-shadow/bin/archie-lsp'
+        },
+        debug: {  
+            command: context.extensionPath + '/archie-lsp-shadow/bin/archie-lsp'
+        }
+    }
     
     let clientOptions: LanguageClientOptions = {
         documentSelector: ['ADL'],
         synchronize: {
-            fileEvents: workspace.createFileSystemWatcher('**/*.*')
+            fileEvents: workspace.createFileSystemWatcher('**/*.adl*')
         }
     };
     

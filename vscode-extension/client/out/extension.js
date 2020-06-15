@@ -1,7 +1,6 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.activate = void 0;
-const net = require("net");
 const vscode_jsonrpc_1 = require("vscode-jsonrpc");
 const vscode_1 = require("vscode");
 const vscode_languageclient_1 = require("vscode-languageclient");
@@ -10,19 +9,27 @@ function activate(context) {
     let connectionInfo = {
         port: 1278
     };
-    let serverOptions = () => {
-        // Connect to language server via socket
-        let socket = net.connect(connectionInfo);
-        let result = {
-            writer: socket,
-            reader: socket
-        };
-        return Promise.resolve(result);
+    // let serverOptions = () => {
+    //     // Connect to language server via socket
+    //     let socket = net.connect(connectionInfo);
+    //     let result: StreamInfo = {
+    //         writer: socket,
+    //         reader: socket
+    //     };
+    //     return Promise.resolve(result);
+    // };
+    let serverOptions = {
+        run: {
+            command: context.extensionPath + '/archie-lsp-shadow/bin/archie-lsp'
+        },
+        debug: {
+            command: context.extensionPath + '/archie-lsp-shadow/bin/archie-lsp'
+        }
     };
     let clientOptions = {
         documentSelector: ['ADL'],
         synchronize: {
-            fileEvents: vscode_1.workspace.createFileSystemWatcher('**/*.*')
+            fileEvents: vscode_1.workspace.createFileSystemWatcher('**/*.adl*')
         }
     };
     // Create the language client and start the client.

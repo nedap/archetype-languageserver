@@ -144,4 +144,19 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
     public CompletableFuture<List<FoldingRange>> foldingRange(FoldingRangeRequestParams params) {
         return CompletableFuture.completedFuture(storage.getFoldingRanges(params.getTextDocument()));
     }
+
+    /**
+     * The Completion request is sent from the client to the server to compute
+     * completion items at a given cursor position. Completion items are
+     * presented in the IntelliSense user interface. If computing complete
+     * completion items is expensive servers can additional provide a handler
+     * for the resolve completion item request. This request is sent when a
+     * completion item is selected in the user interface.
+     *
+     * Registration Options: CompletionRegistrationOptions
+     */
+    @Override
+    public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
+        throw new UnsupportedOperationException();
+    }
 }
