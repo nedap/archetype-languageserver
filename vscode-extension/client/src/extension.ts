@@ -21,12 +21,24 @@ export function activate(context: ExtensionContext) {
     //     return Promise.resolve(result);
     // };
 
-    let serverOptions = { 
-        run: {  
-            command: context.extensionPath + '/archie-lsp-shadow/bin/archie-lsp'
-        },
-        debug: {  
-            command: context.extensionPath + '/archie-lsp-shadow/bin/archie-lsp'
+    let serverOptions;
+    if(process.platform == 'win32') {
+        serverOptions = { 
+            run: {  
+                command: context.extensionPath + '\\archie-lsp-shadow\\bin\\archie-lsp.bat'
+            },
+            debug: {  
+                command: context.extensionPath + '\\archie-lsp-shadow\\bin\\archie-lsp.bat'
+            }
+        }
+    } else {
+        serverOptions = {
+            run: {  
+                command: context.extensionPath + '/archie-lsp-shadow/bin/archie-lsp'
+            },
+            debug: {  
+                command: context.extensionPath + '/archie-lsp-shadow/bin/archie-lsp'
+            }
         }
     }
     
@@ -55,6 +67,7 @@ export function activate(context: ExtensionContext) {
 
     // enable tracing (.Off, .Messages, Verbose)
     lc.trace = Trace.Verbose;
+    
     let disposable = lc.start();
     
     // Push the disposable to the context's subscriptions so that the 

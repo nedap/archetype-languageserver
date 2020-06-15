@@ -18,14 +18,27 @@ function activate(context) {
     //     };
     //     return Promise.resolve(result);
     // };
-    let serverOptions = {
-        run: {
-            command: context.extensionPath + '/archie-lsp-shadow/bin/archie-lsp'
-        },
-        debug: {
-            command: context.extensionPath + '/archie-lsp-shadow/bin/archie-lsp'
-        }
-    };
+    let serverOptions;
+    if (process.platform == 'win32') {
+        serverOptions = {
+            run: {
+                command: context.extensionPath + '\\archie-lsp-shadow\\bin\\archie-lsp.bat'
+            },
+            debug: {
+                command: context.extensionPath + '\\archie-lsp-shadow\\bin\\archie-lsp.bat'
+            }
+        };
+    }
+    else {
+        serverOptions = {
+            run: {
+                command: context.extensionPath + '/archie-lsp-shadow/bin/archie-lsp'
+            },
+            debug: {
+                command: context.extensionPath + '/archie-lsp-shadow/bin/archie-lsp'
+            }
+        };
+    }
     let clientOptions = {
         documentSelector: ['ADL'],
         synchronize: {
