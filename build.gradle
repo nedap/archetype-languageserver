@@ -6,6 +6,7 @@
  * User Manual available at https://docs.gradle.org/6.3/userguide/tutorial_java_projects.html
  */
 
+
 plugins {
     // Apply the java plugin to add support for Java
     id 'java'
@@ -13,8 +14,10 @@ plugins {
     // Apply the application plugin to add support for building a CLI application.
     id 'application'
     id "com.github.johnrengelman.shadow" version "5.2.0"
-}
+    //id "com.palantir.graal" version "0.7.1"
+  //  id "org.beryx.runtime" version "1.9.1"
 
+}
 
 repositories {
     // Use jcenter for resolving dependencies.
@@ -29,12 +32,18 @@ dependencies {
 
     implementation 'com.nedap.healthcare.archie:archie-all:0.12.1'
     implementation 'org.eclipse.lsp4j:org.eclipse.lsp4j:0.9.0'
+    implementation 'org.slf4j:slf4j-nop:1.7.9'
 
     // Use JUnit Jupiter API for testing.
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'
 
     // Use JUnit Jupiter Engine for testing.
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.6.0'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 application {
@@ -46,7 +55,15 @@ test {
     // Use junit platform for unit tests
     useJUnitPlatform()
 }
-
+//
+//graal {
+//    outputName 'archetype-lsp'
+//    mainClass 'com.nedap.openehr.lsp.App'
+//    javaVersion '11'
+//    option '--no-fallback'
+//    option '-H:IncludeResources=.*\\.(bmm|arp)'
+//    graalVersion '20.1.0'
+//}
 //jar {
 //    manifest {
 //        attributes(
@@ -56,4 +73,9 @@ test {
 //    from {
 //        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
 //    }
+//}
+
+//runtime {
+//    options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
+//    modules = ['java.naming', 'java.xml', 'java.sql']
 //}
