@@ -15,7 +15,7 @@ plugins {
     id 'application'
     id "com.github.johnrengelman.shadow" version "5.2.0"
     //id "com.palantir.graal" version "0.7.1"
-  //  id "org.beryx.runtime" version "1.9.1"
+    id "org.beryx.runtime" version "1.9.1"
 
 }
 
@@ -75,7 +75,10 @@ test {
 //    }
 //}
 
-//runtime {
-//    options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
-//    modules = ['java.naming', 'java.xml', 'java.sql']
-//}
+runtime {
+    options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
+    modules = ['java.xml', 'java.sql'] //SQL required because of GSON dependency. Maybe get rid of that anyway...
+    targetPlatform('linux-x64', jvm_linux_home)
+    targetPlatform('winx64', jvm_windows_home)
+    targetPlatform('macos', jvm_macos_home)
+}

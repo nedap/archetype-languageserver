@@ -1,3 +1,4 @@
+gradle.properties
 vscode-extension/archie-lsp-shadow/
 vscode-extension/client/out
 *.vsix
