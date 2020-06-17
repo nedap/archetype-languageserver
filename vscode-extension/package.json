@@ -24,7 +24,7 @@
 		"configuration": {
 			"type": "object",
 			"title": "ADL configuration",
-			"properties": {       
+			"properties": {
 				"java.home": {
 					"type": "string",
 					"description": "Absolute path to your Java home directory"

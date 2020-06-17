@@ -1,5 +1,5 @@
 gradle.properties
-vscode-extension/archie-lsp-shadow/
+vscode-extension/lsp-images/
 vscode-extension/client/out
 *.vsix
 .idea
