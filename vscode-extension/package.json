@@ -3,7 +3,7 @@
 	"description": "OpenEHR ADL support, including syntax highlighting and validation",
 	"author": "Nedap Healthcare",
 	"license": "Apache",
-	"version": "1.0.0",
+	"version": "0.1.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/nedap/archetype-languageserver"

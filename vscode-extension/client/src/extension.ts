@@ -1,7 +1,7 @@
 'use strict';
 
 import * as net from 'net';
-
+import * as path from 'path';
 import {Trace} from 'vscode-jsonrpc';
 import { window, workspace, commands, ExtensionContext, Uri } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ExecutableOptions, Executable, StreamInfo, Position as LSPosition, Location as LSLocation, TransportKind } from 'vscode-languageclient';
@@ -22,24 +22,39 @@ export function activate(context: ExtensionContext) {
     // };
 
     let serverOptions;
-    if(process.platform == 'win32') {
-        serverOptions = { 
-            run: {  
-                command: context.extensionPath + '\\archie-lsp-shadow\\bin\\archie-lsp.bat'
-            },
-            debug: {  
-                command: context.extensionPath + '\\archie-lsp-shadow\\bin\\archie-lsp.bat'
-            }
-        }
-    } else {
+    if(process.arch != 'x32' && process.arch != 'x64') {
+        throw 'unsupported CPU, this extension only runs on windows, macos or linux on x86 CPUs: ' + process.arch
+    }
+    if (process.platform == 'win32') {
         serverOptions = {
-            run: {  
-                command: context.extensionPath + '/archie-lsp-shadow/bin/archie-lsp'
+            run: {
+                command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-winx64', 'bin', 'archie-lsp.bat')
             },
-            debug: {  
-                command: context.extensionPath + '/archie-lsp-shadow/bin/archie-lsp'
+            debug: {
+                command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-winx64', 'bin', 'archie-lsp.bat')
             }
-        }
+        };
+    }
+    else if(process.platform == 'darwin') {
+        serverOptions = {
+            run: {
+                command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-macos', 'bin', 'archie-lsp')
+            },
+            debug: {
+                command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-macos', 'bin', 'archie-lsp')
+            }
+        };
+    } else if (process.platform == 'linux') {
+        serverOptions = {
+            run: {
+                command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-linux-x64', 'bin', 'archie-lsp')
+            },
+            debug: {
+                command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-linux-x64', 'bin', 'archie-lsp')
+            }
+        };
+    } else {
+        throw 'unsupported platform, this extension only runs on windows, macos or linux on x86 CPUs: ' + process.platform
     }
     
     let clientOptions: LanguageClientOptions = {
