@@ -62,7 +62,12 @@ public class HoverInfo {
     }
 
     private void extractHoverInfo(CComplexObject definition, Archetype archetypeForTerms) {
-        getHoverInfoForCObject(definition, archetypeForTerms);
+        try {
+            getHoverInfoForCObject(definition, archetypeForTerms);
+        } catch (Exception e) {
+            //just continue :)
+            e.printStackTrace();
+        }
 
         for(CAttribute attribute:definition.getAttributes()) {
             extractHoverInfo(attribute, archetypeForTerms);
@@ -93,66 +98,74 @@ public class HoverInfo {
 
     private void extractHoverInfo(CAttribute attribute, Archetype archetypeForTerms) {
         for(CObject object:attribute.getChildren()) {
-            if(object instanceof CComplexObject) {
-                extractHoverInfo((CComplexObject) object, archetypeForTerms);
-            } else if (object instanceof CTerminologyCode) {
-                extractHoverInfo((CTerminologyCode) object, archetypeForTerms);
-            } else if (object instanceof ArchetypeSlot) {
-                getHoverInfoForCObject( object, archetypeForTerms);
-            }//for the other primitives, hovers should not be important
-        }
-
-        if(attribute.getStartLine() == null) {
-            return;
-        }
-        CAttribute flatAttribute = archetypeForTerms.itemAtPath(attribute.getPath());
-        if(flatAttribute == null) {
-            flatAttribute = attribute;
-        }
-        Cardinality cardinality = null;
-        MultiplicityInterval existence = null;
-        //TODO: do a proper path lookup thorugh the RM model?
-        CAttribute defaults = new BMMConstraintImposer(metaModels.getSelectedBmmModel()).getDefaultAttribute(flatAttribute.getParent().getRmTypeName(), flatAttribute.getRmAttributeName());
-        if(flatAttribute.getCardinality() != null) {
-            cardinality = flatAttribute.getCardinality();
-        } else {
-            if(defaults != null) {
-                cardinality = defaults.getCardinality();
+            try {
+                if (object instanceof CComplexObject) {
+                    extractHoverInfo((CComplexObject) object, archetypeForTerms);
+                } else if (object instanceof CTerminologyCode) {
+                    extractHoverInfo((CTerminologyCode) object, archetypeForTerms);
+                } else if (object instanceof ArchetypeSlot) {
+                    getHoverInfoForCObject(object, archetypeForTerms);
+                }//for the other primitives, hovers should not be important
+            } catch (Exception e) {
+                //If this fails, fine, continue with the rest of the file!
+                e.printStackTrace();//TODO: report to client?
             }
         }
-        if(flatAttribute.getExistence() != null) {
-            existence = flatAttribute.getExistence();
-        } else {
-            if(defaults != null) {
+        try {
+            if (attribute.getStartLine() == null) {
+                return;
+            }
+            CAttribute flatAttribute = archetypeForTerms.itemAtPath(attribute.getPath());
+            if (flatAttribute == null) {
+                flatAttribute = attribute;
+            }
+            Cardinality cardinality = null;
+            MultiplicityInterval existence = null;
+            //TODO: do a proper path lookup thorugh the RM model?
+            CAttribute defaults = new BMMConstraintImposer(metaModels.getSelectedBmmModel()).getDefaultAttribute(flatAttribute.getParent().getRmTypeName(), flatAttribute.getRmAttributeName());
+            if (flatAttribute.getCardinality() != null) {
+                cardinality = flatAttribute.getCardinality();
+            } else {
+                if (defaults != null) {
+                    cardinality = defaults.getCardinality();
+                }
+            }
+            if (flatAttribute.getExistence() != null) {
                 existence = flatAttribute.getExistence();
+            } else {
+                if (defaults != null) {
+                    existence = flatAttribute.getExistence();
+                }
             }
-        }
-        boolean multiple = flatAttribute.isMultiple();
-        StringBuilder content = new StringBuilder();
-        if(cardinality != null) {
-            content.append("Cardinality: ");
-            content.append(cardinality.toString());
-        }
-        if(existence != null) {
-            content.append(", existence: " + existence.toString());
-        }
-        content.append(multiple ? "\n multiple valued attribute" : "\n single valued attribute");
+            boolean multiple = flatAttribute.isMultiple();
+            StringBuilder content = new StringBuilder();
+            if (cardinality != null) {
+                content.append("Cardinality: ");
+                content.append(cardinality.toString());
+            }
+            if (existence != null) {
+                content.append(", existence: " + existence.toString());
+            }
+            content.append(multiple ? "\n multiple valued attribute" : "\n single valued attribute");
 
 
-        BmmClass classDefinition = metaModels.getSelectedBmmModel().getClassDefinition(flatAttribute.getParent().getRmTypeName());
-        if(classDefinition != null) {
-            BmmClass flatClass = classDefinition.flattenBmmClass();
-            BmmProperty bmmProperty = flatClass.getProperties().get(flatAttribute.getRmAttributeName());
-            if(bmmProperty != null) {
-                content.append("\n\nRM type name: *" + bmmProperty.getType().toDisplayString() + "*");
+            BmmClass classDefinition = metaModels.getSelectedBmmModel().getClassDefinition(flatAttribute.getParent().getRmTypeName());
+            if (classDefinition != null) {
+                BmmClass flatClass = classDefinition.flattenBmmClass();
+                BmmProperty bmmProperty = flatClass.getProperties().get(flatAttribute.getRmAttributeName());
+                if (bmmProperty != null) {
+                    content.append("\n\nRM type name: *" + bmmProperty.getType().toDisplayString() + "*");
+                }
             }
+            Hover hover = new Hover();
+            hover.setContents(new MarkupContent(MARKDOWN, content.toString()));
+            hoverRanges.addRange(
+                    new Position(attribute.getStartLine() - 1, attribute.getStartCharInLine()),
+                    new Position(attribute.getStartLine() - 1, attribute.getStartCharInLine() + attribute.getTokenLength()),
+                    hover);
+        } catch (Exception e) {
+            e.printStackTrace();//TODO: report to client?
         }
-        Hover hover = new Hover();
-        hover.setContents(new MarkupContent(MARKDOWN, content.toString()));
-        hoverRanges.addRange(
-                new Position(attribute.getStartLine()-1, attribute.getStartCharInLine()),
-                new Position(attribute.getStartLine()-1, attribute.getStartCharInLine() + attribute.getTokenLength()),
-                hover);
     }
 
     private void extractHoverInfo(CTerminologyCode object, Archetype archetypeForTerms) {
