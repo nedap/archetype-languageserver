@@ -85,6 +85,11 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
         this.remoteProxy = remoteProxy;
     }
 
+    public void pushDiagnostics(TextDocumentItem document, Exception exception) {
+        PublishDiagnosticsParams diagnosticsParams = DiagnosticsConverter.createDiagnostics(document, exception);
+        remoteProxy.publishDiagnostics(diagnosticsParams);
+    }
+
     public void pushDiagnostics(TextDocumentItem document, ANTLRParserErrors errors) {
         PublishDiagnosticsParams diagnosticsParams = DiagnosticsConverter.createDiagnostics(document, errors);
         remoteProxy.publishDiagnostics(diagnosticsParams);

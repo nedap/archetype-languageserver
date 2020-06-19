@@ -18,6 +18,20 @@ import java.util.List;
 
 public class DiagnosticsConverter {
 
+    public static PublishDiagnosticsParams createDiagnostics(TextDocumentItem document, Exception exception) {
+        PublishDiagnosticsParams diagnosticsParams = new PublishDiagnosticsParams();
+        List<Diagnostic> diagnostics = new ArrayList<>();
+        Range range = new Range(
+                new Position(0, 1),
+                new Position(0, 50)
+        );
+        diagnostics.add(new Diagnostic(range, exception.getMessage(),  DiagnosticSeverity.Error, "ADL parsing"));
+        diagnosticsParams.setDiagnostics(diagnostics);
+        diagnosticsParams.setUri(document.getUri());
+        diagnosticsParams.setVersion(document.getVersion());
+        return diagnosticsParams;
+    }
+
     public static PublishDiagnosticsParams createDiagnostics(TextDocumentItem document, ANTLRParserErrors errors) {
         PublishDiagnosticsParams diagnosticsParams = new PublishDiagnosticsParams();
         List<Diagnostic> diagnostics = new ArrayList<>();

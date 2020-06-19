@@ -80,7 +80,14 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
             if (documentInformation.getErrors().hasNoErrors()) {
                 ADLParser adlParser = new ADLParser(BuiltinReferenceModels.getMetaModels());
                 adlParser.setLogEnabled(false);//no console output please :)
-                Archetype archetype = adlParser.parse(textDocumentItem.getText());
+                Archetype archetype = null;
+                try {
+                    archetype = adlParser.parse(textDocumentItem.getText());
+                } catch (Exception ex) {
+                    //this particular exce[tion is a parse error, usually when extracting JSON. be sure to post taht
+                    textDocumentService.pushDiagnostics(textDocumentItem, ex);
+                    return;
+                }
                 addArchetype(archetype);
                 //perform incremental compilation here
 
@@ -95,6 +102,8 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                     language = "en";
                 }
                 documentInformation.setHoverInfo(new HoverInfo(archetype, archetypeForTerms, language));
+
+
 
                 //diagnostics will now be pushed from within the invalidateArchetypesAndRecompile method
             } else {
