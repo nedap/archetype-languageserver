@@ -83,29 +83,28 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                 Archetype archetype = null;
                 try {
                     archetype = adlParser.parse(textDocumentItem.getText());
+
+                    addArchetype(archetype);
+                    //perform incremental compilation here
+
+                    invalidateAndRecompileArchetypes(archetype);
+                    ValidationResult result = getValidationResult(archetype.getArchetypeId().toString());
+                    Archetype archetypeForTerms = archetype;
+                    if(result != null && result.getFlattened() != null) {
+                        archetypeForTerms = result.getFlattened();
+                    }
+                    String language = archetype.getOriginalLanguage() != null ? archetype.getOriginalLanguage().getCodeString() : null;
+                    if(language == null) {
+                        language = "en";
+                    }
+                    documentInformation.setHoverInfo(new HoverInfo(archetype, archetypeForTerms, language));
+                    //diagnostics will now be pushed from within the invalidateArchetypesAndRecompile method
                 } catch (Exception ex) {
                     //this particular exce[tion is a parse error, usually when extracting JSON. be sure to post taht
                     textDocumentService.pushDiagnostics(textDocumentItem, ex);
-                    return;
                 }
-                addArchetype(archetype);
-                //perform incremental compilation here
-
-                invalidateAndRecompileArchetypes(archetype);
-                ValidationResult result = getValidationResult(archetype.getArchetypeId().toString());
-                Archetype archetypeForTerms = archetype;
-                if(result != null && result.getFlattened() != null) {
-                    archetypeForTerms = result.getFlattened();
-                }
-                String language = archetype.getOriginalLanguage() != null ? archetype.getOriginalLanguage().getCodeString() : null;
-                if(language == null) {
-                    language = "en";
-                }
-                documentInformation.setHoverInfo(new HoverInfo(archetype, archetypeForTerms, language));
 
 
-
-                //diagnostics will now be pushed from within the invalidateArchetypesAndRecompile method
             } else {
                 textDocumentService.pushDiagnostics(textDocumentItem, documentInformation.getErrors());
             }
@@ -221,8 +220,8 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
             try {
                 TextDocumentItem adl = new TextDocumentItem(uri, "adl", 0, new String(Files.readAllBytes(file.toPath()), Charsets.UTF_8));
                 addDocument(adl);
-            } catch (IOException e) {
-                //TODO: send diagnostics
+            } catch (Exception e) {
+                textDocumentService.pushDiagnostics(new TextDocumentItem(uri, "adl", 0, e.toString()), e);
                 e.printStackTrace();
             }
         }
@@ -240,8 +239,8 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
         if(hasAdlsExtension(file)) {
             try {
                 updateDocument(uri, 0, new String(Files.readAllBytes(file.toPath()), Charsets.UTF_8));
-            } catch (IOException e) {
-                //TODO: send diagnostics
+            } catch (Exception e) {
+                textDocumentService.pushDiagnostics(new TextDocumentItem(uri, "adl", 0, null), e);
                 e.printStackTrace();
             }
         }
