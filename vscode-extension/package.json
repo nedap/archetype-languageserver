@@ -17,7 +17,8 @@
 		"vscode": "^1.43.0"
 	},
 	"activationEvents": [
-		"onLanguage:ADL"
+		"onLanguage:ADL",
+		"workspaceContains:**/.(adls|adlt|adlf|adl|adl2)"
 	],
 	"main": "./client/out/extension",
 	"contributes": {
