@@ -33,7 +33,8 @@ public class ADL2SymbolExtractor {
         archetypeId = symbolExtractingListener.getArchetypeId();
         return new DocumentInformation(archetypeId, listener.getErrors(),
                 symbolExtractingListener.getSymbols(),
-                symbolExtractingListener.getFoldingRanges());
+                symbolExtractingListener.getFoldingRanges(),
+                symbolExtractingListener.getDocumentLinks());
     }
 
     public String getArchetypeId() {

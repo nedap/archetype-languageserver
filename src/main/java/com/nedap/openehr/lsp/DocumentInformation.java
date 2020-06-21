@@ -23,11 +23,13 @@ public class DocumentInformation {
 
     public DocumentInformation(String archetypeId, ANTLRParserErrors errors,
                                List<Either<SymbolInformation, DocumentSymbol>> symbols,
-                               List<FoldingRange> foldingRanges) {
+                               List<FoldingRange> foldingRanges,
+                               List<DocumentLink> documentLinks) {
         this.archetypeId = archetypeId;
         this.errors = errors;
         this.symbols = symbols;
         this.foldingRanges = foldingRanges;
+        this.documentLinks = new DocumentLinks(documentLinks);
     }
 
     public String getArchetypeId() {

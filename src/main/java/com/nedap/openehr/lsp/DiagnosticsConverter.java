@@ -25,7 +25,7 @@ public class DiagnosticsConverter {
                 new Position(0, 1),
                 new Position(0, 50)
         );
-        diagnostics.add(new Diagnostic(range, exception.getMessage(),  DiagnosticSeverity.Error, "Error processing file"));
+        diagnostics.add(new Diagnostic(range, exception.getMessage() == null ? exception.toString() : exception.getMessage(),  DiagnosticSeverity.Error, "Error processing file"));
         diagnosticsParams.setDiagnostics(diagnostics);
         diagnosticsParams.setUri(document.getUri());
         diagnosticsParams.setVersion(document.getVersion());

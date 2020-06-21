@@ -101,7 +101,6 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                         language = "en";
                     }
                     documentInformation.setHoverInfo(new HoverInfo(archetype, archetypeForTerms, language));
-                    documentInformation.setDocumentLinks(new DocumentLinks(archetype, this));
                     //diagnostics will now be pushed from within the invalidateArchetypesAndRecompile method
                 } catch (Exception ex) {
                     //this particular exce[tion is a parse error, usually when extracting JSON. be sure to post taht
@@ -163,6 +162,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                     validator.validate(archetype, this);
                 }
             }
+            resolveDocumentLinks();
         }
     }
 
@@ -261,6 +261,13 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
 
     public void compile() {
         compile(validator);
+        resolveDocumentLinks();
+    }
+
+    private void resolveDocumentLinks() {
+        for(DocumentInformation info:symbolsByUri.values()) {
+            info.getDocumentLinks().resolveLinks(this);
+        }
     }
 
     public void fileRemoved(String uri) {
@@ -279,6 +286,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
         for(ValidationResult result:new ArrayList<>(getAllValidationResults())) {
             removeValidationResult(result.getArchetypeId());
         }
+        resolveDocumentLinks();
     }
 
     public TextDocumentItem getDocument(String archetypeRef) {
@@ -287,6 +295,10 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
             return null;
         }
         return documentsByArchetypeId.get(archetype.getArchetypeId().toString());
+    }
+
+    public DocumentInformation getDocumentInformation(String uri) {
+        return this.symbolsByUri.get(uri);
     }
 
     public List<DocumentLink> getDocumentLinks(DocumentLinkParams params) {

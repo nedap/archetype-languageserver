@@ -1,6 +1,7 @@
 package com.nedap.openehr.lsp.symbolextractor;
 
 import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -35,6 +36,10 @@ public class CodeRangeIndex<T> {
             // too large or in a hole
             return null;
         }
+    }
+
+    public void addRange(Range range, T content) {
+        addRange(range.getStart(), range.getEnd(), content);
     }
 
     public void addRange(Position start, Position stop, T content) {

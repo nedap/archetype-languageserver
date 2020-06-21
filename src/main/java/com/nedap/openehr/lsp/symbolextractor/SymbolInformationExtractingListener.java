@@ -7,6 +7,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.eclipse.lsp4j.DocumentLink;
 import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.FoldingRange;
 import org.eclipse.lsp4j.Location;
@@ -29,6 +30,8 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     private final Set<Token> visitedTokens = new LinkedHashSet<>();
     private final AdlLexer lexer;
 
+    private List<DocumentLink> documentLinks = new ArrayList<>();
+
     private List<FoldingRange> foldingRanges = new ArrayList<>();
 
     private final String documentUri;
@@ -43,6 +46,10 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
 
     public List<Either<SymbolInformation, DocumentSymbol>> getSymbols() {
         return this.symbols;
+    }
+
+    public List<DocumentLink> getDocumentLinks() {
+        return documentLinks;
     }
 
     public List<FoldingRange> getFoldingRanges() {
@@ -67,8 +74,8 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
 
     private Range createRange(ParserRuleContext ctx) {
         return new Range(
-                new Position(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine()),
-                new Position(ctx.getStop().getLine(), ctx.getStop().getCharPositionInLine())
+                new Position(ctx.getStart().getLine()-1, ctx.getStart().getCharPositionInLine()),
+                new Position(ctx.getStop().getLine()-1, ctx.getStop().getCharPositionInLine())
         );
     }
 
@@ -79,8 +86,8 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
 
     private Range createRange(Token symbol) {
         return new Range(
-                new Position(symbol.getLine(), symbol.getCharPositionInLine()),
-                new Position(symbol.getLine(), symbol.getText().length())
+                new Position(symbol.getLine()-1, symbol.getCharPositionInLine()),
+                new Position(symbol.getLine()-1, symbol.getCharPositionInLine() + symbol.getText().length())
         );//TODO: scan text for line endings, and determine stop line+ from that!
     }
 
@@ -270,6 +277,16 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
 
     @Override public void enterC_archetype_root(AdlParser.C_archetype_rootContext ctx) {
         addFoldingRange(ctx);
+        String archetypeRef = ctx.archetype_ref().getText();
+        TerminalNode terminalNode = ctx.archetype_ref().ARCHETYPE_HRID();
+        if(terminalNode == null) {
+            terminalNode = ctx.archetype_ref().ARCHETYPE_REF();
+        }
+        if(terminalNode != null) {
+            DocumentLink documentLink = new DocumentLink(this.createRange(terminalNode.getSymbol()));
+            documentLink.setData(archetypeRef); //we'll resolve the target later
+            documentLinks.add(documentLink);
+        }
     }
 
     /**
@@ -292,4 +309,5 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     public String getArchetypeId() {
         return archetypeId;
     }
+
 }
