@@ -41,6 +41,7 @@ public class HoverInfo {
     public static final String MARKDOWN = "markdown";
     private CodeRangeIndex<Hover> hoverRanges = new CodeRangeIndex<>();
     private String language;
+
     public Hover getHoverInfo(HoverParams params) {
         return hoverRanges.getFromCodeRange(params.getPosition());
     }

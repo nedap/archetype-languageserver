@@ -9,7 +9,10 @@ import com.nedap.archie.archetypevalidator.ArchetypeValidator;
 import com.nedap.archie.archetypevalidator.ValidationResult;
 import com.nedap.archie.flattener.InMemoryFullArchetypeRepository;
 import com.nedap.openehr.lsp.symbolextractor.ADL2SymbolExtractor;
+import com.nedap.openehr.lsp.symbolextractor.DocumentLinks;
 import com.nedap.openehr.lsp.symbolextractor.HoverInfo;
+import org.eclipse.lsp4j.DocumentLink;
+import org.eclipse.lsp4j.DocumentLinkParams;
 import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.FoldingRange;
 import org.eclipse.lsp4j.Hover;
@@ -98,6 +101,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                         language = "en";
                     }
                     documentInformation.setHoverInfo(new HoverInfo(archetype, archetypeForTerms, language));
+                    documentInformation.setDocumentLinks(new DocumentLinks(archetype, this));
                     //diagnostics will now be pushed from within the invalidateArchetypesAndRecompile method
                 } catch (Exception ex) {
                     //this particular exce[tion is a parse error, usually when extracting JSON. be sure to post taht
@@ -277,4 +281,17 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
         }
     }
 
+    public TextDocumentItem getDocument(String archetypeRef) {
+        Archetype archetype = getArchetype(archetypeRef);
+        if(archetype == null) {
+            return null;
+        }
+        return documentsByArchetypeId.get(archetype.getArchetypeId().toString());
+    }
+
+    public List<DocumentLink> getDocumentLinks(DocumentLinkParams params) {
+        DocumentInformation documentInformation = this.symbolsByUri.get(params.getTextDocument().getUri());
+        List<DocumentLink> result = documentInformation.getAllDocumentLinks();
+        return result;
+    }
 }

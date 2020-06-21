@@ -164,4 +164,23 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
     public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
         throw new UnsupportedOperationException();
     }
+
+    /**
+     * The document links request is sent from the client to the server to request the location of links in a document.
+     *
+     * Registration Options: DocumentLinkRegistrationOptions
+     */
+    @Override
+    public CompletableFuture<List<DocumentLink>> documentLink(DocumentLinkParams params) {
+        return CompletableFuture.completedFuture(this.storage.getDocumentLinks(params));
+    }
+
+    /**
+     * The document link resolve request is sent from the client to the server to resolve the target of a given document link.
+     */
+    @Override
+    public CompletableFuture<DocumentLink> documentLinkResolve(DocumentLink params) {
+        throw new UnsupportedOperationException();
+    }
+
 }

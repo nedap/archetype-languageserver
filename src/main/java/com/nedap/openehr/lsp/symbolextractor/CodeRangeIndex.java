@@ -2,9 +2,12 @@ package com.nedap.openehr.lsp.symbolextractor;
 
 import org.eclipse.lsp4j.Position;
 
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 /**
  * index that finds a matching code range for a given position. The set of code ranges must be non-overlapping, but can contain holes
@@ -36,6 +39,10 @@ public class CodeRangeIndex<T> {
 
     public void addRange(Position start, Position stop, T content) {
         index.put(start, new RangeWithContent<>(start, stop, content));
+    }
+
+    public List<T> values() {
+        return index.values().stream().map(v -> v.getContent()).collect(Collectors.toList());
     }
 
     private static class RangeWithContent<T> {

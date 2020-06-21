@@ -138,7 +138,10 @@
 				{"include": "#occurrences"},
 				{"include": "multiplicityInterval"},
 				{"include": "#cComplexObjectName"},				
-				{"include": "#cAttributeContainer"}				
+				{"include": "#cAttributeContainer"},
+				{"include": "#useArchetype"},
+				{"include": "#useArchetypeLink"},
+				{"include": "#useNode"}
 			]
 		},
 		"cAttributeContainer": {
@@ -167,8 +170,24 @@
 			"patterns": [
 				{"include": "#cComplexObjectContainer"}
 			]
+		},
+		"useArchetype": {
+			"match": "use_archetype",
+			"name": "keyword.use_archetype"
+		},
+		"useNode": {
+			"match": "use_node",
+			"name": "keyword.use_node"
+		},
+		"useArchetypeLink": {
+			"match": "([A-Z_$][a-zA-Z0-9_$]+)\\[[a-zA-Z]{2}\\d+(\\.\\d+)*\\s*\\,\\s*([^\\]]+)\\]",
+			"captures": {
+				"1": {"name" : "entity.name.type"},
+				"2": {"name" : "entity.name.tag"},
+				"3": {"name": "constant.language"},
+				"4": {"name": "storage.type"} 
+			}
 		}
-
 	}
 }
 	

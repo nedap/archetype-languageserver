@@ -31,6 +31,7 @@ public class ADL2LanguageServer implements LanguageServer {
         capabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
         capabilities.setFoldingRangeProvider(true);
         capabilities.setHoverProvider(true);
+        capabilities.setDocumentLinkProvider(new DocumentLinkOptions(true));
         ServerInfo serverInfo = new ServerInfo();
         serverInfo.setName("ADL 2 Archetype language server");
         serverInfo.setVersion("0.0.1-alpha");

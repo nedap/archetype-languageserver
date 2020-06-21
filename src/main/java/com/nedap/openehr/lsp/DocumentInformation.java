@@ -1,7 +1,9 @@
 package com.nedap.openehr.lsp;
 
 import com.nedap.archie.antlr.errors.ANTLRParserErrors;
+import com.nedap.openehr.lsp.symbolextractor.DocumentLinks;
 import com.nedap.openehr.lsp.symbolextractor.HoverInfo;
+import org.eclipse.lsp4j.DocumentLink;
 import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.FoldingRange;
 import org.eclipse.lsp4j.Hover;
@@ -17,6 +19,7 @@ public class DocumentInformation {
     private List<Either<SymbolInformation, DocumentSymbol>> symbols;
     private List<FoldingRange> foldingRanges;
     private HoverInfo hoverInfo;
+    private DocumentLinks documentLinks;
 
     public DocumentInformation(String archetypeId, ANTLRParserErrors errors,
                                List<Either<SymbolInformation, DocumentSymbol>> symbols,
@@ -56,5 +59,20 @@ public class DocumentInformation {
 
     public void setHoverInfo(HoverInfo hoverInfo) {
         this.hoverInfo = hoverInfo;
+    }
+
+    public DocumentLinks getDocumentLinks() {
+        return documentLinks;
+    }
+
+    public void setDocumentLinks(DocumentLinks documentLinks) {
+        this.documentLinks = documentLinks;
+    }
+
+    public List<DocumentLink> getAllDocumentLinks() {
+        if(documentLinks == null) {
+            return null;
+        }
+        return documentLinks.getAllDocumentLinks();
     }
 }
