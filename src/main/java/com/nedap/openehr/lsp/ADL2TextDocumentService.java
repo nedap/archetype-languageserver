@@ -2,22 +2,15 @@ package com.nedap.openehr.lsp;
 
 
 import com.nedap.archie.antlr.errors.ANTLRParserErrors;
-import com.nedap.archie.antlr.errors.ANTLRParserMessage;
-import com.nedap.archie.aom.ArchetypeModelObject;
-import com.nedap.archie.archetypevalidator.ValidationMessage;
 import com.nedap.archie.archetypevalidator.ValidationResult;
-import com.nedap.archie.query.AOMPathQuery;
-
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 
 import java.io.File;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 

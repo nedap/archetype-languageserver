@@ -213,11 +213,11 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                 if(file.isDirectory()) {
                     addDirectory(file);
                 } else {
-                    addFile("file://" + file.getAbsolutePath(), file);
+                    addFile(file.toURI().toString(), file);
                 }
             }
         } else {
-            addFile("file://" + directory.getAbsolutePath(), directory);
+            addFile(directory.toURI().toString(), directory);
         }
     }
 
