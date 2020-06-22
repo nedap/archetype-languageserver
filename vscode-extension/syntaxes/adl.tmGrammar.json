@@ -1,4 +1,9 @@
 {
+	"name": "adl",
+	"filetypes": [
+		"adl", "adls", "adl2", "adlt", "adlf"
+	],
+	
 	"scopeName": "source.adl",
 	"patterns": [{ "include": "#basics" }],
 	"repository": {
