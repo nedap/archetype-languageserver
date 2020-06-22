@@ -5,6 +5,7 @@ import com.nedap.archie.adlparser.antlr.AdlLexer;
 import com.nedap.archie.adlparser.antlr.AdlParser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.MultiMap;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.eclipse.lsp4j.DocumentLink;
@@ -23,6 +24,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Stack;
+import java.util.regex.Pattern;
 
 public class SymbolInformationExtractingListener extends AdlBaseListener {
     private String archetypeId;
@@ -37,7 +39,6 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     private final String documentUri;
 
     private Stack<DocumentSymbol> symbolStack = new Stack<>();
-
 
     public SymbolInformationExtractingListener(String documentUri, AdlLexer lexer) {
         this.documentUri = documentUri;
@@ -339,6 +340,57 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
         addFoldingRange(ctx);
     }
 
+    Pattern idCodePattern = Pattern.compile("\"(id|at|ac)(\\d|\\.)+\"");
+
+    @Override public void enterAttr_val(AdlParser.Attr_valContext ctx) {
+        if(!symbolStack.isEmpty()) {
+            DocumentSymbol parent = symbolStack.peek();
+            if(parent.getKind() == SymbolKind.Key && idCodePattern.matcher(parent.getName()).matches()) {
+                //do not add things like 'text' and 'description', they aren't useful at all!
+                //TODO: maybe move this to a post-processor?
+                if(ctx.attribute_id().getText().equalsIgnoreCase("text")) {
+                    if(ctx.object_block() != null) {
+                        parent.setDetail(ctx.object_block().getText());
+                    }
+                }
+            } else {
+                addSymbol(ctx.attribute_id().ALPHA_LC_ID(), ctx, ctx.attribute_id().getText(), SymbolKind.Field, StackAction.PUSH);
+            }
+        } else {
+            addSymbol(ctx.attribute_id().ALPHA_LC_ID(), ctx, ctx.attribute_id().getText(), SymbolKind.Field, StackAction.PUSH);
+        }
+    }
+
+    @Override public void exitAttr_val(AdlParser.Attr_valContext ctx) {
+        //TODO: move to postprocessor!
+        if(!symbolStack.isEmpty()) {
+            DocumentSymbol parent = symbolStack.peek();
+            if(parent.getKind() == SymbolKind.Key && idCodePattern.matcher(parent.getName()).matches()) {
+            } else {
+                popStack();
+            }
+        } else {
+            popStack();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override public void enterKeyed_object(AdlParser.Keyed_objectContext ctx) {
+        addSymbol(ctx.primitive_value(), ctx, ctx.primitive_value().getText(), SymbolKind.Key, StackAction.PUSH);
+    }
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override public void exitKeyed_object(AdlParser.Keyed_objectContext ctx) {
+        popStack();
+    }
+
     private void addSymbol(TerminalNode node, String tokenName, SymbolKind symbolKind) {
         addSymbol(node, null, tokenName, symbolKind);
 
@@ -377,6 +429,34 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
             }
 
             visitedTokens.add(node.getSymbol());
+        }
+    }
+
+    private void addSymbol(ParserRuleContext node, ParserRuleContext entireRule, String tokenName, SymbolKind symbolKind, StackAction stackAction) {
+
+        DocumentSymbol symbol = createSymbolInformation(tokenName, symbolKind, createRange(node));
+
+        if(node.getText().startsWith("\n")) {
+            Range range = symbol.getRange();
+            range.getStart().setLine(range.getStart().getLine()+1);
+            range.getEnd().setLine(range.getEnd().getLine()+1);
+        }
+        if(entireRule != null) {
+            Range range = createRange(entireRule);
+            symbol.setRange(range);
+        }
+        if(!symbolStack.isEmpty()) {
+            List<DocumentSymbol> children = symbolStack.peek().getChildren();
+            if(children == null) {
+                symbolStack.peek().setChildren(new ArrayList<>());
+                children = symbolStack.peek().getChildren();
+            }
+            children.add(symbol);
+        } else {
+            symbols.add(Either.forRight(symbol));
+        }
+        if(stackAction == StackAction.PUSH) {
+            symbolStack.push(symbol);
         }
     }
 
