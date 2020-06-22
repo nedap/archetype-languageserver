@@ -180,7 +180,9 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
      */
     @Override
     public CompletableFuture<DocumentLink> documentLinkResolve(DocumentLink params) {
-        throw new UnsupportedOperationException();
+        //resolving is done on update, so cannot do anything here.
+        //might be useful for future purposes
+        return CompletableFuture.completedFuture(params);
     }
 
 }

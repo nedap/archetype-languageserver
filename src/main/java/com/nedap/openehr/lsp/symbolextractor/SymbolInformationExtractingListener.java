@@ -98,7 +98,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      */
     @Override public void visitTerminal(TerminalNode node) {
         //TODO: get token type and set here as name?
-        String displayName = lexer.getVocabulary().getDisplayName(node.getSymbol().getType());
+//        String displayName = lexer.getVocabulary().getDisplayName(node.getSymbol().getType());
 //        addSymbol(node, displayName, SymbolKind.String);
     }
     /**
@@ -256,13 +256,13 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     @Override public void enterC_complex_object(AdlParser.C_complex_objectContext ctx) {
         if(ctx.ID_CODE() != null) {
             addSymbol(ctx.type_id().ALPHA_UC_ID(), "complex object " + ctx.type_id().getText() + "[" + ctx.ID_CODE().getText() + "]", SymbolKind.Object);
-            addSymbol(ctx.ID_CODE(), "complex object " + ctx.type_id().getText() + "[" + ctx.ID_CODE().getText() + "]", SymbolKind.Object);
+           // addSymbol(ctx.ID_CODE(), "complex object " + ctx.type_id().getText() + "[" + ctx.ID_CODE().getText() + "]", SymbolKind.Object);
         } else if (ctx.ROOT_ID_CODE() != null) {
             addSymbol(ctx.type_id().ALPHA_UC_ID(), "complex object " + ctx.type_id().getText() + "[" + ctx.ROOT_ID_CODE().getText() + "]", SymbolKind.Object);
-            addSymbol(ctx.ROOT_ID_CODE(), "[" + ctx.ROOT_ID_CODE().getText() + "]", SymbolKind.Key);
+         //   addSymbol(ctx.ROOT_ID_CODE(), "[" + ctx.ROOT_ID_CODE().getText() + "]", SymbolKind.Key);
         }
         if(ctx.SYM_MATCHES() != null) {
-            addSymbol(ctx.SYM_MATCHES(), ctx.SYM_MATCHES().getText(), SymbolKind.Operator);
+       //     addSymbol(ctx.SYM_MATCHES(), ctx.SYM_MATCHES().getText(), SymbolKind.Operator);
         }
         addFoldingRange(ctx);
     }
@@ -300,6 +300,11 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
 
         if(!this.visitedTokens.contains(node.getSymbol())) {
             SymbolInformation symbol = createSymbolInformation(tokenName, symbolKind, createRange(node.getSymbol()));
+            if(node.getText().startsWith("\n")) {
+                Range range = symbol.getLocation().getRange();
+                range.getStart().setLine(range.getStart().getLine()+1);
+                range.getEnd().setLine(range.getEnd().getLine()+1);
+            }
             symbols.add(Either.forLeft(symbol));
             visitedTokens.add(node.getSymbol());
         }
