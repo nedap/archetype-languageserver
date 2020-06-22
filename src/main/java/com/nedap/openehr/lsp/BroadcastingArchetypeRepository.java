@@ -11,6 +11,7 @@ import com.nedap.archie.flattener.InMemoryFullArchetypeRepository;
 import com.nedap.openehr.lsp.symbolextractor.ADL2SymbolExtractor;
 import com.nedap.openehr.lsp.symbolextractor.DocumentLinks;
 import com.nedap.openehr.lsp.symbolextractor.HoverInfo;
+import com.nedap.openehr.lsp.symbolextractor.SymbolNameFromTerminologyHelper;
 import org.eclipse.lsp4j.DocumentLink;
 import org.eclipse.lsp4j.DocumentLinkParams;
 import org.eclipse.lsp4j.DocumentSymbol;
@@ -101,6 +102,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                         language = "en";
                     }
                     documentInformation.setHoverInfo(new HoverInfo(archetype, archetypeForTerms, language));
+                    SymbolNameFromTerminologyHelper.giveNames(documentInformation.getSymbols(), archetypeForTerms, language);
                     //diagnostics will now be pushed from within the invalidateArchetypesAndRecompile method
                 } catch (Exception ex) {
                     //this particular exce[tion is a parse error, usually when extracting JSON. be sure to post taht
