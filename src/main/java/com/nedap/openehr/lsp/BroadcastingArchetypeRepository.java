@@ -336,4 +336,13 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
     public void convertAdl14(String documentUri) {
         this.adl14Storage.convert(documentUri);
     }
+
+    public boolean isADL14(TextDocumentIdentifier textDocument) {
+        return this.getDocumentInformation(textDocument.getUri()) == null
+                && adl14Storage.getArchetype(textDocument) != null;
+    }
+
+    public void convertAllAdl14(String rootFileUri) {
+        this.adl14Storage.convertAll(rootFileUri);
+    }
 }

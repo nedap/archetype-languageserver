@@ -35,7 +35,10 @@ public class ADL2LanguageServer implements LanguageServer {
         capabilities.setDocumentLinkProvider(new DocumentLinkOptions(true));
 
         capabilities.setCodeActionProvider(new CodeActionOptions(Lists.newArrayList(CodeActionKind.Source + ".convert.adl14")));
-        capabilities.setExecuteCommandProvider(new ExecuteCommandOptions(Lists.newArrayList(ADL2TextDocumentService.ADL2_COMMAND)));
+        capabilities.setExecuteCommandProvider(new ExecuteCommandOptions(Lists.newArrayList(
+                ADL2TextDocumentService.ADL2_COMMAND,
+                ADL2TextDocumentService.ALL_ADL2_COMMAND
+                )));
 
         ServerInfo serverInfo = new ServerInfo();
         serverInfo.setName("ADL 2 Archetype language server");

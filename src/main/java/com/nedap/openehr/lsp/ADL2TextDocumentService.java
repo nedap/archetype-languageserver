@@ -17,12 +17,14 @@ import org.eclipse.lsp4j.services.WorkspaceService;
 import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class ADL2TextDocumentService implements TextDocumentService, WorkspaceService {
 
-    public static final String ADL2_COMMAND = "source.convert.adl2";
+    public static final String ADL2_COMMAND = "source.convert.adl14";
+    public static final String ALL_ADL2_COMMAND = "source.convert.alladl14";
 
     private LanguageClient remoteProxy;
     private final BroadcastingArchetypeRepository storage = new BroadcastingArchetypeRepository(this);
@@ -196,12 +198,27 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
     @JsonRequest
     @ResponseJsonAdapter(CodeActionResponseAdapter.class)
     public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params) {
-        CodeAction action = new CodeAction("convert to ADL 2");
-        action.setKind(CodeActionKind.Source + ".convert.adl2");
-        Command command = new Command("Convert to ADL 2", ADL2_COMMAND);
-        command.setArguments(Lists.newArrayList(params.getTextDocument().getUri()));
-        action.setCommand(command);
-        return CompletableFuture.completedFuture(Lists.newArrayList(Either.forRight(action)));
+        if(storage.isADL14(params.getTextDocument())) {
+            CodeAction action1 = new CodeAction("convert this file to ADL 2");
+            action1.setKind(CodeActionKind.Source + ".convert.adl2");
+            {
+                Command command = new Command("Convert to ADL 2", ADL2_COMMAND);
+                command.setArguments(Lists.newArrayList(params.getTextDocument().getUri()));
+                action1.setCommand(command);
+            }
+
+            CodeAction actionAll = new CodeAction("convert all ADL 1.4 files to ADL 2");
+            actionAll.setKind(CodeActionKind.Source + ".convert.adl2");
+            {
+                Command command = new Command("Convert all ADL 1.4 files to ADL 2", ALL_ADL2_COMMAND);
+                command.setArguments(Lists.newArrayList(params.getTextDocument().getUri()));
+                actionAll.setCommand(command);
+            }
+            return CompletableFuture.completedFuture(Lists.newArrayList(
+                    Either.forRight(action1),
+                    Either.forRight(actionAll)));
+        }
+        return CompletableFuture.completedFuture(Collections.emptyList());
     }
 
     /**
@@ -217,10 +234,11 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
     public CompletableFuture<Object> executeCommand(ExecuteCommandParams params) {
         if(params.getCommand().equalsIgnoreCase(ADL2_COMMAND)) {
             String documentUri = ((JsonPrimitive) params.getArguments().get(0)).getAsString();
-            System.err.println("will convert to adl 2: " + documentUri);
             storage.convertAdl14(documentUri);
+        } else if (params.getCommand().equalsIgnoreCase(ALL_ADL2_COMMAND)) {
+            String documentUri = ((JsonPrimitive) params.getArguments().get(0)).getAsString();
+            storage.convertAllAdl14(documentUri);
         }
-
         return CompletableFuture.completedFuture(null);
     }
 
