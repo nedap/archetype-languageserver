@@ -1,21 +1,13 @@
-package com.nedap.openehr.lsp.symbolextractor;
+package com.nedap.openehr.lsp.document;
 
 import com.nedap.archie.aom.Archetype;
-import com.nedap.archie.aom.CArchetypeRoot;
-import com.nedap.archie.aom.CAttribute;
-import com.nedap.archie.aom.CComplexObject;
-import com.nedap.archie.aom.CObject;
 import com.nedap.archie.aom.terminology.ArchetypeTerm;
-import com.nedap.archie.flattener.ArchetypeRepository;
 import com.nedap.openehr.lsp.BroadcastingArchetypeRepository;
-import com.nedap.openehr.lsp.DocumentInformation;
+import com.nedap.openehr.lsp.document.CodeRangeIndex;
+import com.nedap.openehr.lsp.document.DocumentInformation;
 import org.eclipse.lsp4j.DocumentLink;
-import org.eclipse.lsp4j.Hover;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentItem;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class DocumentLinks {

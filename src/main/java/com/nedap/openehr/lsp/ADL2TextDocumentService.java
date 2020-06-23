@@ -1,23 +1,31 @@
 package com.nedap.openehr.lsp;
 
 
+import com.google.common.collect.Lists;
+import com.google.gson.JsonPrimitive;
 import com.nedap.archie.antlr.errors.ANTLRParserErrors;
 import com.nedap.archie.archetypevalidator.ValidationResult;
 import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.adapters.CodeActionResponseAdapter;
+import org.eclipse.lsp4j.jsonrpc.json.ResponseJsonAdapter;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 
 import java.io.File;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class ADL2TextDocumentService implements TextDocumentService, WorkspaceService {
 
+    public static final String ADL2_COMMAND = "source.convert.adl2";
+
     private LanguageClient remoteProxy;
-    private BroadcastingArchetypeRepository storage = new BroadcastingArchetypeRepository(this);
+    private final BroadcastingArchetypeRepository storage = new BroadcastingArchetypeRepository(this);
 
     @Override
     public void didOpen(DidOpenTextDocumentParams params) {
@@ -178,4 +186,63 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
         return CompletableFuture.completedFuture(params);
     }
 
+    /**
+     * The code action request is sent from the client to the server to compute
+     * commands for a given text document and range. These commands are
+     * typically code fixes to either fix problems or to beautify/refactor code.
+     *
+     * Registration Options: TextDocumentRegistrationOptions
+     */
+    @JsonRequest
+    @ResponseJsonAdapter(CodeActionResponseAdapter.class)
+    public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params) {
+        CodeAction action = new CodeAction("convert to ADL 2");
+        action.setKind(CodeActionKind.Source + ".convert.adl2");
+        Command command = new Command("Convert to ADL 2", ADL2_COMMAND);
+        command.setArguments(Lists.newArrayList(params.getTextDocument().getUri()));
+        action.setCommand(command);
+        return CompletableFuture.completedFuture(Lists.newArrayList(Either.forRight(action)));
+    }
+
+    /**
+     * The workspace/executeCommand request is sent from the client to the
+     * server to trigger command execution on the server. In most cases the
+     * server creates a WorkspaceEdit structure and applies the changes to the
+     * workspace using the request workspace/applyEdit which is sent from the
+     * server to the client.
+     *
+     * Registration Options: ExecuteCommandRegistrationOptions
+     */
+    @JsonRequest
+    public CompletableFuture<Object> executeCommand(ExecuteCommandParams params) {
+        if(params.getCommand().equalsIgnoreCase(ADL2_COMMAND)) {
+            String documentUri = ((JsonPrimitive) params.getArguments().get(0)).getAsString();
+            System.err.println("will convert to adl 2: " + documentUri);
+            storage.convertAdl14(documentUri);
+        }
+
+        return CompletableFuture.completedFuture(null);
+    }
+
+    public void writeFile(String uri, String label, String content) {
+        WorkspaceEdit edit = new WorkspaceEdit();
+        List<Either<TextDocumentEdit, ResourceOperation>> changes = new ArrayList<>();
+        changes.add(Either.forRight(
+                new CreateFile(uri, new CreateFileOptions(true, false)))
+        );
+        changes.add(Either.forLeft(
+                new TextDocumentEdit(new VersionedTextDocumentIdentifier(uri, 1),
+                        Lists.newArrayList(
+                                new TextEdit(new Range(
+                                        new Position(0, 0),
+                                        new Position(0, 0)),
+                                        content
+                                        )
+                        )))
+        );
+
+
+        edit.setDocumentChanges(changes);
+        remoteProxy.applyEdit(new ApplyWorkspaceEditParams(edit, label));
+    }
 }

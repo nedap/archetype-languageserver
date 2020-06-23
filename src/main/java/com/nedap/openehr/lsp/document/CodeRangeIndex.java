@@ -1,4 +1,4 @@
-package com.nedap.openehr.lsp.symbolextractor;
+package com.nedap.openehr.lsp.document;
 
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;

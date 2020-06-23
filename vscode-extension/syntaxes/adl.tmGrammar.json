@@ -2,9 +2,10 @@
 	"name": "adl",
 	"filetypes": [
 		"adl", "adls", "adl2", "adlt", "adlf"
-	],
-	
+	],	
 	"scopeName": "source.adl",
+	"foldingStartMarker": "(\\{|\\<)\\s*$",
+	"foldingStopMarker": "^\\s*(\\}|\\>)",
 	"patterns": [{ "include": "#basics" }],
 	"repository": {
 		"basics": {
@@ -36,7 +37,7 @@
 		},
 		"sections": {
 			"name": "markup.heading",
-			"match": "(archetype|template|operational_template|template_overlay|terminology|language|specialise|description)"
+			"match": "(archetype|template|operational_template|template_overlay|terminology|ontology|concept|language|specialise|description)"
 		},
 		"odinStart": {
 			"name": "meta.structure.odin.start",
@@ -97,7 +98,7 @@
 		"definition": {
 			"name": "meta.structure.definition",
 			"begin": "(definition)(\\s\\n)*",
-			"end": "(rules|terminology)",
+			"end": "(rules|terminology|ontology)",
 			"beginCaptures": {
 				"1": {"name": "markup.heading.definition"}
 			},

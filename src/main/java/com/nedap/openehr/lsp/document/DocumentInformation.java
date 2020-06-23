@@ -1,8 +1,6 @@
-package com.nedap.openehr.lsp;
+package com.nedap.openehr.lsp.document;
 
 import com.nedap.archie.antlr.errors.ANTLRParserErrors;
-import com.nedap.openehr.lsp.symbolextractor.DocumentLinks;
-import com.nedap.openehr.lsp.symbolextractor.HoverInfo;
 import org.eclipse.lsp4j.DocumentLink;
 import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.FoldingRange;

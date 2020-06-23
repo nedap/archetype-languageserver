@@ -8,41 +8,33 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.MultiMap;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.eclipse.lsp4j.DocumentLink;
-import org.eclipse.lsp4j.DocumentSymbol;
-import org.eclipse.lsp4j.FoldingRange;
-import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.SymbolInformation;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.Range;
-import org.eclipse.lsp4j.SymbolInformation;
-import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 public class SymbolInformationExtractingListener extends AdlBaseListener {
+    private final String documentUri;
     private String archetypeId;
     private final List<Either<SymbolInformation, DocumentSymbol>> symbols = new ArrayList<>();
     private final Set<Token> visitedTokens = new LinkedHashSet<>();
-    private final AdlLexer lexer;
-
     private List<DocumentLink> documentLinks = new ArrayList<>();
-
     private List<FoldingRange> foldingRanges = new ArrayList<>();
 
-    private final String documentUri;
+    private Map<String, List<LocationLink>> idCodeToTerminologyLocations = new ConcurrentHashMap<>();
 
     private Stack<DocumentSymbol> symbolStack = new Stack<>();
 
     public SymbolInformationExtractingListener(String documentUri, AdlLexer lexer) {
         this.documentUri = documentUri;
-        this.lexer = lexer;
     }
 
     //private Stack<SymbolInformation> symbolStack = new Stack<>();
@@ -380,7 +372,16 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterKeyed_object(AdlParser.Keyed_objectContext ctx) {
-        addSymbol(ctx.primitive_value(), ctx, ctx.primitive_value().getText(), SymbolKind.Key, StackAction.PUSH);
+        String key = ctx.primitive_value().getText();
+        addSymbol(ctx.primitive_value(), ctx, key, SymbolKind.Key, StackAction.PUSH);
+        if(idCodePattern.matcher(key).matches()) {
+            List<LocationLink> locationLinks = idCodeToTerminologyLocations.get(key);
+            if(locationLinks == null) {
+                locationLinks = new ArrayList<>();
+                idCodeToTerminologyLocations.put(key, locationLinks);
+            }
+            locationLinks.add(new LocationLink(documentUri, createRange(ctx), createRange(ctx.primitive_value())));
+        }
     }
     /**
      * {@inheritDoc}
@@ -465,4 +466,11 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
         return archetypeId;
     }
 
+    public Map<String, List<LocationLink>> getIdCodeToTerminologyLocations() {
+        return idCodeToTerminologyLocations;
+    }
+
+    public void setIdCodeToTerminologyLocations(Map<String, List<LocationLink>> idCodeToTerminologyLocations) {
+        this.idCodeToTerminologyLocations = idCodeToTerminologyLocations;
+    }
 }

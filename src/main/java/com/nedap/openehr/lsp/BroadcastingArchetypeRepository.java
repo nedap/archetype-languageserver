@@ -1,6 +1,7 @@
 package com.nedap.openehr.lsp;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
 import com.nedap.archie.adlparser.ADLParser;
 import com.nedap.archie.aom.Archetype;
 import com.nedap.archie.aom.Template;
@@ -8,9 +9,9 @@ import com.nedap.archie.aom.TemplateOverlay;
 import com.nedap.archie.archetypevalidator.ArchetypeValidator;
 import com.nedap.archie.archetypevalidator.ValidationResult;
 import com.nedap.archie.flattener.InMemoryFullArchetypeRepository;
+import com.nedap.openehr.lsp.document.DocumentInformation;
 import com.nedap.openehr.lsp.symbolextractor.ADL2SymbolExtractor;
-import com.nedap.openehr.lsp.symbolextractor.DocumentLinks;
-import com.nedap.openehr.lsp.symbolextractor.HoverInfo;
+import com.nedap.openehr.lsp.document.HoverInfo;
 import com.nedap.openehr.lsp.symbolextractor.SymbolNameFromTerminologyHelper;
 import org.eclipse.lsp4j.DocumentLink;
 import org.eclipse.lsp4j.DocumentLinkParams;
@@ -28,15 +29,13 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeRepository {
 
@@ -45,11 +44,13 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
     Map<String, DocumentInformation> symbolsByUri = new ConcurrentHashMap<>();
     Map<String, TextDocumentItem> documentsByArchetypeId = new ConcurrentHashMap<>();
     private ArchetypeValidator validator = new ArchetypeValidator(BuiltinReferenceModels.getMetaModels());
+    private final ADL14Storage adl14Storage;
     private boolean compile = true;
 
 
     public BroadcastingArchetypeRepository(ADL2TextDocumentService textDocumentService) {
         this.textDocumentService = textDocumentService;
+        adl14Storage = new ADL14Storage(textDocumentService, this) ;
 
     }
 
@@ -60,11 +61,17 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
 
     public void updateDocument(String uri, int version, String text) {
         TextDocumentItem textDocumentItem = documents.get(uri); //TODO: retrieve old Archetype ID and if changed, remove the old archetype
+        if(textDocumentItem == null) {
+            textDocumentItem = new TextDocumentItem();
+            textDocumentItem.setUri(uri);
+        }
         textDocumentItem.setVersion(version);
         textDocumentItem.setText(text);
         handleChanged(textDocumentItem);
 
     }
+
+    Pattern adl14Pattern = Pattern.compile("[^\n]+adl_version\\s*=\\s*1\\.4.*");
 
     /**
      * Handles a changed textdocument. Does:
@@ -73,9 +80,20 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
      * @param textDocumentItem
      */
     private void handleChanged(TextDocumentItem textDocumentItem) {
-
+        boolean adl14 = false;
+        if(textDocumentItem.getText().contains("\n")) {
+            String firstLine = textDocumentItem.getText().substring(0, textDocumentItem.getText().indexOf("\n"));
+            adl14 = adl14Pattern.matcher(firstLine).matches();
+        }
+        if(adl14) {
+            //make sure any ADL 2 things get removed here!
+            fileRemoved(textDocumentItem.getUri());//TODO: move to internal remove method
+            adl14Storage.addFile(textDocumentItem);
+            return;
+        }
         try {
             ADL2SymbolExtractor adl2SymbolExtractor = new ADL2SymbolExtractor();
+
             DocumentInformation documentInformation = adl2SymbolExtractor.extractSymbols(textDocumentItem.getUri(), textDocumentItem.getText());
             symbolsByUri.put(textDocumentItem.getUri(), documentInformation);
             if(documentInformation.getArchetypeId() != null) {
@@ -189,15 +207,18 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
     }
 
     public List<Either<SymbolInformation, DocumentSymbol>> getSymbols(String uri) {
-        return this.symbolsByUri.get(uri).getSymbols();
+        DocumentInformation documentInformation = this.symbolsByUri.get(uri);
+        return documentInformation == null ? Lists.newArrayList() : documentInformation.getSymbols();
     }
 
     public Hover getHover(HoverParams params) {
-        return this.symbolsByUri.get(params.getTextDocument().getUri()).getHoverInfo(params);
+        DocumentInformation documentInformation = this.symbolsByUri.get(params.getTextDocument().getUri());
+        return documentInformation == null ? null: documentInformation.getHoverInfo(params);
     }
 
     public List<FoldingRange> getFoldingRanges(TextDocumentIdentifier textDocument) {
-        return this.symbolsByUri.get(textDocument.getUri()).getFoldingRanges();
+        DocumentInformation documentInformation = this.symbolsByUri.get(textDocument.getUri());
+        return documentInformation == null ? null: documentInformation.getFoldingRanges();
     }
 
     public void addFolder(String uri) {
@@ -305,7 +326,14 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
 
     public List<DocumentLink> getDocumentLinks(DocumentLinkParams params) {
         DocumentInformation documentInformation = this.symbolsByUri.get(params.getTextDocument().getUri());
+        if(documentInformation == null) {
+            return new ArrayList<>();
+        }
         List<DocumentLink> result = documentInformation.getAllDocumentLinks();
         return result;
+    }
+
+    public void convertAdl14(String documentUri) {
+        this.adl14Storage.convert(documentUri);
     }
 }

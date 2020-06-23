@@ -1,5 +1,6 @@
 package com.nedap.openehr.lsp;
 
+import com.google.common.collect.Lists;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageServer;
@@ -32,6 +33,10 @@ public class ADL2LanguageServer implements LanguageServer {
         capabilities.setFoldingRangeProvider(true);
         capabilities.setHoverProvider(true);
         capabilities.setDocumentLinkProvider(new DocumentLinkOptions(true));
+
+        capabilities.setCodeActionProvider(new CodeActionOptions(Lists.newArrayList(CodeActionKind.Source + ".convert.adl14")));
+        capabilities.setExecuteCommandProvider(new ExecuteCommandOptions(Lists.newArrayList(ADL2TextDocumentService.ADL2_COMMAND)));
+
         ServerInfo serverInfo = new ServerInfo();
         serverInfo.setName("ADL 2 Archetype language server");
         serverInfo.setVersion("0.0.1-alpha");
@@ -82,6 +87,5 @@ public class ADL2LanguageServer implements LanguageServer {
     public void connect(LanguageClient remoteProxy) {
         this.remoteProxy = remoteProxy;
         textDocumentService.setRemoteProxy(remoteProxy);
-        remoteProxy.semanticHighlighting(new SemanticHighlightingParams());
     }
 }
