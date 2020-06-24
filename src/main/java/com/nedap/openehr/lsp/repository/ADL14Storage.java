@@ -15,7 +15,9 @@ import org.eclipse.lsp4j.TextDocumentItem;
 import org.openehr.referencemodels.BuiltinReferenceModels;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ADL14Storage {
@@ -44,16 +46,43 @@ public class ADL14Storage {
     public void convert(String documentUri) {
         ADL14Converter adl14Converter = new ADL14Converter(BuiltinReferenceModels.getMetaModels(), configuration);
         adl14Converter.setExistingRepository(repository);
-        ADL2ConversionResultList converted = adl14Converter.convert(Lists.newArrayList(adl14Files.get(documentUri)));
+        Archetype archetype = adl14Files.get(documentUri);
+        //find all parent archetypes that must also be converted for this to properly work
+        List<Archetype> toConvert = getAllToConvertIncludingParents(archetype);
+        ADL2ConversionResultList converted = adl14Converter.convert(toConvert);
         for(ADL2ConversionResult result:converted.getConversionResults()) {
             if(result.getException() != null) {
                 textService.pushDiagnostics(new TextDocumentItem(documentUri, "ADL", 1, ""), result.getException());
             } else {
-                String newPath = documentUri.substring(0, documentUri.lastIndexOf("/")) + "/out/" + converted.getConversionResults().get(0).getArchetypeId() + ".adls";
+                String newPath = documentUri.substring(0, documentUri.lastIndexOf("/")) + "/out/" + result.getArchetypeId() + ".adls";
                 textService.writeFile(newPath, "ADL2 conversion of " + result.getArchetypeId(), ADLArchetypeSerializer.serialize(result.getArchetype()));
             }
         }
 
+    }
+
+    private List<Archetype> getAllToConvertIncludingParents(Archetype archetype) {
+        List<Archetype> toConvert = new ArrayList<>();
+        toConvert.add(archetype);
+        Stack<Archetype> toAdd = new Stack();
+        toAdd.push(archetype);
+        while(!toAdd.isEmpty()) {
+            Archetype a = toAdd.pop();
+            //if parent archetype already present in ADL 2 form, do not convert
+            //it will be taken from ADL 2 form instead
+            //user can override using the convert all adl 1.4 archetypes
+            if (a.getParentArchetypeId() != null && repository.getArchetype(a.getParentArchetypeId()) == null) {
+
+                for (Archetype possibleParent : this.adl14Files.values()) {
+                    //ADL 1.4, so simple string comparison is enough
+                    if (a.getParentArchetypeId().equalsIgnoreCase(possibleParent.getArchetypeId().toString())) {
+                        toConvert.add(possibleParent);
+                        toAdd.push(possibleParent);
+                    }
+                }
+            }
+        }
+        return toConvert;
     }
 
     public void convertAll(String rootUri) {
