@@ -1,7 +1,7 @@
-package com.nedap.openehr.lsp.symbolextractor;
+package com.nedap.openehr.lsp.symbolextractor.adl14;
 
-import com.nedap.archie.adlparser.antlr.AdlLexer;
-import com.nedap.archie.adlparser.antlr.AdlParser;
+import com.nedap.archie.adlparser.antlr.Adl14Lexer;
+import com.nedap.archie.adlparser.antlr.Adl14Parser;
 import com.nedap.archie.antlr.errors.ArchieErrorListener;
 import com.nedap.openehr.lsp.document.ADLVersion;
 import com.nedap.openehr.lsp.document.DocumentInformation;
@@ -11,20 +11,20 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 import java.io.IOException;
 
-public class ADL2SymbolExtractor {
+public class ADL14SymbolExtractor {
 
     private String archetypeId;
 
-    public ADL2SymbolExtractor() {
+    public ADL14SymbolExtractor() {
 
     }
 
     public DocumentInformation extractSymbols(String uri, String text) throws IOException {
-        AdlLexer lexer = new AdlLexer(CharStreams.fromString(text));
-        AdlParser parser = new AdlParser(new CommonTokenStream(lexer));
+        Adl14Lexer lexer = new Adl14Lexer(CharStreams.fromString(text));
+        Adl14Parser parser = new Adl14Parser(new CommonTokenStream(lexer));
         ArchieErrorListener listener = new ArchieErrorListener();
         parser.addErrorListener(listener);
-        SymbolInformationExtractingListener symbolExtractingListener = new SymbolInformationExtractingListener(uri, lexer);
+        ADL14SymbolInformationExtractingListener symbolExtractingListener = new ADL14SymbolInformationExtractingListener(uri, lexer);
         //DocumentSymbolExtractingListener symbolExtractingListener = new DocumentSymbolExtractingListener();
         try {
             new ParseTreeWalker().walk(symbolExtractingListener, parser.adl());
@@ -33,7 +33,7 @@ public class ADL2SymbolExtractor {
             e.printStackTrace();
         }
         archetypeId = symbolExtractingListener.getArchetypeId();
-        return new DocumentInformation(archetypeId, ADLVersion.VERSION_2, listener.getErrors(),
+        return new DocumentInformation(archetypeId, ADLVersion.VERSION_1_4, listener.getErrors(),
                 symbolExtractingListener.getSymbols(),
                 symbolExtractingListener.getFoldingRanges(),
                 symbolExtractingListener.getDocumentLinks());

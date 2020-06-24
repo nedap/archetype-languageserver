@@ -1,5 +1,5 @@
 package com.nedap.openehr.lsp.symbolextractor;
 
-enum StackAction {
+public enum StackAction {
     PUSH, POP, NOTHING;
 }

@@ -13,13 +13,14 @@ import java.util.List;
 
 public class DocumentInformation {
     private String archetypeId;
+    private ADLVersion adlVersion;
     private ANTLRParserErrors errors;
     private List<Either<SymbolInformation, DocumentSymbol>> symbols;
     private List<FoldingRange> foldingRanges;
     private HoverInfo hoverInfo;
     private DocumentLinks documentLinks;
 
-    public DocumentInformation(String archetypeId, ANTLRParserErrors errors,
+    public DocumentInformation(String archetypeId, ADLVersion adlVersion, ANTLRParserErrors errors,
                                List<Either<SymbolInformation, DocumentSymbol>> symbols,
                                List<FoldingRange> foldingRanges,
                                List<DocumentLink> documentLinks) {
@@ -74,5 +75,9 @@ public class DocumentInformation {
             return null;
         }
         return documentLinks.getAllDocumentLinks();
+    }
+
+    public ADLVersion getADLVersion() {
+        return adlVersion;
     }
 }

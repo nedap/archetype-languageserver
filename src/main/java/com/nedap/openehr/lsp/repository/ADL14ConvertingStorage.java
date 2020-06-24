@@ -20,13 +20,13 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ADL14Storage {
+public class ADL14ConvertingStorage {
     private final ADL2TextDocumentService textService;
     private Map<String, Archetype> adl14Files = new ConcurrentHashMap<>();
     private BroadcastingArchetypeRepository repository;
     private ADL14ConversionConfiguration configuration = new ADL14ConversionConfiguration();//TODO: fill :)
 
-    public ADL14Storage(ADL2TextDocumentService service, BroadcastingArchetypeRepository repository) {
+    public ADL14ConvertingStorage(ADL2TextDocumentService service, BroadcastingArchetypeRepository repository) {
         this.repository = repository;
         this.textService = service;
     }

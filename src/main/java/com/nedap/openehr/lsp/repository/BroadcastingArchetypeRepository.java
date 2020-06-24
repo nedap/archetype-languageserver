@@ -10,10 +10,12 @@ import com.nedap.archie.archetypevalidator.ArchetypeValidator;
 import com.nedap.archie.archetypevalidator.ValidationResult;
 import com.nedap.archie.flattener.InMemoryFullArchetypeRepository;
 import com.nedap.openehr.lsp.ADL2TextDocumentService;
+import com.nedap.openehr.lsp.document.ADLVersion;
 import com.nedap.openehr.lsp.document.DocumentInformation;
 import com.nedap.openehr.lsp.symbolextractor.ADL2SymbolExtractor;
 import com.nedap.openehr.lsp.document.HoverInfo;
 import com.nedap.openehr.lsp.symbolextractor.SymbolNameFromTerminologyHelper;
+import com.nedap.openehr.lsp.symbolextractor.adl14.ADL14SymbolExtractor;
 import org.eclipse.lsp4j.DocumentLink;
 import org.eclipse.lsp4j.DocumentLinkParams;
 import org.eclipse.lsp4j.DocumentSymbol;
@@ -45,13 +47,13 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
     Map<String, DocumentInformation> symbolsByUri = new ConcurrentHashMap<>();
     Map<String, TextDocumentItem> documentsByArchetypeId = new ConcurrentHashMap<>();
     private ArchetypeValidator validator = new ArchetypeValidator(BuiltinReferenceModels.getMetaModels());
-    private final ADL14Storage adl14Storage;
+    private final ADL14ConvertingStorage adl14Storage;
     private boolean compile = true;
 
 
     public BroadcastingArchetypeRepository(ADL2TextDocumentService textDocumentService) {
         this.textDocumentService = textDocumentService;
-        adl14Storage = new ADL14Storage(textDocumentService, this) ;
+        adl14Storage = new ADL14ConvertingStorage(textDocumentService, this) ;
 
     }
 
@@ -93,7 +95,18 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
         }
         if(adl14) {
             //make sure any ADL 2 things get removed here!
-            fileRemoved(textDocumentItem.getUri());//TODO: move to internal remove method
+            ADL14SymbolExtractor adlSymbolExtractor = new ADL14SymbolExtractor();
+
+            try {
+                DocumentInformation documentInformation = adlSymbolExtractor.extractSymbols(textDocumentItem.getUri(), textDocumentItem.getText());
+                symbolsByUri.put(textDocumentItem.getUri(), documentInformation);
+                if (documentInformation.getArchetypeId() != null) {
+                    documentsByArchetypeId.put(documentInformation.getArchetypeId(), textDocumentItem);
+                }
+                resolveDocumentLinks();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             adl14Storage.addFile(textDocumentItem);
             return;
         }
@@ -307,9 +320,12 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
         resolveDocumentLinks();
     }
 
+
     private void resolveDocumentLinks() {
         for(DocumentInformation info:symbolsByUri.values()) {
-            info.getDocumentLinks().resolveLinks(this);
+            if(info.getDocumentLinks() != null) {
+                info.getDocumentLinks().resolveLinks(this);
+            }
         }
     }
 
@@ -358,8 +374,9 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
     }
 
     public boolean isADL14(TextDocumentIdentifier textDocument) {
-        return this.getDocumentInformation(textDocument.getUri()) == null
-                && adl14Storage.getArchetype(textDocument) != null;
+        DocumentInformation info = this.getDocumentInformation(textDocument.getUri());
+        return  info != null
+                && info.getADLVersion() == ADLVersion.VERSION_1_4;
     }
 
     public void convertAllAdl14(String rootFileUri) {

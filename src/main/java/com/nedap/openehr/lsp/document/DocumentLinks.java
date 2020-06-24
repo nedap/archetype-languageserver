@@ -23,16 +23,6 @@ public class DocumentLinks {
         return documentLinks.values();
     }
 
-    public DocumentLink resolveLink(BroadcastingArchetypeRepository repository, DocumentLink linkParam) {
-        for(DocumentLink existingLink:documentLinks.values()) {
-            if(existingLink.equals(linkParam)) { //TODO: this will usually work, but theoretically only the URL + range has to match!
-                resolveLinkInternal(repository, existingLink);
-                return existingLink;
-            }
-        }
-        return linkParam;
-    }
-
     /**
      * Re-resolve all document links.
      * TODO: add incremental compile?
@@ -40,7 +30,7 @@ public class DocumentLinks {
      * @param documentLink
      * @return
      */
-    public DocumentLink resolveLinkInternal(BroadcastingArchetypeRepository repository, DocumentLink documentLink) {
+    private DocumentLink resolveLinkInternal(BroadcastingArchetypeRepository repository, DocumentLink documentLink) {
         if(documentLink.getData() != null) {
             String ref = (String) documentLink.getData();
             TextDocumentItem document = repository.getDocument(ref);
