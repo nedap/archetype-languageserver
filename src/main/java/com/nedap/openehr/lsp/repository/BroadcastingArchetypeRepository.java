@@ -65,6 +65,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
         if(textDocumentItem == null) {
             textDocumentItem = new TextDocumentItem();
             textDocumentItem.setUri(uri);
+            documents.put(uri, textDocumentItem);
         }
         textDocumentItem.setVersion(version);
         textDocumentItem.setText(text);
@@ -81,6 +82,10 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
      * @param textDocumentItem
      */
     private void handleChanged(TextDocumentItem textDocumentItem) {
+        if(textDocumentItem.getText().trim().isEmpty()) {
+            //not an ADL file
+            return;
+        }
         boolean adl14 = false;
         if(textDocumentItem.getText().contains("\n")) {
             String firstLine = textDocumentItem.getText().substring(0, textDocumentItem.getText().indexOf("\n"));
@@ -205,6 +210,8 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
 
     public void closeDocument(String uri) {
         //do nothing right now, but eventually we'll have to start reading from file again if this happens
+        //TODO: switch back to filesystem access.
+        //this notification is also sent on delete, so need to check for deletion as well
     }
 
     public List<Either<SymbolInformation, DocumentSymbol>> getSymbols(String uri) {

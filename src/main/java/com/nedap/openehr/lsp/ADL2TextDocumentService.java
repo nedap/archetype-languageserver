@@ -37,7 +37,6 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
 
     @Override
     public void didChange(DidChangeTextDocumentParams params) {
-        String uri = params.getTextDocument().getUri();
         for (TextDocumentContentChangeEvent changeEvent : params.getContentChanges()) {
             // Will be full update because we specified that is all we support
             //full update requires us to split things into lines first
@@ -60,7 +59,10 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
 
     @Override
     public void didSave(DidSaveTextDocumentParams params) {
+    }
 
+    @Override
+    public void willSave(WillSaveTextDocumentParams params) {
     }
 
     /**
