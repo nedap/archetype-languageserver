@@ -1,4 +1,4 @@
-package com.nedap.openehr.lsp;
+package com.nedap.openehr.lsp.repository;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
@@ -9,6 +9,7 @@ import com.nedap.archie.aom.TemplateOverlay;
 import com.nedap.archie.archetypevalidator.ArchetypeValidator;
 import com.nedap.archie.archetypevalidator.ValidationResult;
 import com.nedap.archie.flattener.InMemoryFullArchetypeRepository;
+import com.nedap.openehr.lsp.ADL2TextDocumentService;
 import com.nedap.openehr.lsp.document.DocumentInformation;
 import com.nedap.openehr.lsp.symbolextractor.ADL2SymbolExtractor;
 import com.nedap.openehr.lsp.document.HoverInfo;
@@ -234,12 +235,24 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                 if(file.isDirectory()) {
                     addDirectory(file);
                 } else {
-                    addFile(file.toURI().toString(), file);
+                    addFile(toUri(file), file);
                 }
             }
         } else {
-            addFile(directory.toURI().toString(), directory);
+            addFile(toUri(directory), directory);
         }
+    }
+
+    private String toUri(File file) {
+        String uri = file.toURI().toString();
+        //VSCode URIs start with "file:///", as does the LSP spec
+        //java only does "file:/".
+        //so fix that here so we don't get duplicates in indexes later on
+        //alternative is to make the indexes aware of these differences?
+        if(uri.startsWith("file:/") && uri.charAt(6) != '/') {
+            uri = "file:///" + uri.substring(6);
+        }
+        return uri;
     }
 
     public void addFile(String uri, File file) {

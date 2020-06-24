@@ -2,9 +2,7 @@ package com.nedap.openehr.lsp.document;
 
 import com.nedap.archie.aom.Archetype;
 import com.nedap.archie.aom.terminology.ArchetypeTerm;
-import com.nedap.openehr.lsp.BroadcastingArchetypeRepository;
-import com.nedap.openehr.lsp.document.CodeRangeIndex;
-import com.nedap.openehr.lsp.document.DocumentInformation;
+import com.nedap.openehr.lsp.repository.BroadcastingArchetypeRepository;
 import org.eclipse.lsp4j.DocumentLink;
 import org.eclipse.lsp4j.TextDocumentItem;
 
