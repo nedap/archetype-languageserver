@@ -94,6 +94,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
             adl14 = adl14Pattern.matcher(firstLine).matches();
         }
         if(adl14) {
+            adl14Storage.addFile(textDocumentItem);
             //make sure any ADL 2 things get removed here!
             ADL14SymbolExtractor adlSymbolExtractor = new ADL14SymbolExtractor();
 
@@ -104,10 +105,20 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                     documentsByArchetypeId.put(documentInformation.getArchetypeId(), textDocumentItem);
                 }
                 resolveDocumentLinks();
+
+                Archetype archetype = adl14Storage.getArchetype(new TextDocumentIdentifier(textDocumentItem.getUri()));
+                if(archetype != null) {
+                    String language = archetype.getOriginalLanguage() != null ? archetype.getOriginalLanguage().getCodeString() : null;
+                    if (language == null) {
+                        language = "en";
+                    }
+                    SymbolNameFromTerminologyHelper.giveNames(documentInformation.getSymbols(), archetype, language);
+                }
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            adl14Storage.addFile(textDocumentItem);
+
             return;
         }
         try {

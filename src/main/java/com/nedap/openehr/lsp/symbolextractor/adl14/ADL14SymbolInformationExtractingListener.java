@@ -236,10 +236,11 @@ public class ADL14SymbolInformationExtractingListener extends Adl14BaseListener 
     }
 
     @Override public void enterC_complex_object(Adl14Parser.C_complex_objectContext ctx) {
-        if(ctx.atTypeId() != null) {
-            addSymbol(ctx.type_id().ALPHA_UC_ID(), ctx, ctx.type_id().getText() + "[" + ctx.atTypeId().getText() + "]", SymbolKind.Class, StackAction.PUSH);
-            // addSymbol(ctx.ID_CODE(), "complex object " + ctx.type_id().getText() + "[" + ctx.ID_CODE().getText() + "]", SymbolKind.Object);
+        String tokenName = ctx.type_id().getText();
+        if(ctx.atTypeId() != null && ctx.atTypeId().AT_CODE() != null) {
+            tokenName += "[" + ctx.atTypeId().AT_CODE().getText() + "]";
         }
+        addSymbol(ctx.type_id().ALPHA_UC_ID(), ctx,  tokenName, SymbolKind.Class, StackAction.PUSH);
         if(ctx.SYM_MATCHES() != null) {
             //     addSymbol(ctx.SYM_MATCHES(), ctx.SYM_MATCHES().getText(), SymbolKind.Operator);
         }
@@ -255,6 +256,9 @@ public class ADL14SymbolInformationExtractingListener extends Adl14BaseListener 
             addSymbol(ctx.ADL_PATH(), ctx, ctx.ADL_PATH().getText(), SymbolKind.Field, StackAction.PUSH);
         } else if(ctx.attribute_id() != null) {
             addSymbol(ctx.attribute_id().ALPHA_LC_ID(), ctx, ctx.attribute_id().getText(), SymbolKind.Field, StackAction.PUSH);
+        } else {
+            //we HAVE to add a symbol!
+            System.err.println("SOEMTHING");
         }
         addFoldingRange(ctx);
     }
