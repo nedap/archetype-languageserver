@@ -34,10 +34,15 @@ public class ADL2LanguageServer implements LanguageServer {
         capabilities.setHoverProvider(true);
         capabilities.setDocumentLinkProvider(new DocumentLinkOptions(true));
 
-        capabilities.setCodeActionProvider(new CodeActionOptions(Lists.newArrayList(CodeActionKind.Source + ".convert.adl14")));
+
+        capabilities.setCodeActionProvider(new CodeActionOptions(Lists.newArrayList(
+                ADL2TextDocumentService.ADL2_COMMAND,
+                ADL2TextDocumentService.ALL_ADL2_COMMAND,
+                ADL2TextDocumentService.ADD_TO_TERMINOLOGY)));
         capabilities.setExecuteCommandProvider(new ExecuteCommandOptions(Lists.newArrayList(
                 ADL2TextDocumentService.ADL2_COMMAND,
-                ADL2TextDocumentService.ALL_ADL2_COMMAND
+                ADL2TextDocumentService.ALL_ADL2_COMMAND,
+                ADL2TextDocumentService.ADD_TO_TERMINOLOGY
                 )));
 
         ServerInfo serverInfo = new ServerInfo();

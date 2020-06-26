@@ -1,6 +1,7 @@
 package com.nedap.openehr.lsp.document;
 
 import com.nedap.archie.antlr.errors.ANTLRParserErrors;
+import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DocumentLink;
 import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.FoldingRange;
@@ -19,6 +20,8 @@ public class DocumentInformation {
     private List<FoldingRange> foldingRanges;
     private HoverInfo hoverInfo;
     private DocumentLinks documentLinks;
+    /** the current list of diagnostics for this archetype file */
+    private List<Diagnostic> diagnostics;
 
     public DocumentInformation(String archetypeId, ADLVersion adlVersion, ANTLRParserErrors errors,
                                List<Either<SymbolInformation, DocumentSymbol>> symbols,
@@ -79,5 +82,13 @@ public class DocumentInformation {
 
     public ADLVersion getADLVersion() {
         return adlVersion;
+    }
+
+    public void setDiagnostics(List<Diagnostic> diagnostics) {
+        this.diagnostics = diagnostics;
+    }
+
+    public List<Diagnostic> getDiagnostics() {
+        return diagnostics;
     }
 }

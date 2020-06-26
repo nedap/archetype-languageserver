@@ -11,14 +11,16 @@ import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentItem;
+import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class DiagnosticsConverter {
 
-    public static PublishDiagnosticsParams createDiagnostics(TextDocumentItem document, Exception exception) {
+    public static PublishDiagnosticsParams createDiagnostics(TextDocumentIdentifier document, Exception exception) {
         PublishDiagnosticsParams diagnosticsParams = new PublishDiagnosticsParams();
         List<Diagnostic> diagnostics = new ArrayList<>();
         Range range = new Range(
@@ -27,12 +29,18 @@ public class DiagnosticsConverter {
         );
         diagnostics.add(new Diagnostic(range, exception.getMessage() == null ? exception.toString() : exception.getMessage(),  DiagnosticSeverity.Error, "Error processing file"));
         diagnosticsParams.setDiagnostics(diagnostics);
-        diagnosticsParams.setUri(document.getUri());
-        diagnosticsParams.setVersion(document.getVersion());
+        setBasicDiagnostics(document, diagnosticsParams);
         return diagnosticsParams;
     }
 
-    public static PublishDiagnosticsParams createDiagnostics(TextDocumentItem document, ANTLRParserErrors errors) {
+    private static void setBasicDiagnostics(TextDocumentIdentifier document, PublishDiagnosticsParams diagnosticsParams) {
+        diagnosticsParams.setUri(document.getUri());
+        if(document instanceof VersionedTextDocumentIdentifier) {
+            diagnosticsParams.setVersion(((VersionedTextDocumentIdentifier) document).getVersion ());
+        }
+    }
+
+    public static PublishDiagnosticsParams createDiagnostics(TextDocumentIdentifier document, ANTLRParserErrors errors) {
         PublishDiagnosticsParams diagnosticsParams = new PublishDiagnosticsParams();
         List<Diagnostic> diagnostics = new ArrayList<>();
         for(ANTLRParserMessage warning:errors.getWarnings()) {
@@ -49,12 +57,11 @@ public class DiagnosticsConverter {
 //        }
 
         diagnosticsParams.setDiagnostics(diagnostics);
-        diagnosticsParams.setUri(document.getUri());
-        diagnosticsParams.setVersion(document.getVersion());
+        setBasicDiagnostics(document, diagnosticsParams);
         return diagnosticsParams;
     }
 
-    public static PublishDiagnosticsParams createDiagnosticsFromValidationResult(TextDocumentItem textDocumentItem, ValidationResult validationResult) {
+    public static PublishDiagnosticsParams createDiagnosticsFromValidationResult(TextDocumentIdentifier textDocumentItem, ValidationResult validationResult) {
         PublishDiagnosticsParams diagnosticsParams = new PublishDiagnosticsParams();
         List<Diagnostic> diagnostics = new ArrayList<>();
 
@@ -88,7 +95,7 @@ public class DiagnosticsConverter {
             }
         }
         diagnosticsParams.setDiagnostics(diagnostics);
-        diagnosticsParams.setUri(textDocumentItem.getUri());
+        setBasicDiagnostics(textDocumentItem, diagnosticsParams);
         return diagnosticsParams;
     }
 

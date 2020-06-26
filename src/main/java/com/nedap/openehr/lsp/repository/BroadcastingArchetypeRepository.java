@@ -16,15 +16,7 @@ import com.nedap.openehr.lsp.symbolextractor.ADL2SymbolExtractor;
 import com.nedap.openehr.lsp.document.HoverInfo;
 import com.nedap.openehr.lsp.symbolextractor.SymbolNameFromTerminologyHelper;
 import com.nedap.openehr.lsp.symbolextractor.adl14.ADL14SymbolExtractor;
-import org.eclipse.lsp4j.DocumentLink;
-import org.eclipse.lsp4j.DocumentLinkParams;
-import org.eclipse.lsp4j.DocumentSymbol;
-import org.eclipse.lsp4j.FoldingRange;
-import org.eclipse.lsp4j.Hover;
-import org.eclipse.lsp4j.HoverParams;
-import org.eclipse.lsp4j.SymbolInformation;
-import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.eclipse.lsp4j.TextDocumentItem;
+import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.openehr.referencemodels.BuiltinReferenceModels;
 
@@ -154,12 +146,12 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                     //diagnostics will now be pushed from within the invalidateArchetypesAndRecompile method
                 } catch (Exception ex) {
                     //this particular exce[tion is a parse error, usually when extracting JSON. be sure to post taht
-                    textDocumentService.pushDiagnostics(textDocumentItem, ex);
+                    textDocumentService.pushDiagnostics(new VersionedTextDocumentIdentifier(textDocumentItem.getUri(), textDocumentItem.getVersion()), ex);
                 }
 
 
             } else {
-                textDocumentService.pushDiagnostics(textDocumentItem, documentInformation.getErrors());
+                textDocumentService.pushDiagnostics(new VersionedTextDocumentIdentifier(textDocumentItem.getUri(), textDocumentItem.getVersion()), documentInformation.getErrors());
             }
         } catch (IOException e) {
             //shouldn't happen, ever, just in memory processing
@@ -172,7 +164,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
     public void setValidationResult(ValidationResult result) {
         super.setValidationResult(result);
         TextDocumentItem textDocumentItem = documentsByArchetypeId.get(result.getArchetypeId());
-        textDocumentService.pushDiagnostics(textDocumentItem, result);
+        textDocumentService.pushDiagnostics(new VersionedTextDocumentIdentifier(textDocumentItem.getUri(), textDocumentItem.getVersion()), result);
         //new validation result received! Broadcast it :)
 
     }
@@ -292,7 +284,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                 TextDocumentItem adl = new TextDocumentItem(uri, "adl", 0, new String(Files.readAllBytes(file.toPath()), Charsets.UTF_8));
                 addDocument(adl);
             } catch (Exception e) {
-                textDocumentService.pushDiagnostics(new TextDocumentItem(uri, "adl", 0, e.toString()), e);
+                textDocumentService.pushDiagnostics(new TextDocumentIdentifier(uri), e);
                 e.printStackTrace();
             }
         }
@@ -311,7 +303,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
             try {
                 updateDocument(uri, 0, new String(Files.readAllBytes(file.toPath()), Charsets.UTF_8));
             } catch (Exception e) {
-                textDocumentService.pushDiagnostics(new TextDocumentItem(uri, "adl", 0, null), e);
+                textDocumentService.pushDiagnostics(new TextDocumentIdentifier(uri), e);
                 e.printStackTrace();
             }
         }
@@ -392,5 +384,12 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
 
     public void convertAllAdl14(String rootFileUri) {
         this.adl14Storage.convertAll(rootFileUri);
+    }
+
+    public void storeDiagnostics(TextDocumentIdentifier document, List<Diagnostic> diagnostics) {
+        DocumentInformation info = getDocumentInformation(document.getUri());
+        if(info != null) {
+            info.setDiagnostics(diagnostics);
+        }
     }
 }

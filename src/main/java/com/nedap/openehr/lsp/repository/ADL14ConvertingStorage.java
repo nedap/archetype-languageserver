@@ -12,6 +12,7 @@ import com.nedap.archie.serializer.adl.ADLArchetypeSerializer;
 import com.nedap.openehr.lsp.ADL2TextDocumentService;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentItem;
+import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 import org.openehr.referencemodels.BuiltinReferenceModels;
 
 import java.util.ArrayList;
@@ -35,9 +36,9 @@ public class ADL14ConvertingStorage {
         ADL14Parser adl14Parser = new ADL14Parser(BuiltinReferenceModels.getMetaModels());
         Archetype archetype = adl14Parser.parse(item.getText(), configuration);
         if(adl14Parser.getErrors().hasErrors()) {
-            textService.pushDiagnostics(item,  adl14Parser.getErrors());
+            textService.pushDiagnostics(new VersionedTextDocumentIdentifier(item.getUri(), item.getVersion()),  adl14Parser.getErrors());
         } else {
-            textService.pushDiagnostics(item,  new ValidationResult(archetype));
+            textService.pushDiagnostics(new VersionedTextDocumentIdentifier(item.getUri(), item.getVersion()),  new ValidationResult(archetype));
             adl14Files.put(item.getUri(), archetype);
         }
     }
@@ -52,7 +53,7 @@ public class ADL14ConvertingStorage {
         ADL2ConversionResultList converted = adl14Converter.convert(toConvert);
         for(ADL2ConversionResult result:converted.getConversionResults()) {
             if(result.getException() != null) {
-                textService.pushDiagnostics(new TextDocumentItem(documentUri, "ADL", 1, ""), result.getException());
+                textService.pushDiagnostics(new TextDocumentIdentifier(documentUri), result.getException());
             } else {
                 String newPath = documentUri.substring(0, documentUri.lastIndexOf("/")) + "/out/" + result.getArchetypeId() + ".adls";
                 textService.writeFile(newPath, "ADL2 conversion of " + result.getArchetypeId(), ADLArchetypeSerializer.serialize(result.getArchetype()));
@@ -91,7 +92,7 @@ public class ADL14ConvertingStorage {
         ADL2ConversionResultList converted = adl14Converter.convert(new ArrayList<>(adl14Files.values()));
         for(ADL2ConversionResult result:converted.getConversionResults()) {
             if(result.getException() != null) {
-                textService.pushDiagnostics(new TextDocumentItem(rootUri, "ADL", 1, ""), result.getException());
+                textService.pushDiagnostics(new TextDocumentIdentifier(rootUri), result.getException());
             } else {
                 String newPath = rootUri.substring(0, rootUri.lastIndexOf("/")) + "/out/" + result.getArchetypeId() + ".adls";
                 textService.writeFile(newPath, "ADL2 conversion of " + result.getArchetypeId(), ADLArchetypeSerializer.serialize(result.getArchetype()));

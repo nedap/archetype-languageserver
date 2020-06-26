@@ -4,8 +4,12 @@ package com.nedap.openehr.lsp;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonPrimitive;
 import com.nedap.archie.antlr.errors.ANTLRParserErrors;
+import com.nedap.archie.archetypevalidator.ErrorType;
 import com.nedap.archie.archetypevalidator.ValidationResult;
+import com.nedap.openehr.lsp.document.ADLVersion;
+import com.nedap.openehr.lsp.document.DocumentInformation;
 import com.nedap.openehr.lsp.repository.BroadcastingArchetypeRepository;
+import com.nedap.openehr.lsp.utils.RangeUtils;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.adapters.CodeActionResponseAdapter;
 import org.eclipse.lsp4j.jsonrpc.json.ResponseJsonAdapter;
@@ -14,6 +18,7 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
+import org.eclipse.lsp4j.util.Positions;
 
 import java.io.File;
 import java.net.URI;
@@ -21,11 +26,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 
 public class ADL2TextDocumentService implements TextDocumentService, WorkspaceService {
 
-    public static final String ADL2_COMMAND = "source.convert.adl14";
-    public static final String ALL_ADL2_COMMAND = "source.convert.alladl14";
+    public static final String ADL2_COMMAND = CodeActionKind.Source + ".convert.adl14";
+    public static final String ALL_ADL2_COMMAND = CodeActionKind.Source + ".convert.alladl14";
+    public static final String ADD_TO_TERMINOLOGY = CodeActionKind.QuickFix + ".add_to_terminology";
 
     private LanguageClient remoteProxy;
     private final BroadcastingArchetypeRepository storage = new BroadcastingArchetypeRepository(this);
@@ -91,21 +99,24 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
         this.remoteProxy = remoteProxy;
     }
 
-    public void pushDiagnostics(TextDocumentItem document, Exception exception) {
-        PublishDiagnosticsParams diagnosticsParams = DiagnosticsConverter.createDiagnostics(document, exception);
+    public void pushDiagnostics(TextDocumentIdentifier documentId, Exception exception) {
+        PublishDiagnosticsParams diagnosticsParams = DiagnosticsConverter.createDiagnostics(documentId, exception);
+        storage.storeDiagnostics(documentId, diagnosticsParams.getDiagnostics());
         remoteProxy.publishDiagnostics(diagnosticsParams);
     }
 
-    public void pushDiagnostics(TextDocumentItem document, ANTLRParserErrors errors) {
-        PublishDiagnosticsParams diagnosticsParams = DiagnosticsConverter.createDiagnostics(document, errors);
+    public void pushDiagnostics(TextDocumentIdentifier documentId, ANTLRParserErrors errors) {
+        PublishDiagnosticsParams diagnosticsParams = DiagnosticsConverter.createDiagnostics(documentId, errors);
+        storage.storeDiagnostics(documentId, diagnosticsParams.getDiagnostics());
         remoteProxy.publishDiagnostics(diagnosticsParams);
     }
 
 
 
-    public void pushDiagnostics(TextDocumentItem textDocumentItem, ValidationResult validationResult) {
-        PublishDiagnosticsParams diagnosticsParams = DiagnosticsConverter.createDiagnosticsFromValidationResult(textDocumentItem, validationResult);
-        // diagnosticsParams.setVersion(textDocumentItem.getVersion());
+    public void pushDiagnostics(TextDocumentIdentifier documentId, ValidationResult validationResult) {
+        PublishDiagnosticsParams diagnosticsParams = DiagnosticsConverter.createDiagnosticsFromValidationResult(documentId, validationResult);
+        storage.storeDiagnostics(documentId, diagnosticsParams.getDiagnostics());
+        // diagnosticsParams.setVersion(documentId.getVersion());
         remoteProxy.publishDiagnostics(diagnosticsParams);
     }
 
@@ -201,7 +212,11 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
     @JsonRequest
     @ResponseJsonAdapter(CodeActionResponseAdapter.class)
     public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params) {
-        if(storage.isADL14(params.getTextDocument())) {
+        DocumentInformation info = storage.getDocumentInformation(params.getTextDocument().getUri());
+        if(info == null) {
+            return null;
+        }
+        if(info.getADLVersion() == ADLVersion.VERSION_1_4) {
             CodeAction action1 = new CodeAction("convert this file to ADL 2");
             action1.setKind(CodeActionKind.Source + ".convert.adl2");
             {
@@ -220,9 +235,31 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
             return CompletableFuture.completedFuture(Lists.newArrayList(
                     Either.forRight(action1),
                     Either.forRight(actionAll)));
+        } else {
+            if(info.getDiagnostics() != null) {
+                List<Diagnostic> missingTermsCodes = info.getDiagnostics().stream().filter(d ->
+                            d.getCode() != null && d.getCode().isLeft() && d.getCode().getLeft().startsWith(ErrorType.VATID.getCode()) && RangeUtils.rangesOverlap(params.getRange(), d.getRange())
+                        )
+                        .collect(Collectors.toList());
+                //TODO: store in intermediate list so we can add more code actions :)
+                List<Either<Command, CodeAction>> codeActions = missingTermsCodes.stream().map(d -> {
+                    CodeAction action = new CodeAction("add to terminology");
+                    action.setKind(ADD_TO_TERMINOLOGY);
+                    action.setIsPreferred(true);
+                    action.setDiagnostics(Lists.newArrayList(d));
+                    Command c = new Command("add to terminology", ADD_TO_TERMINOLOGY);
+                    c.setArguments(Lists.newArrayList(params.getTextDocument().getUri(), d.getMessage()));//TODO: store id/ac/at code here!
+                    action.setCommand(c);
+                    return Either.<Command, CodeAction>forRight(action);
+                }).collect(Collectors.toList());
+
+                return CompletableFuture.completedFuture(codeActions);
+            }
         }
         return CompletableFuture.completedFuture(Collections.emptyList());
     }
+
+
 
     /**
      * The workspace/executeCommand request is sent from the client to the
@@ -241,6 +278,8 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
         } else if (params.getCommand().equalsIgnoreCase(ALL_ADL2_COMMAND)) {
             String documentUri = ((JsonPrimitive) params.getArguments().get(0)).getAsString();
             storage.convertAllAdl14(documentUri);
+        } else if (params.getCommand().equalsIgnoreCase(ADD_TO_TERMINOLOGY)) {
+            new AddTerminologyCommmand(storage, this, params).apply();
         }
         return CompletableFuture.completedFuture(null);
     }
@@ -262,6 +301,17 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
                         )))
         );
 
+
+        edit.setDocumentChanges(changes);
+        remoteProxy.applyEdit(new ApplyWorkspaceEditParams(edit, label));
+    }
+
+    public void applyEdits(String uri, int version, String label, List<TextEdit> commands) {
+        WorkspaceEdit edit = new WorkspaceEdit();
+        List<Either<TextDocumentEdit, ResourceOperation>> changes = new ArrayList<>();
+        changes.add(Either.forLeft(
+                new TextDocumentEdit(new VersionedTextDocumentIdentifier(uri, version), commands))
+        );
 
         edit.setDocumentChanges(changes);
         remoteProxy.applyEdit(new ApplyWorkspaceEditParams(edit, label));
