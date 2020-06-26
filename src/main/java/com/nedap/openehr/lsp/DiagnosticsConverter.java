@@ -71,8 +71,15 @@ public class DiagnosticsConverter {
                     ArchetypeModelObject withLocation = null;
                     if(message.getPathInArchetype() != null) {
                         try {
-                            withLocation = new AOMPathQuery(message.getPathInArchetype()).findMatchingPredicate(validationResult.getSourceArchetype().getDefinition(),
+
+                            List<ArchetypeModelObject> found = new AOMPathQuery(message.getPathInArchetype()).findAllMatchingPredicate(validationResult.getSourceArchetype().getDefinition(),
                                     (o) -> o instanceof ArchetypeModelObject && ((ArchetypeModelObject) o).getStartLine() != null);
+                            if(found == null || found.isEmpty()) {
+                                withLocation = null;
+                            } else {
+                                //the deepest found path!
+                                withLocation = found.get(found.size()-1);
+                            }
                         } catch (Exception e) {
                             //we really don't care, but log just in case
                             e.printStackTrace();
