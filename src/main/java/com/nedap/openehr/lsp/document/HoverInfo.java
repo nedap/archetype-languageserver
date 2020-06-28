@@ -74,24 +74,28 @@ public class HoverInfo {
 
     private void getHoverInfoForCObject(CObject definition, Archetype archetypeForTerms) {
         ArchetypeTerm term = archetypeForTerms.getTerm(definition, language);
+        String content;
         if(term != null) {
-            String content = "### " + definition.getRmTypeName() + ": " + term.getText() + "\n\n\t" + term.getDescription();
-            CObject flattenedObject = (definition instanceof CPrimitiveObject) ? definition : archetypeForTerms.itemAtPath(definition.getPath());
-            if(flattenedObject == null) {
-                //fallback if something went wrong
-                flattenedObject = definition;
-            }
-            MultiplicityInterval occurrences = flattenedObject.effectiveOccurrences(metaModels::referenceModelPropMultiplicity);
-            content += "\n occurrences: " + occurrences.toString();
-
-            Hover hover = new Hover();
-            hover.setContents(new MarkupContent(MARKDOWN, content.toString()));
-            hoverRanges.addRange(
-                    new Position(definition.getStartLine()-1, definition.getStartCharInLine()),
-                    new Position(definition.getStartLine()-1, definition.getStartCharInLine() + definition.getTokenLength()),
-                    hover);
-
+            content = "### " + definition.getRmTypeName() + ": " + term.getText() + "\n\n\t" + term.getDescription();
+        } else {
+            content = "### No term found";
         }
+        CObject flattenedObject = (definition instanceof CPrimitiveObject) ? definition : archetypeForTerms.itemAtPath(definition.getPath());
+        if(flattenedObject == null) {
+            //fallback if something went wrong
+            flattenedObject = definition;
+        }
+        MultiplicityInterval occurrences = flattenedObject.effectiveOccurrences(metaModels::referenceModelPropMultiplicity);
+        content += "\n occurrences: " + occurrences.toString();
+
+        content += "\n\n path: " + definition.getPath();
+
+        Hover hover = new Hover();
+        hover.setContents(new MarkupContent(MARKDOWN, content.toString()));
+        hoverRanges.addRange(
+                new Position(definition.getStartLine()-1, definition.getStartCharInLine()),
+                new Position(definition.getStartLine()-1, definition.getStartCharInLine() + definition.getTokenLength()),
+                hover);
     }
 
     private void extractHoverInfo(CAttribute attribute, Archetype archetypeForTerms) {
@@ -119,7 +123,7 @@ public class HoverInfo {
             }
             Cardinality cardinality = null;
             MultiplicityInterval existence = null;
-            //TODO: do a proper path lookup thorugh the RM model?
+            //TODO: do a proper path lookup through the RM model?
             CAttribute defaults = new BMMConstraintImposer(metaModels.getSelectedBmmModel()).getDefaultAttribute(flatAttribute.getParent().getRmTypeName(), flatAttribute.getRmAttributeName());
             if (flatAttribute.getCardinality() != null) {
                 cardinality = flatAttribute.getCardinality();
@@ -155,6 +159,7 @@ public class HoverInfo {
                     content.append("\n\nRM type name: *" + bmmProperty.getType().toDisplayString() + "*");
                 }
             }
+            content.append("\n\n path: " + attribute.getPath());
             Hover hover = new Hover();
             hover.setContents(new MarkupContent(MARKDOWN, content.toString()));
             hoverRanges.addRange(
