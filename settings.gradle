@@ -9,3 +9,4 @@
 
 rootProject.name = 'archie-lsp'
 includeBuild '../archie'
+includeBuild '../aqlparser'

@@ -4,34 +4,34 @@ import com.nedap.archie.adlparser.antlr.AdlBaseListener;
 import com.nedap.archie.adlparser.antlr.AdlLexer;
 import com.nedap.archie.adlparser.antlr.AdlParser;
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.misc.MultiMap;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.DocumentLink;
+import org.eclipse.lsp4j.DocumentSymbol;
+import org.eclipse.lsp4j.FoldingRange;
+import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.SymbolInformation;
+import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
+
+import static com.nedap.openehr.lsp.utils.ANTLRUtils.createRange;
 
 public class SymbolInformationExtractingListener extends AdlBaseListener {
     private final String documentUri;
     private String archetypeId;
-    private final List<Either<SymbolInformation, DocumentSymbol>> symbols = new ArrayList<>();
-    private final Set<Token> visitedTokens = new LinkedHashSet<>();
+
     private List<DocumentLink> documentLinks = new ArrayList<>();
     private List<FoldingRange> foldingRanges = new ArrayList<>();
 
     private Map<String, List<LocationLink>> idCodeToTerminologyLocations = new ConcurrentHashMap<>();
 
-    private Stack<DocumentSymbol> symbolStack = new Stack<>();
+    private DocumentSymbolStack stack = new DocumentSymbolStack();
 
     public SymbolInformationExtractingListener(String documentUri, AdlLexer lexer) {
         this.documentUri = documentUri;
@@ -40,7 +40,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     //private Stack<SymbolInformation> symbolStack = new Stack<>();
 
     public List<Either<SymbolInformation, DocumentSymbol>> getSymbols() {
-        return this.symbols;
+        return stack.getSymbols();
     }
 
     public List<DocumentLink> getDocumentLinks() {
@@ -57,8 +57,8 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      */
     @Override
     public void enterArchetype(AdlParser.ArchetypeContext ctx) {
-        addSymbol(ctx.SYM_ARCHETYPE(), ctx, "archetype", SymbolKind.Constant, StackAction.PUSH);
-        addSymbol(ctx.ARCHETYPE_HRID(), null, "archetype id", SymbolKind.File);
+        stack.addSymbol(ctx.SYM_ARCHETYPE(), ctx, "archetype", SymbolKind.Constant, StackAction.PUSH);
+        stack.addSymbol(ctx.ARCHETYPE_HRID(), null, "archetype id", SymbolKind.File);
         this.archetypeId = ctx.ARCHETYPE_HRID().getText();
     }
 
@@ -67,33 +67,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
         
     }
 
-    private Range createRange(ParserRuleContext ctx, TerminalNode fallback) {
-        Position start = new Position(ctx.getStart().getLine()-1, ctx.getStart().getCharPositionInLine());
-        Position end = new Position(ctx.getStop().getLine()-1, ctx.getStop().getCharPositionInLine());
-        if(start.equals(end)) {
-            //not good :)
-            return createRange(fallback.getSymbol());
-        }
-        return new Range(start, end);
-        //}
-    }
 
-    private Range createRange(ParserRuleContext ctx) {
-        Position start = new Position(ctx.getStart().getLine()-1, ctx.getStart().getCharPositionInLine());
-        Position end = new Position(ctx.getStop().getLine()-1, ctx.getStop().getCharPositionInLine());
-        if(start.equals(end)) {
-            //not good :)
-            end.setCharacter(end.getCharacter()+1);
-        }
-        return new Range(start, end);
-    }
-
-    private Range createRange(Token symbol) {
-        return new Range(
-                new Position(symbol.getLine()-1, symbol.getCharPositionInLine()),
-                new Position(symbol.getLine()-1, symbol.getCharPositionInLine() + symbol.getText().length())
-        );//TODO: scan text for line endings, and determine stop line+ from that!
-    }
 
     /**
      * {@inheritDoc}
@@ -113,8 +87,8 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     @Override public void visitErrorNode(ErrorNode node) { }
 
     @Override public void enterTemplate(AdlParser.TemplateContext ctx) {
-        addSymbol(ctx.SYM_TEMPLATE(), ctx, "archetype", SymbolKind.Constant, StackAction.PUSH);
-        addSymbol(ctx.ARCHETYPE_HRID(), "archetype id", SymbolKind.Class);
+        stack.addSymbol(ctx.SYM_TEMPLATE(), ctx, "archetype", SymbolKind.Constant, StackAction.PUSH);
+        stack.addSymbol(ctx.ARCHETYPE_HRID(), "archetype id", SymbolKind.Class);
         this.archetypeId = ctx.ARCHETYPE_HRID().getText();
     }
     /**
@@ -127,15 +101,13 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     }
 
     private void popStack() {
-        if(!symbolStack.isEmpty()) {
-            symbolStack.pop();
-        }
+        stack.pop();
     }
 
 
     @Override public void enterTemplate_overlay(AdlParser.Template_overlayContext ctx) {
-        addSymbol(ctx.SYM_TEMPLATE_OVERLAY(), ctx, "archetype", SymbolKind.Constant, StackAction.PUSH);
-        addSymbol(ctx.ARCHETYPE_HRID(), "archetype id", SymbolKind.Class);
+        stack.addSymbol(ctx.SYM_TEMPLATE_OVERLAY(), ctx, "archetype", SymbolKind.Constant, StackAction.PUSH);
+        stack.addSymbol(ctx.ARCHETYPE_HRID(), "archetype id", SymbolKind.Class);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
 
@@ -144,8 +116,8 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     }
 
     @Override public void enterOperational_template(AdlParser.Operational_templateContext ctx) {
-        addSymbol(ctx.SYM_OPERATIONAL_TEMPLATE(), ctx, "operational template", SymbolKind.Constant, StackAction.PUSH);
-        addSymbol(ctx.ARCHETYPE_HRID(), "archetype id", SymbolKind.Class);
+        stack.addSymbol(ctx.SYM_OPERATIONAL_TEMPLATE(), ctx, "operational template", SymbolKind.Constant, StackAction.PUSH);
+        stack.addSymbol(ctx.ARCHETYPE_HRID(), "archetype id", SymbolKind.Class);
         this.archetypeId = ctx.ARCHETYPE_HRID().getText();
     }
 
@@ -153,37 +125,18 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
         popStack();
     }
 
-    private DocumentSymbol createSymbolInformation(String s, SymbolKind symbolKind, Range range) {
-//        SymbolInformation symbolInformation = new SymbolInformation();
-//
-//        symbolInformation.setName(s);
-//        symbolInformation.setKind(module);
-//
-//        symbolInformation.setLocation(new Location(documentUri, range));
-//
-//        return symbolInformation;
-        DocumentSymbol documentSymbol = new DocumentSymbol();
-
-        documentSymbol.setName(s);
-        documentSymbol.setKind(symbolKind);
-
-        documentSymbol.setRange(range);
-        documentSymbol.setSelectionRange(range);
-
-        return documentSymbol;
-    }
     /**
      * {@inheritDoc}
      *
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterSpecialization_section(AdlParser.Specialization_sectionContext ctx) {
-        addSymbol(ctx.SYM_SPECIALIZE(), ctx, "specialization section", SymbolKind.Module, StackAction.PUSH);
+        stack.addSymbol(ctx.SYM_SPECIALIZE(), ctx, "specialization section", SymbolKind.Module, StackAction.PUSH);
         TerminalNode terminalNode = ctx.archetype_ref().ARCHETYPE_HRID();
         if(terminalNode == null) {
             terminalNode = ctx.archetype_ref().ARCHETYPE_REF();
         }
-        DocumentLink documentLink = new DocumentLink(this.createRange(terminalNode.getSymbol()));
+        DocumentLink documentLink = new DocumentLink(createRange(terminalNode.getSymbol()));
         documentLink.setData(terminalNode.getText()); //we'll resolve the target later
         documentLinks.add(documentLink);
         addFoldingRange(ctx);
@@ -199,7 +152,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterLanguage_section(AdlParser.Language_sectionContext ctx) {
-        addSymbol(ctx.SYM_LANGUAGE(), ctx, "language section", SymbolKind.Module, StackAction.PUSH);
+        stack.addSymbol(ctx.SYM_LANGUAGE(), ctx, "language section", SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
     /**
@@ -216,7 +169,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterDescription_section(AdlParser.Description_sectionContext ctx) {
-        addSymbol(ctx.SYM_DESCRIPTION(), ctx, "description section", SymbolKind.Module, StackAction.PUSH);
+        stack.addSymbol(ctx.SYM_DESCRIPTION(), ctx, "description section", SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
 
@@ -238,7 +191,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterDefinition_section(AdlParser.Definition_sectionContext ctx) {
-        addSymbol(ctx.SYM_DEFINITION(), ctx, "definition section", SymbolKind.Module, StackAction.PUSH);
+        stack.addSymbol(ctx.SYM_DEFINITION(), ctx, "definition section", SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
     /**
@@ -255,7 +208,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterRules_section(AdlParser.Rules_sectionContext ctx) {
-        addSymbol(ctx.SYM_RULES(), ctx, "rules section", SymbolKind.Module, StackAction.PUSH);
+        stack.addSymbol(ctx.SYM_RULES(), ctx, "rules section", SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
 
@@ -269,7 +222,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterTerminology_section(AdlParser.Terminology_sectionContext ctx) {
-        addSymbol(ctx.SYM_TERMINOLOGY(), ctx, "terminology section", SymbolKind.Module, StackAction.PUSH);
+        stack.addSymbol(ctx.SYM_TERMINOLOGY(), ctx, "terminology section", SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
 
     }
@@ -284,7 +237,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterAnnotations_section(AdlParser.Annotations_sectionContext ctx) {
-        addSymbol(ctx.SYM_ANNOTATIONS(), ctx, "annotations section", SymbolKind.Module, StackAction.PUSH);
+        stack.addSymbol(ctx.SYM_ANNOTATIONS(), ctx, "annotations section", SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
 
@@ -294,10 +247,10 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
 
     @Override public void enterC_complex_object(AdlParser.C_complex_objectContext ctx) {
         if(ctx.ID_CODE() != null) {
-            addSymbol(ctx.type_id().ALPHA_UC_ID(), ctx, ctx.type_id().getText() + "[" + ctx.ID_CODE().getText() + "]", SymbolKind.Class, StackAction.PUSH);
+            stack.addSymbol(ctx.type_id().ALPHA_UC_ID(), ctx, ctx.type_id().getText() + "[" + ctx.ID_CODE().getText() + "]", SymbolKind.Class, StackAction.PUSH);
            // addSymbol(ctx.ID_CODE(), "complex object " + ctx.type_id().getText() + "[" + ctx.ID_CODE().getText() + "]", SymbolKind.Object);
         } else if (ctx.ROOT_ID_CODE() != null) {
-            addSymbol(ctx.type_id().ALPHA_UC_ID(), ctx, ctx.type_id().getText() + "[" + ctx.ROOT_ID_CODE().getText() + "]", SymbolKind.Class, StackAction.PUSH);
+            stack.addSymbol(ctx.type_id().ALPHA_UC_ID(), ctx, ctx.type_id().getText() + "[" + ctx.ROOT_ID_CODE().getText() + "]", SymbolKind.Class, StackAction.PUSH);
          //   addSymbol(ctx.ROOT_ID_CODE(), "[" + ctx.ROOT_ID_CODE().getText() + "]", SymbolKind.Key);
         }
         if(ctx.SYM_MATCHES() != null) {
@@ -312,9 +265,9 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
 
     @Override public void enterC_attribute(AdlParser.C_attributeContext ctx) {
         if(ctx.ADL_PATH() != null) {
-            addSymbol(ctx.ADL_PATH(), ctx, ctx.ADL_PATH().getText(), SymbolKind.Field, StackAction.PUSH);
+            stack.addSymbol(ctx.ADL_PATH(), ctx, ctx.ADL_PATH().getText(), SymbolKind.Field, StackAction.PUSH);
         } else if(ctx.attribute_id() != null) {
-            addSymbol(ctx.attribute_id().ALPHA_LC_ID(), ctx, ctx.attribute_id().getText(), SymbolKind.Field, StackAction.PUSH);
+            stack.addSymbol(ctx.attribute_id().ALPHA_LC_ID(), ctx, ctx.attribute_id().getText(), SymbolKind.Field, StackAction.PUSH);
         } else {
             throw new RuntimeException("unexpected code path");
         }
@@ -330,7 +283,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     }
 
     @Override public void enterC_archetype_root(AdlParser.C_archetype_rootContext ctx) {
-        addSymbol(ctx.SYM_USE_ARCHETYPE(), ctx, ctx.archetype_ref().getText() + "[" + ctx.ID_CODE().getText() + "]", SymbolKind.Class, StackAction.PUSH);
+        stack.addSymbol(ctx.SYM_USE_ARCHETYPE(), ctx, ctx.archetype_ref().getText() + "[" + ctx.ID_CODE().getText() + "]", SymbolKind.Class, StackAction.PUSH);
         addFoldingRange(ctx);
         String archetypeRef = ctx.archetype_ref().getText();
         TerminalNode terminalNode = ctx.archetype_ref().ARCHETYPE_HRID();
@@ -338,7 +291,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
             terminalNode = ctx.archetype_ref().ARCHETYPE_REF();
         }
         if(terminalNode != null) {
-            DocumentLink documentLink = new DocumentLink(this.createRange(terminalNode.getSymbol()));
+            DocumentLink documentLink = new DocumentLink(createRange(terminalNode.getSymbol()));
             documentLink.setData(archetypeRef); //we'll resolve the target later
             documentLinks.add(documentLink);
         }
@@ -358,8 +311,8 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     Pattern idCodePattern = Pattern.compile("\"(id|at|ac)(\\d|\\.)+\"");
 
     @Override public void enterAttr_val(AdlParser.Attr_valContext ctx) {
-        if(!symbolStack.isEmpty()) {
-            DocumentSymbol parent = symbolStack.peek();
+        if(!stack.isEmpty()) {
+            DocumentSymbol parent = stack.peek();
             if(parent.getKind() == SymbolKind.Key && idCodePattern.matcher(parent.getName()).matches()) {
                 //do not add things like 'text' and 'description', they aren't useful at all!
                 //TODO: maybe move this to a post-processor?
@@ -369,17 +322,17 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
                     }
                 }
             } else {
-                addSymbol(ctx.attribute_id().ALPHA_LC_ID(), ctx, ctx.attribute_id().getText(), SymbolKind.Field, StackAction.PUSH);
+                stack.addSymbol(ctx.attribute_id().ALPHA_LC_ID(), ctx, ctx.attribute_id().getText(), SymbolKind.Field, StackAction.PUSH);
             }
         } else {
-            addSymbol(ctx.attribute_id().ALPHA_LC_ID(), ctx, ctx.attribute_id().getText(), SymbolKind.Field, StackAction.PUSH);
+            stack.addSymbol(ctx.attribute_id().ALPHA_LC_ID(), ctx, ctx.attribute_id().getText(), SymbolKind.Field, StackAction.PUSH);
         }
     }
 
     @Override public void exitAttr_val(AdlParser.Attr_valContext ctx) {
         //TODO: move to postprocessor!
-        if(!symbolStack.isEmpty()) {
-            DocumentSymbol parent = symbolStack.peek();
+        if(!stack.isEmpty()) {
+            DocumentSymbol parent = stack.peek();
             if(parent.getKind() == SymbolKind.Key && idCodePattern.matcher(parent.getName()).matches()) {
             } else {
                 popStack();
@@ -396,7 +349,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      */
     @Override public void enterKeyed_object(AdlParser.Keyed_objectContext ctx) {
         String key = ctx.primitive_value().getText();
-        addSymbol(ctx.primitive_value(), ctx, key, SymbolKind.Key, StackAction.PUSH);
+        stack.addSymbol(ctx.primitive_value(), ctx, key, SymbolKind.Key, StackAction.PUSH);
         if(idCodePattern.matcher(key).matches()) {
             List<LocationLink> locationLinks = idCodeToTerminologyLocations.get(key);
             if(locationLinks == null) {
@@ -414,76 +367,6 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     @Override public void exitKeyed_object(AdlParser.Keyed_objectContext ctx) {
         popStack();
     }
-
-    private void addSymbol(TerminalNode node, String tokenName, SymbolKind symbolKind) {
-        addSymbol(node, null, tokenName, symbolKind);
-
-    }
-
-    private void addSymbol(TerminalNode node, ParserRuleContext entireRule, String tokenName, SymbolKind symbolKind) {
-        addSymbol(node, entireRule, tokenName, symbolKind, StackAction.NOTHING);
-    }
-
-    private void addSymbol(TerminalNode node, ParserRuleContext entireRule, String tokenName, SymbolKind symbolKind, StackAction stackAction) {
-
-        if(!this.visitedTokens.contains(node.getSymbol())) {
-            DocumentSymbol symbol = createSymbolInformation(tokenName, symbolKind, createRange(node.getSymbol()));
-
-            if(node.getText().startsWith("\n")) {
-                Range range = symbol.getRange();
-                range.getStart().setLine(range.getStart().getLine()+1);
-                range.getEnd().setLine(range.getEnd().getLine()+1);
-            }
-            if(entireRule != null) {
-                Range range = createRange(entireRule, node);
-                symbol.setRange(range);
-            }
-            if(!symbolStack.isEmpty()) {
-                List<DocumentSymbol> children = symbolStack.peek().getChildren();
-                if(children == null) {
-                    symbolStack.peek().setChildren(new ArrayList<>());
-                    children = symbolStack.peek().getChildren();
-                }
-                children.add(symbol);
-            } else {
-                symbols.add(Either.forRight(symbol));
-            }
-            if(stackAction == StackAction.PUSH) {
-                symbolStack.push(symbol);
-            }
-
-            visitedTokens.add(node.getSymbol());
-        }
-    }
-
-    private void addSymbol(ParserRuleContext node, ParserRuleContext entireRule, String tokenName, SymbolKind symbolKind, StackAction stackAction) {
-
-        DocumentSymbol symbol = createSymbolInformation(tokenName, symbolKind, createRange(node));
-
-        if(node.getText().startsWith("\n")) {
-            Range range = symbol.getRange();
-            range.getStart().setLine(range.getStart().getLine()+1);
-            range.getEnd().setLine(range.getEnd().getLine()+1);
-        }
-        if(entireRule != null) {
-            Range range = createRange(entireRule);
-            symbol.setRange(range);
-        }
-        if(!symbolStack.isEmpty()) {
-            List<DocumentSymbol> children = symbolStack.peek().getChildren();
-            if(children == null) {
-                symbolStack.peek().setChildren(new ArrayList<>());
-                children = symbolStack.peek().getChildren();
-            }
-            children.add(symbol);
-        } else {
-            symbols.add(Either.forRight(symbol));
-        }
-        if(stackAction == StackAction.PUSH) {
-            symbolStack.push(symbol);
-        }
-    }
-
 
     public String getArchetypeId() {
         return archetypeId;
