@@ -67,11 +67,25 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
         
     }
 
+    private Range createRange(ParserRuleContext ctx, TerminalNode fallback) {
+        Position start = new Position(ctx.getStart().getLine()-1, ctx.getStart().getCharPositionInLine());
+        Position end = new Position(ctx.getStop().getLine()-1, ctx.getStop().getCharPositionInLine());
+        if(start.equals(end)) {
+            //not good :)
+            return createRange(fallback.getSymbol());
+        }
+        return new Range(start, end);
+        //}
+    }
+
     private Range createRange(ParserRuleContext ctx) {
-        return new Range(
-                new Position(ctx.getStart().getLine()-1, ctx.getStart().getCharPositionInLine()),
-                new Position(ctx.getStop().getLine()-1, ctx.getStop().getCharPositionInLine())
-        );
+        Position start = new Position(ctx.getStart().getLine()-1, ctx.getStart().getCharPositionInLine());
+        Position end = new Position(ctx.getStop().getLine()-1, ctx.getStop().getCharPositionInLine());
+        if(start.equals(end)) {
+            //not good :)
+            end.setCharacter(end.getCharacter()+1);
+        }
+        return new Range(start, end);
     }
 
     private Range createRange(Token symbol) {
@@ -301,6 +315,8 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
             addSymbol(ctx.ADL_PATH(), ctx, ctx.ADL_PATH().getText(), SymbolKind.Field, StackAction.PUSH);
         } else if(ctx.attribute_id() != null) {
             addSymbol(ctx.attribute_id().ALPHA_LC_ID(), ctx, ctx.attribute_id().getText(), SymbolKind.Field, StackAction.PUSH);
+        } else {
+            throw new RuntimeException("unexpected code path");
         }
         addFoldingRange(ctx);
     }
@@ -419,7 +435,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
                 range.getEnd().setLine(range.getEnd().getLine()+1);
             }
             if(entireRule != null) {
-                Range range = createRange(entireRule);
+                Range range = createRange(entireRule, node);
                 symbol.setRange(range);
             }
             if(!symbolStack.isEmpty()) {
