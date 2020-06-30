@@ -6,6 +6,7 @@ import com.google.gson.JsonPrimitive;
 import com.nedap.archie.antlr.errors.ANTLRParserErrors;
 import com.nedap.archie.archetypevalidator.ErrorType;
 import com.nedap.archie.archetypevalidator.ValidationResult;
+import com.nedap.openehr.lsp.commands.AddTerminologyCommmand;
 import com.nedap.openehr.lsp.document.ADLVersion;
 import com.nedap.openehr.lsp.document.DocumentInformation;
 import com.nedap.openehr.lsp.repository.BroadcastingArchetypeRepository;
@@ -18,7 +19,6 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
-import org.eclipse.lsp4j.util.Positions;
 
 import java.io.File;
 import java.net.URI;
@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import java.util.stream.DoubleStream;
 
 public class ADL2TextDocumentService implements TextDocumentService, WorkspaceService {
 

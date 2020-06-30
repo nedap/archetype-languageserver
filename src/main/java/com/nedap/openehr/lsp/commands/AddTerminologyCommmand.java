@@ -1,7 +1,8 @@
-package com.nedap.openehr.lsp;
+package com.nedap.openehr.lsp.commands;
 
 import com.google.common.collect.Lists;
 import com.google.gson.JsonPrimitive;
+import com.nedap.openehr.lsp.ADL2TextDocumentService;
 import com.nedap.openehr.lsp.document.DocumentInformation;
 import com.nedap.openehr.lsp.repository.BroadcastingArchetypeRepository;
 import org.eclipse.lsp4j.DocumentSymbol;
