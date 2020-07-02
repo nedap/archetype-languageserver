@@ -8,6 +8,7 @@ import com.nedap.archie.archetypevalidator.ErrorType;
 import com.nedap.archie.archetypevalidator.ValidationResult;
 import com.nedap.openehr.lsp.commands.AddTerminologyCommmand;
 import com.nedap.openehr.lsp.commands.ConvertToOptCommand;
+import com.nedap.openehr.lsp.commands.GenerateExampleCommand;
 import com.nedap.openehr.lsp.document.ADLVersion;
 import com.nedap.openehr.lsp.document.DocumentInformation;
 import com.nedap.openehr.lsp.repository.BroadcastingArchetypeRepository;
@@ -38,6 +39,10 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
     public static final String WRITE_OPT_ADL = CodeActionKind.Source + ".opt.adl";
     public static final String WRITE_OPT_JSON = CodeActionKind.Source + ".opt.json";
     public static final String WRITE_OPT_XML = CodeActionKind.Source + ".opt.xml";
+    public static final String WRITE_EXAMPLE_JSON = CodeActionKind.Source + ".example.json";
+    public static final String WRITE_EXAMPLE_FLAT_JSON = CodeActionKind.Source + ".example.flat_json";
+    public static final String WRITE_EXAMPLE_XML = CodeActionKind.Source + ".example.xml";
+    public static final String WRITE_EXAMPLE_COMMAND = CodeActionKind.Source + ".example";
 
     private LanguageClient remoteProxy;
     private final BroadcastingArchetypeRepository storage = new BroadcastingArchetypeRepository(this);
@@ -259,7 +264,16 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
                 for(String format:Lists.newArrayList("adl", "json", "xml")) {
                     CodeAction convertToOpt = new CodeAction("Convert to Opt (" +format + ")");
                     convertToOpt.setKind(WRITE_OPT_COMMAND + "." + format);
-                    Command c = new Command("add to terminology", WRITE_OPT_COMMAND);
+                    Command c = new Command("Write OPT", WRITE_OPT_COMMAND);
+                    c.setArguments(Lists.newArrayList(params.getTextDocument().getUri(), format));
+                    convertToOpt.setCommand(c);
+                    codeActions.add(Either.<Command, CodeAction>forRight(convertToOpt));
+                }
+
+                for(String format:Lists.newArrayList("json", "flat_json", "xml")) {
+                    CodeAction convertToOpt = new CodeAction("Generate example (" +format + ")");
+                    convertToOpt.setKind(WRITE_EXAMPLE_COMMAND + "." + format);
+                    Command c = new Command("Write example", WRITE_EXAMPLE_COMMAND);
                     c.setArguments(Lists.newArrayList(params.getTextDocument().getUri(), format));
                     convertToOpt.setCommand(c);
                     codeActions.add(Either.<Command, CodeAction>forRight(convertToOpt));
@@ -299,6 +313,9 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
                 break;
             case WRITE_OPT_COMMAND:
                 new ConvertToOptCommand(storage, this, params).apply();
+                break;
+            case WRITE_EXAMPLE_COMMAND:
+                new GenerateExampleCommand(storage, this, params).apply();
                 break;
             default:
                 throw new UnsupportedOperationException("unknown command: " + params.getCommand());

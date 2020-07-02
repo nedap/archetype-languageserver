@@ -41,13 +41,17 @@ public class ADL2LanguageServer implements LanguageServer {
                 ADL2TextDocumentService.ADD_TO_TERMINOLOGY,
                 ADL2TextDocumentService.WRITE_OPT_ADL,
                 ADL2TextDocumentService.WRITE_OPT_JSON,
-                ADL2TextDocumentService.WRITE_OPT_XML
+                ADL2TextDocumentService.WRITE_OPT_XML,
+                ADL2TextDocumentService.WRITE_EXAMPLE_JSON,
+                ADL2TextDocumentService.WRITE_EXAMPLE_FLAT_JSON,
+                ADL2TextDocumentService.WRITE_EXAMPLE_XML
         )));
         capabilities.setExecuteCommandProvider(new ExecuteCommandOptions(Lists.newArrayList(
                 ADL2TextDocumentService.ADL2_COMMAND,
                 ADL2TextDocumentService.ALL_ADL2_COMMAND,
                 ADL2TextDocumentService.ADD_TO_TERMINOLOGY,
-                ADL2TextDocumentService.WRITE_OPT_COMMAND
+                ADL2TextDocumentService.WRITE_OPT_COMMAND,
+                ADL2TextDocumentService.WRITE_EXAMPLE_COMMAND
                 )));
 
         ServerInfo serverInfo = new ServerInfo();
