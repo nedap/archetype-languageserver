@@ -7,6 +7,7 @@ import com.nedap.archie.antlr.errors.ANTLRParserErrors;
 import com.nedap.archie.archetypevalidator.ErrorType;
 import com.nedap.archie.archetypevalidator.ValidationResult;
 import com.nedap.openehr.lsp.commands.AddTerminologyCommmand;
+import com.nedap.openehr.lsp.commands.ConvertToOptCommand;
 import com.nedap.openehr.lsp.document.ADLVersion;
 import com.nedap.openehr.lsp.document.DocumentInformation;
 import com.nedap.openehr.lsp.repository.BroadcastingArchetypeRepository;
@@ -33,6 +34,10 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
     public static final String ADL2_COMMAND = CodeActionKind.Source + ".convert.adl14";
     public static final String ALL_ADL2_COMMAND = CodeActionKind.Source + ".convert.alladl14";
     public static final String ADD_TO_TERMINOLOGY = CodeActionKind.QuickFix + ".add_to_terminology";
+    public static final String WRITE_OPT_COMMAND = CodeActionKind.Source + ".opt";
+    public static final String WRITE_OPT_ADL = CodeActionKind.Source + ".opt.adl";
+    public static final String WRITE_OPT_JSON = CodeActionKind.Source + ".opt.json";
+    public static final String WRITE_OPT_XML = CodeActionKind.Source + ".opt.xml";
 
     private LanguageClient remoteProxy;
     private final BroadcastingArchetypeRepository storage = new BroadcastingArchetypeRepository(this);
@@ -251,7 +256,14 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
                     action.setCommand(c);
                     return Either.<Command, CodeAction>forRight(action);
                 }).collect(Collectors.toList());
-
+                for(String format:Lists.newArrayList("adl", "json", "xml")) {
+                    CodeAction convertToOpt = new CodeAction("Convert to Opt (" +format + ")");
+                    convertToOpt.setKind(WRITE_OPT_COMMAND + "." + format);
+                    Command c = new Command("add to terminology", WRITE_OPT_COMMAND);
+                    c.setArguments(Lists.newArrayList(params.getTextDocument().getUri(), format));
+                    convertToOpt.setCommand(c);
+                    codeActions.add(Either.<Command, CodeAction>forRight(convertToOpt));
+                }
                 return CompletableFuture.completedFuture(codeActions);
             }
         }
@@ -271,14 +283,25 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
      */
     @JsonRequest
     public CompletableFuture<Object> executeCommand(ExecuteCommandParams params) {
-        if(params.getCommand().equalsIgnoreCase(ADL2_COMMAND)) {
-            String documentUri = ((JsonPrimitive) params.getArguments().get(0)).getAsString();
-            storage.convertAdl14(documentUri);
-        } else if (params.getCommand().equalsIgnoreCase(ALL_ADL2_COMMAND)) {
-            String documentUri = ((JsonPrimitive) params.getArguments().get(0)).getAsString();
-            storage.convertAllAdl14(documentUri);
-        } else if (params.getCommand().equalsIgnoreCase(ADD_TO_TERMINOLOGY)) {
-            new AddTerminologyCommmand(storage, this, params).apply();
+        switch(params.getCommand()) {
+            case ADL2_COMMAND: {
+                String documentUri = ((JsonPrimitive) params.getArguments().get(0)).getAsString();
+                storage.convertAdl14(documentUri);
+                break;
+            }
+            case ALL_ADL2_COMMAND: {
+                String documentUri = ((JsonPrimitive) params.getArguments().get(0)).getAsString();
+                storage.convertAllAdl14(documentUri);
+                break;
+            }
+            case ADD_TO_TERMINOLOGY:
+                new AddTerminologyCommmand(storage, this, params).apply();
+                break;
+            case WRITE_OPT_COMMAND:
+                new ConvertToOptCommand(storage, this, params).apply();
+                break;
+            default:
+                throw new UnsupportedOperationException("unknown command: " + params.getCommand());
         }
         return CompletableFuture.completedFuture(null);
     }

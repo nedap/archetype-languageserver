@@ -38,11 +38,16 @@ public class ADL2LanguageServer implements LanguageServer {
         capabilities.setCodeActionProvider(new CodeActionOptions(Lists.newArrayList(
                 ADL2TextDocumentService.ADL2_COMMAND,
                 ADL2TextDocumentService.ALL_ADL2_COMMAND,
-                ADL2TextDocumentService.ADD_TO_TERMINOLOGY)));
+                ADL2TextDocumentService.ADD_TO_TERMINOLOGY,
+                ADL2TextDocumentService.WRITE_OPT_ADL,
+                ADL2TextDocumentService.WRITE_OPT_JSON,
+                ADL2TextDocumentService.WRITE_OPT_XML
+        )));
         capabilities.setExecuteCommandProvider(new ExecuteCommandOptions(Lists.newArrayList(
                 ADL2TextDocumentService.ADL2_COMMAND,
                 ADL2TextDocumentService.ALL_ADL2_COMMAND,
-                ADL2TextDocumentService.ADD_TO_TERMINOLOGY
+                ADL2TextDocumentService.ADD_TO_TERMINOLOGY,
+                ADL2TextDocumentService.WRITE_OPT_COMMAND
                 )));
 
         ServerInfo serverInfo = new ServerInfo();

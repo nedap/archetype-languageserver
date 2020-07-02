@@ -55,7 +55,7 @@ public class ADL14ConvertingStorage {
             if(result.getException() != null) {
                 textService.pushDiagnostics(new TextDocumentIdentifier(documentUri), result.getException());
             } else {
-                String newPath = documentUri.substring(0, documentUri.lastIndexOf("/")) + "/out/" + result.getArchetypeId() + ".adls";
+                String newPath = documentUri.substring(0, documentUri.lastIndexOf("/")) + "/adl2/" + result.getArchetypeId() + ".adls";
                 textService.writeFile(newPath, "ADL2 conversion of " + result.getArchetypeId(), ADLArchetypeSerializer.serialize(result.getArchetype()));
             }
         }
