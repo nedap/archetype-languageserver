@@ -28,6 +28,7 @@ public class DocumentInformation {
                                List<FoldingRange> foldingRanges,
                                List<DocumentLink> documentLinks) {
         this.archetypeId = archetypeId;
+        this.adlVersion = adlVersion;
         this.errors = errors;
         this.symbols = symbols;
         this.foldingRanges = foldingRanges;
