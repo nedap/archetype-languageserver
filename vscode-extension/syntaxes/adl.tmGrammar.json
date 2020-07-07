@@ -37,7 +37,7 @@
 		},
 		"sections": {
 			"name": "markup.heading",
-			"match": "(archetype|template|operational_template|template_overlay|terminology|ontology|concept|language|specialise|description)"
+			"match": "(archetype|template|operational_template|template_overlay|terminology|ontology|component_terminologies|concept|language|specialise|description)"
 		},
 		"odinStart": {
 			"name": "meta.structure.odin.start",
