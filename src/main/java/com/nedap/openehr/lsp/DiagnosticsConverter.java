@@ -6,8 +6,10 @@ import com.nedap.archie.aom.ArchetypeModelObject;
 import com.nedap.archie.archetypevalidator.ValidationMessage;
 import com.nedap.archie.archetypevalidator.ValidationResult;
 import com.nedap.archie.query.AOMPathQuery;
+import com.nedap.openehr.lsp.document.DocumentInformation;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
+import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
@@ -27,6 +29,7 @@ public class DiagnosticsConverter {
                 new Position(0, 1),
                 new Position(0, 50)
         );
+        exception.printStackTrace();
         diagnostics.add(new Diagnostic(range, exception.getMessage() == null ? exception.toString() : exception.getMessage(),  DiagnosticSeverity.Error, "Error processing file"));
         diagnosticsParams.setDiagnostics(diagnostics);
         setBasicDiagnostics(document, diagnosticsParams);
@@ -61,35 +64,19 @@ public class DiagnosticsConverter {
         return diagnosticsParams;
     }
 
-    public static PublishDiagnosticsParams createDiagnosticsFromValidationResult(TextDocumentIdentifier textDocumentItem, ValidationResult validationResult) {
+    public static PublishDiagnosticsParams createDiagnosticsFromValidationResult(TextDocumentIdentifier textDocumentItem, DocumentInformation docInfo, ValidationResult validationResult) {
         PublishDiagnosticsParams diagnosticsParams = new PublishDiagnosticsParams();
         List<Diagnostic> diagnostics = new ArrayList<>();
 
         if(validationResult != null) {
             if(validationResult.hasWarningsOrErrors()) {
                 for(ValidationMessage message:validationResult.getErrors()) {
-                    ArchetypeModelObject withLocation = null;
+                    DocumentSymbol documentSymbol = null;
                     if(message.getPathInArchetype() != null) {
-                        try {
-
-                            List<ArchetypeModelObject> found = new AOMPathQuery(message.getPathInArchetype()).findAllMatchingPredicate(validationResult.getSourceArchetype().getDefinition(),
-                                    (o) -> o instanceof ArchetypeModelObject && ((ArchetypeModelObject) o).getStartLine() != null);
-                            if(found == null || found.isEmpty()) {
-                                withLocation = null;
-                            } else {
-                                //the deepest found path!
-                                withLocation = found.get(found.size()-1);
-                            }
-                        } catch (Exception e) {
-                            //we really don't care, but log just in case
-                            e.printStackTrace();
-                        }
+                        documentSymbol = docInfo.lookupCObjectOrAttribute(message.getPathInArchetype());
                     }
-                    if(withLocation != null) {
-                        Range range = new Range(
-                                new Position(withLocation.getStartLine()-1, withLocation.getStartCharInLine()),
-                                new Position(withLocation.getStartLine()-1, withLocation.getStartCharInLine() + withLocation.getTokenLength())
-                        );
+                    if(documentSymbol != null) {
+                        Range range = documentSymbol.getSelectionRange();
                         diagnostics.add(new Diagnostic(range, toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
                     } else {
                         Range range = new Range(

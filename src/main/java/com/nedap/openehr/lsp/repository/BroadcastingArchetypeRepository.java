@@ -173,7 +173,8 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
     public void setValidationResult(ValidationResult result) {
         super.setValidationResult(result);
         TextDocumentItem textDocumentItem = documentsByArchetypeId.get(result.getArchetypeId());
-        textDocumentService.pushDiagnostics(new VersionedTextDocumentIdentifier(textDocumentItem.getUri(), textDocumentItem.getVersion()), result);
+        DocumentInformation documentInformation = getDocumentInformation(textDocumentItem.getUri());
+        textDocumentService.pushDiagnostics(new VersionedTextDocumentIdentifier(textDocumentItem.getUri(), textDocumentItem.getVersion()), documentInformation, result);
         //new validation result received! Broadcast it :)
 
     }

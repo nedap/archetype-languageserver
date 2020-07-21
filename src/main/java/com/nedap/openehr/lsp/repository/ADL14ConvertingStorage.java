@@ -38,7 +38,7 @@ public class ADL14ConvertingStorage {
         if(adl14Parser.getErrors().hasErrors()) {
             textService.pushDiagnostics(new VersionedTextDocumentIdentifier(item.getUri(), item.getVersion()),  adl14Parser.getErrors());
         } else {
-            textService.pushDiagnostics(new VersionedTextDocumentIdentifier(item.getUri(), item.getVersion()),  new ValidationResult(archetype));
+            textService.pushDiagnostics(new VersionedTextDocumentIdentifier(item.getUri(), item.getVersion()),  null, new ValidationResult(archetype));
             adl14Files.put(item.getUri(), archetype);
         }
     }

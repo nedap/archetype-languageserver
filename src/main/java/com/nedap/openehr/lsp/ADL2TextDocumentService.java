@@ -122,8 +122,8 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
 
 
 
-    public void pushDiagnostics(TextDocumentIdentifier documentId, ValidationResult validationResult) {
-        PublishDiagnosticsParams diagnosticsParams = DiagnosticsConverter.createDiagnosticsFromValidationResult(documentId, validationResult);
+    public void pushDiagnostics(TextDocumentIdentifier documentId, DocumentInformation docInfo, ValidationResult validationResult) {
+        PublishDiagnosticsParams diagnosticsParams = DiagnosticsConverter.createDiagnosticsFromValidationResult(documentId, docInfo, validationResult);
         storage.storeDiagnostics(documentId, diagnosticsParams.getDiagnostics());
         // diagnosticsParams.setVersion(documentId.getVersion());
         remoteProxy.publishDiagnostics(diagnosticsParams);

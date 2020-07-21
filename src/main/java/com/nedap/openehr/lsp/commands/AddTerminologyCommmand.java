@@ -22,6 +22,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.nedap.openehr.lsp.utils.DocumentSymbolUtils.getDocumentSymbolOrThrow;
+
 public class AddTerminologyCommmand {
     private final BroadcastingArchetypeRepository storage;
     private final ADL2TextDocumentService textDocumentService;
@@ -70,14 +72,6 @@ public class AddTerminologyCommmand {
         }
         this.textDocumentService.applyEdits(documentUri, 0, "Add missing terminology code", editCommands);
 
-    }
-
-    private DocumentSymbol getDocumentSymbolOrThrow(List<DocumentSymbol> symbols, String name) {
-        Optional<DocumentSymbol> symbol = symbols.stream().filter(s -> s.getName().equalsIgnoreCase(name)).findAny();
-        if (!symbol.isPresent()) {
-            throw new RuntimeException(name + " symbol not found");
-        }
-        return symbol.get();
     }
 
 }

@@ -86,7 +86,7 @@ public class HoverInfo {
             flattenedObject = definition;
         }
         MultiplicityInterval occurrences = flattenedObject.effectiveOccurrences(metaModels::referenceModelPropMultiplicity);
-        content += "\n occurrences: " + occurrences.toString();
+        content += "\n occurrences: " + occurrences;
 
         content += "\n\n path: " + definition.getPath();
 
