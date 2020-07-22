@@ -67,7 +67,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
 
     }
 
-    Pattern adl14Pattern = Pattern.compile("[^\n]+adl_version\\s*=\\s*1\\.4.*");
+    private static final Pattern adl14Pattern = Pattern.compile("[^\n]+adl_version\\s*=\\s*1\\.4.*");
 
     /**
      * Handles a changed textdocument. Does:
@@ -82,7 +82,8 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
         }
         boolean adl14 = false;
         if(textDocumentItem.getText().contains("\n")) {
-            String firstLine = textDocumentItem.getText().substring(0, textDocumentItem.getText().indexOf("\n"));
+            int firstLineEnding = Math.min(textDocumentItem.getText().indexOf("\n"), textDocumentItem.getText().indexOf("\r"));
+            String firstLine = textDocumentItem.getText().substring(0, firstLineEnding);
             adl14 = adl14Pattern.matcher(firstLine).matches();
         }
         if(adl14) {

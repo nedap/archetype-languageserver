@@ -52,7 +52,7 @@ public class DocumentInformation {
         this(archetypeId, adlVersion, errors, symbols, foldingRanges, documentLinks, new CodeRangeIndex<>());
     }
 
-    public DocumentInformation(String archetypeId, ADLVersion version2, ANTLRParserErrors errors, List<Either<SymbolInformation, DocumentSymbol>> symbols, List<FoldingRange> foldingRanges, List<DocumentLink> documentLinks, CodeRangeIndex<DocumentSymbol> cTerminologyCodes) {
+    public DocumentInformation(String archetypeId, ADLVersion adlVersion, ANTLRParserErrors errors, List<Either<SymbolInformation, DocumentSymbol>> symbols, List<FoldingRange> foldingRanges, List<DocumentLink> documentLinks, CodeRangeIndex<DocumentSymbol> cTerminologyCodes) {
         this.archetypeId = archetypeId;
         this.adlVersion = adlVersion;
         this.errors = errors;

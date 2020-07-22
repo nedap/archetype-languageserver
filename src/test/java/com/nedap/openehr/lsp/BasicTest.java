@@ -15,6 +15,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -107,5 +109,69 @@ public class BasicTest {
         assertEquals(new Position(21, 25), diagnostic.getRange().getEnd());
         assertTrue(diagnostic.getMessage().contains("WRONG"));
         assertTrue(diagnostic.getCode().getLeft().contains("VCORM"));
+    }
+
+    @Test
+    public void adl14() throws Exception {
+        openResource("adl14_valid.adl");
+        System.out.println(testClient.getDiagnostics());
+        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("uri").getDiagnostics();
+        assertTrue(diagnostics.isEmpty());
+        CompletableFuture<List<Either<Command, CodeAction>>> codeActionsFuture = adl2LanguageServer.getTextDocumentService().codeAction(new CodeActionParams(new TextDocumentIdentifier("uri"), new Range(new Position(1, 1), new Position(1, 1)), new CodeActionContext()));
+        List<Either<Command, CodeAction>> codeActions = codeActionsFuture.get();
+        System.out.println(codeActions);
+        assertEquals(2, codeActions.size());
+    }
+
+    @Test
+    public void adl14WindowsFileEndings() throws Exception {
+        DidOpenTextDocumentParams didOpenTextDocumentParams = new DidOpenTextDocumentParams();
+        String archetype;
+        try (InputStream stream = getClass().getResourceAsStream("adl14_valid.adl")) {
+            archetype = IOUtils.toString(stream, StandardCharsets.UTF_8.name());
+        }
+        archetype = ensureWindowsLineEneingd(archetype);
+
+        didOpenTextDocumentParams.setTextDocument(new TextDocumentItem("uri", "ADL", 1, archetype));
+        textDocumentService.didOpen(didOpenTextDocumentParams);
+        System.out.println(testClient.getDiagnostics());
+        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("uri").getDiagnostics();
+        assertTrue(diagnostics.isEmpty());
+        CompletableFuture<List<Either<Command, CodeAction>>> codeActionsFuture = adl2LanguageServer.getTextDocumentService().codeAction(new CodeActionParams(new TextDocumentIdentifier("uri"), new Range(new Position(1, 1), new Position(1, 1)), new CodeActionContext()));
+        List<Either<Command, CodeAction>> codeActions = codeActionsFuture.get();
+        System.out.println(codeActions);
+        assertEquals(2, codeActions.size());
+
+    }
+
+    @Test
+    public void adl14LinuxFileEndings() throws Exception {
+        DidOpenTextDocumentParams didOpenTextDocumentParams = new DidOpenTextDocumentParams();
+        String archetype;
+        try (InputStream stream = getClass().getResourceAsStream("adl14_valid.adl")) {
+            archetype = IOUtils.toString(stream, StandardCharsets.UTF_8.name());
+        }
+        archetype = normalizeLineEndings(archetype);
+
+        didOpenTextDocumentParams.setTextDocument(new TextDocumentItem("uri", "ADL", 1, archetype));
+        textDocumentService.didOpen(didOpenTextDocumentParams);
+        System.out.println(testClient.getDiagnostics());
+        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("uri").getDiagnostics();
+        assertTrue(diagnostics.isEmpty());
+        CompletableFuture<List<Either<Command, CodeAction>>> codeActionsFuture = adl2LanguageServer.getTextDocumentService().codeAction(new CodeActionParams(new TextDocumentIdentifier("uri"), new Range(new Position(1, 1), new Position(1, 1)), new CodeActionContext()));
+        List<Either<Command, CodeAction>> codeActions = codeActionsFuture.get();
+        System.out.println(codeActions);
+        assertEquals(2, codeActions.size());
+
+    }
+
+    public static String ensureWindowsLineEneingd(String val) {
+        String normalized = normalizeLineEndings(val);
+        return normalized.replaceAll("\n", "\r\n");
+    }
+
+    public static String normalizeLineEndings(String val) {
+        return val.replace("\r\n", "\n")
+                .replace("\r", "\n");
     }
 }
