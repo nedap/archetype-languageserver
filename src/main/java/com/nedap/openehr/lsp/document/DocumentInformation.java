@@ -23,6 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DocumentInformation {
+
     private String archetypeId;
     private ADLVersion adlVersion;
     private ANTLRParserErrors errors;
@@ -32,17 +33,23 @@ public class DocumentInformation {
     private DocumentLinks documentLinks;
     /** the current list of diagnostics for this archetype file */
     private List<Diagnostic> diagnostics;
+    private final CodeRangeIndex<DocumentSymbol> cTerminologyCodes;
 
     public DocumentInformation(String archetypeId, ADLVersion adlVersion, ANTLRParserErrors errors,
                                List<Either<SymbolInformation, DocumentSymbol>> symbols,
                                List<FoldingRange> foldingRanges,
                                List<DocumentLink> documentLinks) {
+        this(archetypeId, adlVersion, errors, symbols, foldingRanges, documentLinks, new CodeRangeIndex<>());
+    }
+
+    public DocumentInformation(String archetypeId, ADLVersion version2, ANTLRParserErrors errors, List<Either<SymbolInformation, DocumentSymbol>> symbols, List<FoldingRange> foldingRanges, List<DocumentLink> documentLinks, CodeRangeIndex<DocumentSymbol> cTerminologyCodes) {
         this.archetypeId = archetypeId;
         this.adlVersion = adlVersion;
         this.errors = errors;
         this.symbols = symbols;
         this.foldingRanges = foldingRanges;
         this.documentLinks = new DocumentLinks(documentLinks);
+        this.cTerminologyCodes = cTerminologyCodes;
     }
 
     public String getArchetypeId() {
@@ -134,16 +141,16 @@ public class DocumentInformation {
             }
             {
                 DocumentSymbol foundAttribute = findAttribute(currentSymbol, segment, pathSegments, i);
-                if(foundAttribute.getName().startsWith("/")) {
+                if (foundAttribute == null) {
+                    return returnResultSoFar ? currentSymbol : null;
+                } else if(foundAttribute.getName().startsWith("/")) {
                     //differential path. Skip a couple of path segments
                     int numberOfSegments = new APathQuery(foundAttribute.getName()).getPathSegments().size();
                     i = i + numberOfSegments - 1;
                     segment = pathSegments.get(i);
                 }
 
-                if (foundAttribute == null) {
-                    return returnResultSoFar ? currentSymbol : null;
-                }
+
                 currentSymbol = foundAttribute;
             }
 
@@ -165,8 +172,12 @@ public class DocumentInformation {
                 }
                 currentSymbol = foundCObject;
             } else {
+                if(i == pathSegments.size() -1) {
+                    //this just points at an attribute, that's ok.
+                    return returnCurrentSymbolIfPossible(returnResultSoFar, pathSegments, currentSymbol, i);
+                }
                 // let's hope it's size 1
-                if(currentSymbol.getChildren() == null || currentSymbol.getChildren().isEmpty()) {
+                else if(currentSymbol.getChildren() == null || currentSymbol.getChildren().isEmpty()) {
                     return returnCurrentSymbolIfPossible(returnResultSoFar, pathSegments, currentSymbol, i);
                 } else if(currentSymbol.getChildren().size() == 1) {
                     currentSymbol = currentSymbol.getChildren().get(0);
@@ -246,5 +257,9 @@ public class DocumentInformation {
             return currentSymbol;
         }
         return returnResultSoFar ? currentSymbol : null;
+    }
+
+    public CodeRangeIndex<DocumentSymbol> getcTerminologyCodes() {
+        return cTerminologyCodes;
     }
 }

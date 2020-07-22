@@ -122,7 +122,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                     if(language == null) {
                         language = "en";
                     }
-                    documentInformation.setHoverInfo(new HoverInfo(archetype, archetypeForTerms, language));
+                    documentInformation.setHoverInfo(new HoverInfo(documentInformation, archetype, archetypeForTerms, language));
                     SymbolNameFromTerminologyHelper.giveNames(documentInformation.getSymbols(), archetypeForTerms, language);
                     //diagnostics will now be pushed from within the invalidateArchetypesAndRecompile method
                 } catch (Exception ex) {

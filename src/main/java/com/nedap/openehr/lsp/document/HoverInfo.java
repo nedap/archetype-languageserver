@@ -19,10 +19,11 @@ import com.nedap.archie.aom.utils.AOMUtils;
 import com.nedap.archie.base.Cardinality;
 import com.nedap.archie.base.MultiplicityInterval;
 import com.nedap.archie.rminfo.MetaModels;
+import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.HoverParams;
 import org.eclipse.lsp4j.MarkupContent;
-import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 import org.openehr.bmm.core.BmmClass;
 import org.openehr.bmm.core.BmmProperty;
 import org.openehr.referencemodels.BuiltinReferenceModels;
@@ -45,34 +46,34 @@ public class HoverInfo {
 
     private MetaModels metaModels = BuiltinReferenceModels.getMetaModels();
 
-    public HoverInfo(Archetype sourceArchetype, Archetype archetypeForTerms, String language) {
+    public HoverInfo(DocumentInformation documentInformation, Archetype sourceArchetype, Archetype archetypeForTerms, String language) {
         this.language = language;
         metaModels.selectModel(sourceArchetype);
-        extractHoverInfo(sourceArchetype.getDefinition(), archetypeForTerms);
+        extractHoverInfo(documentInformation, sourceArchetype.getDefinition(), archetypeForTerms);
 
         if(sourceArchetype instanceof Template) {
             Template template = (Template) sourceArchetype;
             for(TemplateOverlay overlay:template.getTemplateOverlays()) {
-                extractHoverInfo(overlay.getDefinition(), archetypeForTerms);
+                extractHoverInfo(documentInformation, overlay.getDefinition(), archetypeForTerms);
             }
         }
 
     }
 
-    private void extractHoverInfo(CComplexObject definition, Archetype archetypeForTerms) {
+    private void extractHoverInfo(DocumentInformation documentInformation, CComplexObject definition, Archetype archetypeForTerms) {
         try {
-            getHoverInfoForCObject(definition, archetypeForTerms);
+            getHoverInfoForCObject(documentInformation, definition, archetypeForTerms);
         } catch (Exception e) {
             //just continue :)
             e.printStackTrace();
         }
 
         for(CAttribute attribute:definition.getAttributes()) {
-            extractHoverInfo(attribute, archetypeForTerms);
+            extractHoverInfo(documentInformation, attribute, archetypeForTerms);
         }
     }
 
-    private void getHoverInfoForCObject(CObject definition, Archetype archetypeForTerms) {
+    private void getHoverInfoForCObject(DocumentInformation documentInformation, CObject definition, Archetype archetypeForTerms) {
         ArchetypeTerm term = archetypeForTerms.getTerm(definition, language);
         String content;
         if(term != null) {
@@ -92,21 +93,21 @@ public class HoverInfo {
 
         Hover hover = new Hover();
         hover.setContents(new MarkupContent(MARKDOWN, content.toString()));
-        hoverRanges.addRange(
-                new Position(definition.getStartLine()-1, definition.getStartCharInLine()),
-                new Position(definition.getStartLine()-1, definition.getStartCharInLine() + definition.getTokenLength()),
-                hover);
+        Range range = getHoverRange(documentInformation, definition);
+        if(range != null) {
+            hoverRanges.addRange(range, hover);
+        }
     }
 
-    private void extractHoverInfo(CAttribute attribute, Archetype archetypeForTerms) {
+    private void extractHoverInfo(DocumentInformation documentInformation, CAttribute attribute, Archetype archetypeForTerms) {
         for(CObject object:attribute.getChildren()) {
             try {
                 if (object instanceof CComplexObject) {
-                    extractHoverInfo((CComplexObject) object, archetypeForTerms);
+                    extractHoverInfo(documentInformation, (CComplexObject) object, archetypeForTerms);
                 } else if (object instanceof CTerminologyCode) {
-                    extractHoverInfo((CTerminologyCode) object, archetypeForTerms);
+                    extractHoverInfo(documentInformation, (CTerminologyCode) object, archetypeForTerms);
                 } else if (object instanceof ArchetypeSlot) {
-                    getHoverInfoForCObject(object, archetypeForTerms);
+                    getHoverInfoForCObject(documentInformation, object, archetypeForTerms);
                 }//for the other primitives, hovers should not be important
             } catch (Exception e) {
                 //If this fails, fine, continue with the rest of the file!
@@ -114,9 +115,6 @@ public class HoverInfo {
             }
         }
         try {
-            if (attribute.getStartLine() == null) {
-                return;
-            }
             CAttribute flatAttribute = archetypeForTerms.itemAtPath(attribute.getPath());
             if (flatAttribute == null) {
                 flatAttribute = attribute;
@@ -162,17 +160,48 @@ public class HoverInfo {
             content.append("\n\n path: " + attribute.getPath());
             Hover hover = new Hover();
             hover.setContents(new MarkupContent(MARKDOWN, content.toString()));
-            hoverRanges.addRange(
-                    new Position(attribute.getStartLine() - 1, attribute.getStartCharInLine()),
-                    new Position(attribute.getStartLine() - 1, attribute.getStartCharInLine() + attribute.getTokenLength()),
-                    hover);
+            Range range = getHoverRange(documentInformation, attribute);
+            if(range != null) {
+                hoverRanges.addRange(range, hover);
+            }
         } catch (Exception e) {
             e.printStackTrace();//TODO: report to client?
         }
     }
 
-    private void extractHoverInfo(CTerminologyCode object, Archetype archetypeForTerms) {
-        List<TerminologyCodeWithArchetypeTerm> terms = getTerms(object, archetypeForTerms);
+    private Range getHoverRange(DocumentInformation documentInformation, CAttribute attribute) {
+        DocumentSymbol documentSymbol = documentInformation.lookupCObjectOrAttribute(attribute.path(), false);
+        if(documentSymbol == null) {
+            return null;
+        }
+        return documentSymbol.getSelectionRange();
+    }
+
+    private Range getHoverRange(DocumentInformation documentInformation, CObject cObject) {
+        DocumentSymbol documentSymbol = documentInformation.lookupCObjectOrAttribute(cObject.path(), false);
+        if(documentSymbol == null) {
+            return null;
+        }
+        return documentSymbol.getSelectionRange();
+    }
+
+    private void extractHoverInfo(DocumentInformation documentInformation, CTerminologyCode object, Archetype archetypeForTerms) {
+        DocumentSymbol documentSymbol = documentInformation.lookupCObjectOrAttribute(object.path(), true);//get the closest to an actual location
+
+        //the document symbol tree does not contain terminology codes. So use the separate index
+        //perhaps better to add two versions of the tree, one for internal and one for external use?
+        //anyway, this works and is fast.
+        DocumentSymbol terminologyCodeSymbol = documentInformation.getcTerminologyCodes().getFirstMatchAfter(
+                documentSymbol.getSelectionRange().getStart(),
+                d -> object.getConstraint().contains(d.getName()));
+
+
+        if(terminologyCodeSymbol == null) {
+            System.err.println("COULD NOT FIND DOCUMENT SYMBOL FOR CTERMINOLOGY CODE");
+            return;
+        }
+        List<TerminologyCodeWithArchetypeTerm> terms = getTerms(object, terminologyCodeSymbol, archetypeForTerms);
+
         if(terms != null) {
             StringBuilder content = new StringBuilder();
             if(object.getConstraint() != null && object.getConstraint().size() ==1 && AOMUtils.isValueSetCode(object.getConstraint().get(0))) {
@@ -201,42 +230,41 @@ public class HoverInfo {
             }
             Hover hover = new Hover();
             hover.setContents(new MarkupContent(MARKDOWN, content.toString()));
-            hoverRanges.addRange(
-                    new Position(object.getStartLine()-1, object.getStartCharInLine()),
-                    new Position(object.getStartLine()-1, object.getStartCharInLine() + object.getTokenLength()),
-                    hover);
+            Range range = terminologyCodeSymbol.getRange();
+            hoverRanges.addRange(range, hover);
         }
     }
 
-    public List<TerminologyCodeWithArchetypeTerm> getTerms(CTerminologyCode cTermCode, Archetype archetypeForTerms) {
+
+    public List<TerminologyCodeWithArchetypeTerm> getTerms(CTerminologyCode cTermCode, DocumentSymbol terminologyCode, Archetype archetypeForTerms) {
         List<TerminologyCodeWithArchetypeTerm> result = new ArrayList();
         ArchetypeTerminology terminology = archetypeForTerms.getTerminology(cTermCode);
         String language = ArchieLanguageConfiguration.getMeaningAndDescriptionLanguage();
         String defaultLanguage = ArchieLanguageConfiguration.getDefaultMeaningAndDescriptionLanguage();
-        for (String constraint : cTermCode.getConstraint()) {
-            if (constraint.startsWith("at")) {
-                ArchetypeTerm termDefinition = terminology.getTermDefinition(language, constraint);
-                if (termDefinition == null) {
-                    termDefinition = terminology.getTermDefinition(defaultLanguage, constraint);
-                }
-                if (termDefinition != null) {
-                    result.add(new TerminologyCodeWithArchetypeTerm(constraint, termDefinition));
-                }
-            } else if (constraint.startsWith("ac")) {
-                ValueSet acValueSet = terminology.getValueSets().get(constraint);
-                if (acValueSet != null) {
-                    for (String atCode : acValueSet.getMembers()) {
-                        ArchetypeTerm termDefinition = terminology.getTermDefinition(language, atCode);
-                        if (termDefinition == null) {
-                            termDefinition = terminology.getTermDefinition(defaultLanguage, atCode);
-                        }
-                        if (termDefinition != null) {
-                            result.add(new TerminologyCodeWithArchetypeTerm(atCode, termDefinition));
-                        }
+        String constraint = terminologyCode.getName();
+        if (constraint.startsWith("at")) {
+            ArchetypeTerm termDefinition = terminology.getTermDefinition(language, constraint);
+            if (termDefinition == null) {
+                termDefinition = terminology.getTermDefinition(defaultLanguage, constraint);
+            }
+            if (termDefinition != null) {
+                result.add(new TerminologyCodeWithArchetypeTerm(constraint, termDefinition));
+            }
+        } else if (constraint.startsWith("ac")) {
+            ValueSet acValueSet = terminology.getValueSets().get(constraint);
+            if (acValueSet != null) {
+                for (String atCode : acValueSet.getMembers()) {
+                    ArchetypeTerm termDefinition = terminology.getTermDefinition(language, atCode);
+                    if (termDefinition == null) {
+                        termDefinition = terminology.getTermDefinition(defaultLanguage, atCode);
+                    }
+                    if (termDefinition != null) {
+                        result.add(new TerminologyCodeWithArchetypeTerm(atCode, termDefinition));
                     }
                 }
             }
         }
+
         return result;
     }
 }

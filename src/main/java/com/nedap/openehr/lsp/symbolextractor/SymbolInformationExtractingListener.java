@@ -3,6 +3,7 @@ package com.nedap.openehr.lsp.symbolextractor;
 import com.nedap.archie.adlparser.antlr.AdlBaseListener;
 import com.nedap.archie.adlparser.antlr.AdlLexer;
 import com.nedap.archie.adlparser.antlr.AdlParser;
+import com.nedap.openehr.lsp.document.CodeRangeIndex;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -10,6 +11,7 @@ import org.eclipse.lsp4j.DocumentLink;
 import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.FoldingRange;
 import org.eclipse.lsp4j.LocationLink;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -30,6 +32,8 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     private List<FoldingRange> foldingRanges = new ArrayList<>();
 
     private Map<String, List<LocationLink>> idCodeToTerminologyLocations = new ConcurrentHashMap<>();
+
+    private CodeRangeIndex<DocumentSymbol> cTerminologyCodes = new CodeRangeIndex<>();
 
     private DocumentSymbolStack stack = new DocumentSymbolStack();
 
@@ -301,6 +305,31 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
         popStack();
     }
 
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override public void enterC_terminology_code(AdlParser.C_terminology_codeContext ctx) {
+        String name = null;
+        if(ctx.AC_CODE() != null) {
+            name = ctx.AC_CODE().getText();
+        } else if (ctx.AT_CODE() != null) {
+            name = ctx.AT_CODE().getText();
+        }
+        if(name != null) {
+            Range range = createRange(ctx);
+            cTerminologyCodes.addRange(range, stack.createSymbolInformation(name, SymbolKind.Constant, range));
+        }
+    }
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override public void exitC_terminology_code(AdlParser.C_terminology_codeContext ctx) { }
+
     /**
      * An odin &lt; ... &gt; block
      */
@@ -378,5 +407,9 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
 
     public void setIdCodeToTerminologyLocations(Map<String, List<LocationLink>> idCodeToTerminologyLocations) {
         this.idCodeToTerminologyLocations = idCodeToTerminologyLocations;
+    }
+
+    public CodeRangeIndex<DocumentSymbol> getCTerminologyCodes() {
+        return cTerminologyCodes;
     }
 }

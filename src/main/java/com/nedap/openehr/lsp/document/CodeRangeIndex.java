@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -36,6 +37,17 @@ public class CodeRangeIndex<T> {
             // too large or in a hole
             return null;
         }
+    }
+
+    public T getFirstMatchAfter(Position position, Predicate<T> filter) {
+        Map.Entry<Position, RangeWithContent<T>> entry = index.ceilingEntry(position);
+        while(entry != null && !filter.test(entry.getValue().getContent())) {
+            entry = index.higherEntry(entry.getKey());
+        }
+        if(entry == null) {
+            return null;
+        }
+        return entry.getValue().getContent();
     }
 
     public void addRange(Range range, T content) {
