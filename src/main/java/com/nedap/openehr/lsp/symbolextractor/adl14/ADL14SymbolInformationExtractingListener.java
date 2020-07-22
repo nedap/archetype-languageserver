@@ -3,6 +3,7 @@ package com.nedap.openehr.lsp.symbolextractor.adl14;
 import com.nedap.archie.adlparser.antlr.Adl14BaseListener;
 import com.nedap.archie.adlparser.antlr.Adl14Lexer;
 import com.nedap.archie.adlparser.antlr.Adl14Parser;
+import com.nedap.openehr.lsp.document.DocumentInformation;
 import com.nedap.openehr.lsp.symbolextractor.StackAction;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -135,7 +136,7 @@ public class ADL14SymbolInformationExtractingListener extends Adl14BaseListener 
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterSpecialization_section(Adl14Parser.Specialization_sectionContext ctx) {
-        addSymbol(ctx.SYM_SPECIALIZE(), ctx, "specialization section", SymbolKind.Module, StackAction.PUSH);
+        addSymbol(ctx.SYM_SPECIALIZE(), ctx, DocumentInformation.SPECIALISATION_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         TerminalNode terminalNode = ctx.archetype_ref().ARCHETYPE_HRID();
         if(terminalNode == null) {
             terminalNode = ctx.archetype_ref().ARCHETYPE_REF();
@@ -156,7 +157,7 @@ public class ADL14SymbolInformationExtractingListener extends Adl14BaseListener 
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterLanguage_section(Adl14Parser.Language_sectionContext ctx) {
-        addSymbol(ctx.SYM_LANGUAGE(), ctx, "language section", SymbolKind.Module, StackAction.PUSH);
+        addSymbol(ctx.SYM_LANGUAGE(), ctx, DocumentInformation.TERMINOLOGY_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
     /**
@@ -173,7 +174,7 @@ public class ADL14SymbolInformationExtractingListener extends Adl14BaseListener 
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterDescription_section(Adl14Parser.Description_sectionContext ctx) {
-        addSymbol(ctx.SYM_DESCRIPTION(), ctx, "description section", SymbolKind.Module, StackAction.PUSH);
+        addSymbol(ctx.SYM_DESCRIPTION(), ctx, DocumentInformation.DESCRIPTION_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
 
@@ -195,7 +196,7 @@ public class ADL14SymbolInformationExtractingListener extends Adl14BaseListener 
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterDefinition_section(Adl14Parser.Definition_sectionContext ctx) {
-        addSymbol(ctx.SYM_DEFINITION(), ctx, "definition section", SymbolKind.Module, StackAction.PUSH);
+        addSymbol(ctx.SYM_DEFINITION(), ctx, DocumentInformation.DEFINITION_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
     /**
@@ -212,7 +213,7 @@ public class ADL14SymbolInformationExtractingListener extends Adl14BaseListener 
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterRules_section(Adl14Parser.Rules_sectionContext ctx) {
-        addSymbol(ctx.SYM_RULES(), ctx, "rules section", SymbolKind.Module, StackAction.PUSH);
+        addSymbol(ctx.SYM_RULES(), ctx, DocumentInformation.RULES_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
 
@@ -226,7 +227,7 @@ public class ADL14SymbolInformationExtractingListener extends Adl14BaseListener 
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterTerminology_section(Adl14Parser.Terminology_sectionContext ctx) {
-        addSymbol(ctx.SYM_TERMINOLOGY(), ctx, "terminology section", SymbolKind.Module, StackAction.PUSH);
+        addSymbol(ctx.SYM_TERMINOLOGY(), ctx, DocumentInformation.TERMINOLOGY_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
 
     }

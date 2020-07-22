@@ -4,6 +4,7 @@ import com.nedap.archie.adlparser.antlr.AdlBaseListener;
 import com.nedap.archie.adlparser.antlr.AdlLexer;
 import com.nedap.archie.adlparser.antlr.AdlParser;
 import com.nedap.openehr.lsp.document.CodeRangeIndex;
+import com.nedap.openehr.lsp.document.DocumentInformation;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -135,7 +136,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterSpecialization_section(AdlParser.Specialization_sectionContext ctx) {
-        stack.addSymbol(ctx.SYM_SPECIALIZE(), ctx, "specialization section", SymbolKind.Module, StackAction.PUSH);
+        stack.addSymbol(ctx.SYM_SPECIALIZE(), ctx, DocumentInformation.SPECIALISATION_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         TerminalNode terminalNode = ctx.archetype_ref().ARCHETYPE_HRID();
         if(terminalNode == null) {
             terminalNode = ctx.archetype_ref().ARCHETYPE_REF();
@@ -156,7 +157,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterLanguage_section(AdlParser.Language_sectionContext ctx) {
-        stack.addSymbol(ctx.SYM_LANGUAGE(), ctx, "language section", SymbolKind.Module, StackAction.PUSH);
+        stack.addSymbol(ctx.SYM_LANGUAGE(), ctx, DocumentInformation.LANGUAGE_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
     /**
@@ -173,7 +174,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterDescription_section(AdlParser.Description_sectionContext ctx) {
-        stack.addSymbol(ctx.SYM_DESCRIPTION(), ctx, "description section", SymbolKind.Module, StackAction.PUSH);
+        stack.addSymbol(ctx.SYM_DESCRIPTION(), ctx, DocumentInformation.DESCRIPTION_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
 
@@ -195,7 +196,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterDefinition_section(AdlParser.Definition_sectionContext ctx) {
-        stack.addSymbol(ctx.SYM_DEFINITION(), ctx, "definition section", SymbolKind.Module, StackAction.PUSH);
+        stack.addSymbol(ctx.SYM_DEFINITION(), ctx, DocumentInformation.DEFINITION_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
     /**
@@ -212,7 +213,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterRules_section(AdlParser.Rules_sectionContext ctx) {
-        stack.addSymbol(ctx.SYM_RULES(), ctx, "rules section", SymbolKind.Module, StackAction.PUSH);
+        stack.addSymbol(ctx.SYM_RULES(), ctx, DocumentInformation.RULES_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
 
@@ -226,7 +227,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterTerminology_section(AdlParser.Terminology_sectionContext ctx) {
-        stack.addSymbol(ctx.SYM_TERMINOLOGY(), ctx, "terminology section", SymbolKind.Module, StackAction.PUSH);
+        stack.addSymbol(ctx.SYM_TERMINOLOGY(), ctx, DocumentInformation.TERMINOLOGY_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
 
     }
@@ -241,7 +242,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      * <p>The default implementation does nothing.</p>
      */
     @Override public void enterAnnotations_section(AdlParser.Annotations_sectionContext ctx) {
-        stack.addSymbol(ctx.SYM_ANNOTATIONS(), ctx, "annotations section", SymbolKind.Module, StackAction.PUSH);
+        stack.addSymbol(ctx.SYM_ANNOTATIONS(), ctx, DocumentInformation.ANNOTATIONS_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
 

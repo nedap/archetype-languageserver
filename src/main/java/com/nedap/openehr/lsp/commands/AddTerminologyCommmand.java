@@ -48,8 +48,8 @@ public class AddTerminologyCommmand {
         DocumentInformation documentInformation = storage.getDocumentInformation(documentUri);
         List<DocumentSymbol> symbols = documentInformation.getSymbols().stream().map(e -> e.getRight()).collect(Collectors.toList());
         DocumentSymbol archetypeSymbol = getDocumentSymbolOrThrow(symbols, "archetype");
-        DocumentSymbol terminology = getDocumentSymbolOrThrow(archetypeSymbol.getChildren(), "terminology section");
-        DocumentSymbol termDefinitions = getDocumentSymbolOrThrow(terminology.getChildren(), "term_definitions");
+        DocumentSymbol terminology = getDocumentSymbolOrThrow(archetypeSymbol.getChildren(), DocumentInformation.TERMINOLOGY_SECTION_NAME);
+        DocumentSymbol termDefinitions = getDocumentSymbolOrThrow(terminology.getChildren(), DocumentInformation.TERM_DEFINITIONS_NAME);
         List<TextEdit> editCommands = new ArrayList<>();
         for (DocumentSymbol languageSymbol : Lists.reverse(termDefinitions.getChildren())) {
             Position insertBefore = languageSymbol.getRange().getEnd();

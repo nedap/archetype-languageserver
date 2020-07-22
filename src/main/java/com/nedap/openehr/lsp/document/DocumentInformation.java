@@ -24,6 +24,16 @@ import java.util.regex.Pattern;
 
 public class DocumentInformation {
 
+    public static final String DEFINITION_SECTION_NAME = "definition section";
+    public static final String TERMINOLOGY_SECTION_NAME = "terminology section";
+    public static final String LANGUAGE_SECTION_NAME = "language section";
+    public static final String SPECIALISATION_SECTION_NAME = "specialisation section";
+    public static final String DESCRIPTION_SECTION_NAME = "description section";
+    public static final String ANNOTATIONS_SECTION_NAME = "annotations section";
+    public static final String RULES_SECTION_NAME = "rules section";
+    public static final String TERM_DEFINITIONS_NAME = "term definitions";
+
+
     private String archetypeId;
     private ADLVersion adlVersion;
     private ANTLRParserErrors errors;
@@ -130,7 +140,7 @@ public class DocumentInformation {
         if(documentSymbols.isEmpty()) {
             return null;
         }
-        DocumentSymbol definitionSections = DocumentSymbolUtils.getDocumentSymbolOrThrow(documentSymbols.get(0).getChildren(), "definition section");
+        DocumentSymbol definitionSections = DocumentSymbolUtils.getDocumentSymbolOrThrow(documentSymbols.get(0).getChildren(), DEFINITION_SECTION_NAME);
         DocumentSymbol rootNode = definitionSections.getChildren().get(0);
         DocumentSymbol currentSymbol = rootNode;
         for(int i = 0; i < pathSegments.size(); i++) {

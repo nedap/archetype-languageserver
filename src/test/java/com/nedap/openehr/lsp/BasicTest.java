@@ -1,20 +1,20 @@
 package com.nedap.openehr.lsp;
 
-import org.apache.commons.io.FileUtils;
+import com.nedap.openehr.lsp.document.DocumentInformation;
+import com.nedap.openehr.lsp.utils.DocumentSymbolUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.services.LanguageClient;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -39,32 +39,50 @@ public class BasicTest {
     @Test
     public void testBasics() throws IOException {
 
+        openResource("test_archetype.adls");
+        System.out.println(testClient.getDiagnostics());
+        assertTrue(testClient.getDiagnostics().get("uri").getDiagnostics().isEmpty());
+    }
 
+
+    @Test
+    public void testDocumentOutline() throws IOException, ExecutionException, InterruptedException {
+
+        openResource("test_archetype.adls");
+        CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> uri = adl2LanguageServer.getTextDocumentService().documentSymbol(new DocumentSymbolParams(new TextDocumentIdentifier("uri")));
+        List<Either<SymbolInformation, DocumentSymbol>> eitherSymbols = uri.get();
+        List<DocumentSymbol> documentSymbols = DocumentSymbolUtils.getDocumentSymbols(eitherSymbols);
+        //System.out.println(documentSymbols);
+        DocumentSymbol archetype = DocumentSymbolUtils.getDocumentSymbolOrThrow(documentSymbols, "archetype");
+
+        DocumentSymbol definition = DocumentSymbolUtils.getDocumentSymbolOrThrow(archetype.getChildren(), DocumentInformation.DEFINITION_SECTION_NAME);
+        DocumentSymbolUtils.getDocumentSymbolOrThrow(archetype.getChildren(), DocumentInformation.DESCRIPTION_SECTION_NAME);
+        DocumentSymbolUtils.getDocumentSymbolOrThrow(archetype.getChildren(), DocumentInformation.LANGUAGE_SECTION_NAME);
+        DocumentSymbolUtils.getDocumentSymbolOrThrow(archetype.getChildren(), DocumentInformation.TERMINOLOGY_SECTION_NAME);
+
+        DocumentSymbol aTestCluster = DocumentSymbolUtils.getDocumentSymbolOrThrow(definition.getChildren(), "A test cluster");
+        DocumentSymbol items = DocumentSymbolUtils.getDocumentSymbolOrThrow(aTestCluster.getChildren(), "items");
+        assertEquals(new Range(new Position(18, 8), new Position(26, 8)), items.getRange());
+        assertEquals(SymbolKind.Field, items.getKind());
+
+    }
+
+    private void openResource(String s) throws IOException {
         DidOpenTextDocumentParams didOpenTextDocumentParams = new DidOpenTextDocumentParams();
         String archetype;
-        try(InputStream stream = getClass().getResourceAsStream("test_archetype.adls")) {
+        try (InputStream stream = getClass().getResourceAsStream(s)) {
             archetype = IOUtils.toString(stream, StandardCharsets.UTF_8.name());
         }
 
         didOpenTextDocumentParams.setTextDocument(new TextDocumentItem("uri", "ADL", 1, archetype));
         textDocumentService.didOpen(didOpenTextDocumentParams);
-        System.out.println(testClient.getDiagnostics());
-        assertTrue(testClient.getDiagnostics().get("uri").getDiagnostics().isEmpty());
-
     }
 
 
     @Test
     public void syntaxError() throws IOException {
 
-        DidOpenTextDocumentParams didOpenTextDocumentParams = new DidOpenTextDocumentParams();
-        String archetype;
-        try(InputStream stream = getClass().getResourceAsStream("syntax_error.adls")) {
-            archetype = IOUtils.toString(stream, StandardCharsets.UTF_8.name());
-        }
-
-        didOpenTextDocumentParams.setTextDocument(new TextDocumentItem("uri", "ADL", 1, archetype));
-        textDocumentService.didOpen(didOpenTextDocumentParams);
+        openResource("syntax_error.adls");
         System.out.println(testClient.getDiagnostics());
         List<Diagnostic> diagnostics = testClient.getDiagnostics().get("uri").getDiagnostics();
         assertFalse(diagnostics.isEmpty());
@@ -78,14 +96,7 @@ public class BasicTest {
     @Test
     public void validationError() throws IOException {
 
-        DidOpenTextDocumentParams didOpenTextDocumentParams = new DidOpenTextDocumentParams();
-        String archetype;
-        try(InputStream stream = getClass().getResourceAsStream("validation_error.adls")) {
-            archetype = IOUtils.toString(stream, StandardCharsets.UTF_8.name());
-        }
-
-        didOpenTextDocumentParams.setTextDocument(new TextDocumentItem("uri", "ADL", 1, archetype));
-        textDocumentService.didOpen(didOpenTextDocumentParams);
+        openResource("validation_error.adls");
         System.out.println(testClient.getDiagnostics());
         List<Diagnostic> diagnostics = testClient.getDiagnostics().get("uri").getDiagnostics();
         assertFalse(diagnostics.isEmpty());
