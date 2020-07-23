@@ -15,8 +15,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -112,6 +110,21 @@ public class BasicTest {
     }
 
     @Test
+    public void jsonError() throws IOException {
+
+        openResource("json_error.adls");
+        System.out.println(testClient.getDiagnostics());
+        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("uri").getDiagnostics();
+        assertFalse(diagnostics.isEmpty());
+        Diagnostic diagnostic = diagnostics.get(0);
+        assertEquals(DiagnosticSeverity.Error, diagnostic.getSeverity());
+        assertEquals("Error processing file", diagnostic.getSource());
+        assertEquals(new Position(0, 1), diagnostic.getRange().getStart());
+        assertEquals(new Position(0, 50), diagnostic.getRange().getEnd());
+        assertTrue(diagnostic.getMessage().contains("com.fasterxml.jackson.databind.JsonMappingException"));
+    }
+
+    @Test
     public void adl14() throws Exception {
         openResource("adl14_valid.adl");
         System.out.println(testClient.getDiagnostics());
@@ -130,7 +143,7 @@ public class BasicTest {
         try (InputStream stream = getClass().getResourceAsStream("adl14_valid.adl")) {
             archetype = IOUtils.toString(stream, StandardCharsets.UTF_8.name());
         }
-        archetype = ensureWindowsLineEneingd(archetype);
+        archetype = ensureWindowsLineEndings(archetype);
 
         didOpenTextDocumentParams.setTextDocument(new TextDocumentItem("uri", "ADL", 1, archetype));
         textDocumentService.didOpen(didOpenTextDocumentParams);
@@ -165,7 +178,7 @@ public class BasicTest {
 
     }
 
-    public static String ensureWindowsLineEneingd(String val) {
+    public static String ensureWindowsLineEndings(String val) {
         String normalized = normalizeLineEndings(val);
         return normalized.replaceAll("\n", "\r\n");
     }

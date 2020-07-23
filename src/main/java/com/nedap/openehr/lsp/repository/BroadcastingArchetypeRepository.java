@@ -83,6 +83,9 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
         boolean adl14 = false;
         if(textDocumentItem.getText().contains("\n")) {
             int firstLineEnding = Math.min(textDocumentItem.getText().indexOf("\n"), textDocumentItem.getText().indexOf("\r"));
+            if(firstLineEnding == -1) {
+                firstLineEnding = textDocumentItem.getText().indexOf("\n");
+            }
             String firstLine = textDocumentItem.getText().substring(0, firstLineEnding);
             adl14 = adl14Pattern.matcher(firstLine).matches();
         }
