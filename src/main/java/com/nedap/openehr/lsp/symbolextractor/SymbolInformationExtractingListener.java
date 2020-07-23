@@ -183,11 +183,17 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     }
 
     private void addFoldingRange(ParserRuleContext ctx) {
-        foldingRanges.add(new FoldingRange(ctx.getStart().getLine()-1, ctx.getStop().getLine()-1));
+        FoldingRange range = new FoldingRange(ctx.getStart().getLine() - 1, ctx.getStop().getLine() - 1);
+        if(range.getEndLine() != range.getStartLine()) {
+            foldingRanges.add(range);
+        }
     }
 
     private void addFoldingRange(int start, ParserRuleContext stop) {
-        foldingRanges.add(new FoldingRange(start, stop.getStop().getLine()-1));
+        FoldingRange range = new FoldingRange(start, stop.getStop().getLine() - 1);
+        if(range.getEndLine() != range.getStartLine()) {
+            foldingRanges.add(range);
+        }
     }
 
     /**
@@ -348,7 +354,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
                 //TODO: maybe move this to a post-processor?
                 if(ctx.attribute_id().getText().equalsIgnoreCase("text")) {
                     if(ctx.object_block() != null) {
-                        parent.setDetail(ctx.object_block().getText());
+                        parent.setDetail(ctx.object_block().object_value_block().getText());
                     }
                 }
             } else {

@@ -18,23 +18,9 @@ import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class BasicTest {
+public class BasicTest extends LanguageServerTestBase {
 
-    TestClient testClient;
-    private ADL2LanguageServer adl2LanguageServer;
-    private TextDocumentService textDocumentService;
 
-    @BeforeEach
-    public void setup() {
-        testClient = new TestClient();
-        adl2LanguageServer = new ADL2LanguageServer();
-        adl2LanguageServer.connect(testClient);
-        InitializeParams initializeParams = new InitializeParams();
-        InitializedParams initializedParams = new InitializedParams();
-        adl2LanguageServer.initialize(initializeParams);
-        adl2LanguageServer.initialized(initializedParams);
-        textDocumentService = adl2LanguageServer.getTextDocumentService();
-    }
 
     @Test
     public void testBasics() throws IOException {
@@ -45,38 +31,7 @@ public class BasicTest {
     }
 
 
-    @Test
-    public void testDocumentOutline() throws IOException, ExecutionException, InterruptedException {
 
-        openResource("test_archetype.adls");
-        CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> uri = adl2LanguageServer.getTextDocumentService().documentSymbol(new DocumentSymbolParams(new TextDocumentIdentifier("uri")));
-        List<Either<SymbolInformation, DocumentSymbol>> eitherSymbols = uri.get();
-        List<DocumentSymbol> documentSymbols = DocumentSymbolUtils.getDocumentSymbols(eitherSymbols);
-        //System.out.println(documentSymbols);
-        DocumentSymbol archetype = DocumentSymbolUtils.getDocumentSymbolOrThrow(documentSymbols, "archetype");
-
-        DocumentSymbol definition = DocumentSymbolUtils.getDocumentSymbolOrThrow(archetype.getChildren(), DocumentInformation.DEFINITION_SECTION_NAME);
-        DocumentSymbolUtils.getDocumentSymbolOrThrow(archetype.getChildren(), DocumentInformation.DESCRIPTION_SECTION_NAME);
-        DocumentSymbolUtils.getDocumentSymbolOrThrow(archetype.getChildren(), DocumentInformation.LANGUAGE_SECTION_NAME);
-        DocumentSymbolUtils.getDocumentSymbolOrThrow(archetype.getChildren(), DocumentInformation.TERMINOLOGY_SECTION_NAME);
-
-        DocumentSymbol aTestCluster = DocumentSymbolUtils.getDocumentSymbolOrThrow(definition.getChildren(), "A test cluster");
-        DocumentSymbol items = DocumentSymbolUtils.getDocumentSymbolOrThrow(aTestCluster.getChildren(), "items");
-        assertEquals(new Range(new Position(18, 8), new Position(26, 8)), items.getRange());
-        assertEquals(SymbolKind.Field, items.getKind());
-
-    }
-
-    private void openResource(String s) throws IOException {
-        DidOpenTextDocumentParams didOpenTextDocumentParams = new DidOpenTextDocumentParams();
-        String archetype;
-        try (InputStream stream = getClass().getResourceAsStream(s)) {
-            archetype = IOUtils.toString(stream, StandardCharsets.UTF_8.name());
-        }
-
-        didOpenTextDocumentParams.setTextDocument(new TextDocumentItem("uri", "ADL", 1, archetype));
-        textDocumentService.didOpen(didOpenTextDocumentParams);
-    }
 
 
     @Test

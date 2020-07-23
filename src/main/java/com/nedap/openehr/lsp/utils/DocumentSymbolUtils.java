@@ -14,6 +14,15 @@ public class DocumentSymbolUtils {
         return symbols.stream().map(s -> s.getRight()).collect(Collectors.toList());
     }
 
+
+    public static Optional<DocumentSymbol> getDocumentSymbol(DocumentSymbol symbol, String name) {
+        return getDocumentSymbol(symbol.getChildren(), name);
+    }
+
+    public static DocumentSymbol getDocumentSymbolOrThrow(DocumentSymbol symbol, String name) {
+        return getDocumentSymbolOrThrow(symbol.getChildren(), name);
+    }
+
     public static Optional<DocumentSymbol> getDocumentSymbol(List<DocumentSymbol> symbols, String name) {
         return symbols.stream().filter(s -> s.getName().equalsIgnoreCase(name)).findAny();
     }
@@ -21,7 +30,7 @@ public class DocumentSymbolUtils {
     public static DocumentSymbol getDocumentSymbolOrThrow(List<DocumentSymbol> symbols, String name) {
         Optional<DocumentSymbol> symbol = getDocumentSymbol(symbols, name);
         if (!symbol.isPresent()) {
-            throw new RuntimeException(name + " symbol not found");
+            throw new RuntimeException(name + " symbol not found amongs symbols: " + symbols.stream().map(s -> s.getName()).collect(Collectors.joining(", ")));
         }
         return symbol.get();
     }
