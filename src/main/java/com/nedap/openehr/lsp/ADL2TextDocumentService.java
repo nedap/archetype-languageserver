@@ -327,7 +327,7 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
                 new GenerateExampleCommand(storage, this, params).apply();
                 break;
             case SHOW_INFO_COMMAND:
-                //this.remoteProxy.showMessage(new MessageParams(MessageType.Info, params.getArguments().get(0).toString()));
+                this.remoteProxy.showMessage(new MessageParams(MessageType.Info, params.getArguments().get(0).toString()));
                 this.remoteEndPoint.notify("custom/showCodeLens", params.getArguments().get(0).toString());
                 this.remoteEndPoint.request("custom/showCodeLens", params.getArguments().get(0).toString());
                 break;
