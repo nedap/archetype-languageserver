@@ -2,6 +2,7 @@ package com.nedap.openehr.lsp;
 
 import com.google.common.collect.Lists;
 import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.RemoteEndpoint;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageServer;
 import org.eclipse.lsp4j.services.TextDocumentService;
@@ -15,6 +16,7 @@ public class ADL2LanguageServer implements LanguageServer {
     private InitializeParams clientParams;
     private ADL2TextDocumentService textDocumentService = new ADL2TextDocumentService();;
     private LanguageClient remoteProxy;
+    private RemoteEndpoint remoteEndpoint;
 
     @Override
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
@@ -32,6 +34,7 @@ public class ADL2LanguageServer implements LanguageServer {
         capabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
         capabilities.setFoldingRangeProvider(true);
         capabilities.setHoverProvider(true);
+        capabilities.setCodeLensProvider(new CodeLensOptions(false));//no resolve provider for now
         capabilities.setDocumentLinkProvider(new DocumentLinkOptions(true));
 
 
@@ -51,7 +54,8 @@ public class ADL2LanguageServer implements LanguageServer {
                 ADL2TextDocumentService.ALL_ADL2_COMMAND,
                 ADL2TextDocumentService.ADD_TO_TERMINOLOGY,
                 ADL2TextDocumentService.WRITE_OPT_COMMAND,
-                ADL2TextDocumentService.WRITE_EXAMPLE_COMMAND
+                ADL2TextDocumentService.WRITE_EXAMPLE_COMMAND,
+                ADL2TextDocumentService.SHOW_INFO_COMMAND
                 )));
 
         ServerInfo serverInfo = new ServerInfo();
@@ -101,8 +105,10 @@ public class ADL2LanguageServer implements LanguageServer {
         return textDocumentService;
     }
 
-    public void connect(LanguageClient remoteProxy) {
+    public void connect(LanguageClient remoteProxy, RemoteEndpoint remoteEndpoint) {
         this.remoteProxy = remoteProxy;
+        this.remoteEndpoint = remoteEndpoint;
         textDocumentService.setRemoteProxy(remoteProxy);
+        textDocumentService.setRemoteEndPoint(remoteEndpoint);
     }
 }

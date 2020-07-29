@@ -16,6 +16,7 @@ import com.nedap.openehr.lsp.repository.BroadcastingArchetypeRepository;
 import com.nedap.openehr.lsp.utils.RangeUtils;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.adapters.CodeActionResponseAdapter;
+import org.eclipse.lsp4j.jsonrpc.RemoteEndpoint;
 import org.eclipse.lsp4j.jsonrpc.json.ResponseJsonAdapter;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
@@ -44,9 +45,11 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
     public static final String WRITE_EXAMPLE_FLAT_JSON = CodeActionKind.Source + ".example.flat_json";
     public static final String WRITE_EXAMPLE_XML = CodeActionKind.Source + ".example.xml";
     public static final String WRITE_EXAMPLE_COMMAND = CodeActionKind.Source + ".example";
+    public static final String SHOW_INFO_COMMAND = "showinfo";
 
     private LanguageClient remoteProxy;
     private final BroadcastingArchetypeRepository storage = new BroadcastingArchetypeRepository(this);
+    private RemoteEndpoint remoteEndPoint;
 
     @Override
     public void didOpen(DidOpenTextDocumentParams params) {
@@ -108,6 +111,10 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
 
     public void setRemoteProxy(LanguageClient remoteProxy) {
         this.remoteProxy = remoteProxy;
+    }
+
+    public void publishDiagnostics(PublishDiagnosticsParams diagnosticsParams) {
+        remoteProxy.publishDiagnostics(diagnosticsParams);
     }
 
     public void pushDiagnostics(TextDocumentIdentifier documentId, Exception exception) {
@@ -319,6 +326,11 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
             case WRITE_EXAMPLE_COMMAND:
                 new GenerateExampleCommand(storage, this, params).apply();
                 break;
+            case SHOW_INFO_COMMAND:
+                //this.remoteProxy.showMessage(new MessageParams(MessageType.Info, params.getArguments().get(0).toString()));
+                this.remoteEndPoint.notify("custom/showCodeLens", params.getArguments().get(0).toString());
+                this.remoteEndPoint.request("custom/showCodeLens", params.getArguments().get(0).toString());
+                break;
             default:
                 throw new UnsupportedOperationException("unknown command: " + params.getCommand());
         }
@@ -356,5 +368,20 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
 
         edit.setDocumentChanges(changes);
         remoteProxy.applyEdit(new ApplyWorkspaceEditParams(edit, label));
+    }
+
+    /**
+     * The code lens request is sent from the client to the server to compute
+     * code lenses for a given text document.
+     *
+     * Registration Options: CodeLensRegistrationOptions
+     */
+    @JsonRequest
+    public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
+        return CompletableFuture.completedFuture(storage.codeLens(params));
+    }
+
+    public void setRemoteEndPoint(RemoteEndpoint remoteEndpoint) {
+        this.remoteEndPoint = remoteEndpoint;
     }
 }

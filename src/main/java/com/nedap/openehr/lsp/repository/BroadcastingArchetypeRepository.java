@@ -418,4 +418,12 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
             info.setDiagnostics(diagnostics);
         }
     }
+
+    public ADL2TextDocumentService getTextDocumentService() {
+        return this.textDocumentService;
+    }
+
+    public List<? extends CodeLens> codeLens(CodeLensParams params) {
+        return aqlStorage.getCodeLens(params);
+    }
 }

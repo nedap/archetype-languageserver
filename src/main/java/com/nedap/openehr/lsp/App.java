@@ -31,7 +31,7 @@ public class App {
 
         ADL2LanguageServer server = new ADL2LanguageServer();
         Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
-        server.connect(launcher.getRemoteProxy());
+        server.connect(launcher.getRemoteProxy(), launcher.getRemoteEndpoint());
 
         launcher.startListening();
     }
@@ -50,7 +50,7 @@ public class App {
 
                                 ADL2LanguageServer server = new ADL2LanguageServer();
                                 Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
-                                server.connect(launcher.getRemoteProxy());
+                                server.connect(launcher.getRemoteProxy(), launcher.getRemoteEndpoint());
 
 
                                 launcher.startListening();
