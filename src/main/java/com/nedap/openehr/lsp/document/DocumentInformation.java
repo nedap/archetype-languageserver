@@ -1,9 +1,6 @@
 package com.nedap.openehr.lsp.document;
 
 import com.nedap.archie.antlr.errors.ANTLRParserErrors;
-import com.nedap.archie.aom.ArchetypeModelObject;
-import com.nedap.archie.aom.CAttribute;
-import com.nedap.archie.aom.CObject;
 import com.nedap.archie.paths.PathSegment;
 import com.nedap.archie.query.APathQuery;
 import com.nedap.openehr.lsp.utils.DocumentSymbolUtils;
@@ -16,8 +13,6 @@ import org.eclipse.lsp4j.HoverParams;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
-import javax.swing.text.Document;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,7 +34,7 @@ public class DocumentInformation {
     private ANTLRParserErrors errors;
     private List<Either<SymbolInformation, DocumentSymbol>> symbols;
     private List<FoldingRange> foldingRanges;
-    private HoverInfo hoverInfo;
+    private ArchetypeHoverInfo hoverInfo;
     private DocumentLinks documentLinks;
     /** the current list of diagnostics for this archetype file */
     private List<Diagnostic> diagnostics;
@@ -78,7 +73,7 @@ public class DocumentInformation {
         return foldingRanges;
     }
 
-    public HoverInfo getHoverInfo() {
+    public ArchetypeHoverInfo getHoverInfo() {
         return hoverInfo;
     }
 
@@ -89,7 +84,7 @@ public class DocumentInformation {
         return hoverInfo.getHoverInfo(params);
     }
 
-    public void setHoverInfo(HoverInfo hoverInfo) {
+    public void setHoverInfo(ArchetypeHoverInfo hoverInfo) {
         this.hoverInfo = hoverInfo;
     }
 

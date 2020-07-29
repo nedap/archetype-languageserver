@@ -1,0 +1,68 @@
+{
+	"name": "aql",
+	"filetypes": [
+		"aql"
+	],	
+	"scopeName": "source.aql",
+	"patterns": [{ "include": "#basics" }],
+	"repository": {
+		"basics": {
+			"patterns": [
+				{ "include": "#comment" },			
+				{ "include": "#select"  }
+			]
+		},
+	  	"comment": {
+			"name": "comment",
+			"match": "--.*$"
+		},
+		"string": {
+			"begin": "(\"|')",
+			"end": "(\"|')",
+			"name": "string.doubleQuoted.multiline",
+			"patterns": [{"include": "#stringContent"}]
+		},
+		"stringContent": {
+			"name": "string.doubleQuoted.escaped",
+			"match": "\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4})",
+			"comment": "any escaped character, with a \\, in a string"
+		},
+		"number": {
+			"name": "constant.numeric",
+			"match": "-?\\d+\\.(\\d+([eE][-+]?\\d+)?)?"
+		},
+		"select": {
+			"patterns": [
+				{ "include": "#string" },			
+				{ "include": "#number"  },
+				{ "include": "#keywords"  },
+				{ "include": "#path_segment"  },
+				{ "include": "#contains"  }
+			]
+		},
+		"keywords": {
+			"name": "keyword.aql",
+			"match": "(?i:select|from|where|order)"
+		},
+		"path_segment": {
+			"match": "([a-zA-Z][a-zA-Z0-9_]*)?(/)([a-zA-Z][a-zA-Z0-9_]*)(\\[[^\\]]*\\])?",
+			"captures": {
+				"1": {"name": "variable.other.identifier"},
+				"2": {"name": "keyword.operator.path_separator"},
+				"3": {"name": "entity.other.attribute-name.path_segment"},
+				"4": {"name": "entity.name.tag.predicates"}
+			}	
+		},
+		"contains": {
+			"match": "(?i:contains)\\s*([a-zA-Z0-9-_]+)\\s*([a-zA-Z0-9-_]+)?\\s*\\[([^\\]]+)\\]",
+			"captures": {
+				"0": {"name": "keyword.contains"},
+				"1": {"name": "support.class.rm_type_name"},
+				"2": {"name": "variable.name"},
+				"3": {"name": "entity.name.type.archetype"}
+			}	
+		}
+
+	}
+}
+	

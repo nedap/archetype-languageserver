@@ -18,7 +18,8 @@
 	},
 	"activationEvents": [
 		"onLanguage:ADL",
-		"workspaceContains:**/.(adls|adlt|adlf|adl|adl2)"
+		"onLanguage:AQL",
+		"workspaceContains:**/.(adls|adlt|adlf|adl|adl2|aql)"
 	],
 	"main": "./client/out/extension",
 	"contributes": {
@@ -35,7 +36,13 @@
 					".adlt",
 					".adlf",
 					".adl",
-					".adl2"
+					".adl2"					
+				]
+			},
+			{
+				"id": "AQL",
+				"extensions": [
+					".aql"					
 				]
 			}
 		],
@@ -44,6 +51,11 @@
 				"language": "ADL",
 				"scopeName": "source.adl",
 				"path": "./syntaxes/adl.tmGrammar.json"
+			},
+			{
+				"language": "AQL",
+				"scopeName": "source.aql",
+				"path": "./syntaxes/aql.tmGrammar.json"
 			}
 		]
 	},

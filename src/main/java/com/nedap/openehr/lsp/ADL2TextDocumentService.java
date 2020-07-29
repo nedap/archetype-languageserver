@@ -6,6 +6,7 @@ import com.google.gson.JsonPrimitive;
 import com.nedap.archie.antlr.errors.ANTLRParserErrors;
 import com.nedap.archie.archetypevalidator.ErrorType;
 import com.nedap.archie.archetypevalidator.ValidationResult;
+import com.nedap.openehr.lsp.aql.AQLStorage;
 import com.nedap.openehr.lsp.commands.AddTerminologyCommmand;
 import com.nedap.openehr.lsp.commands.ConvertToOptCommand;
 import com.nedap.openehr.lsp.commands.GenerateExampleCommand;
@@ -54,6 +55,7 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
 
     @Override
     public void didChange(DidChangeTextDocumentParams params) {
+
         for (TextDocumentContentChangeEvent changeEvent : params.getContentChanges()) {
             // Will be full update because we specified that is all we support
             //full update requires us to split things into lines first
@@ -223,7 +225,7 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
     public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params) {
         DocumentInformation info = storage.getDocumentInformation(params.getTextDocument().getUri());
         if(info == null) {
-            return null;
+            return CompletableFuture.completedFuture(new ArrayList<>());
         }
         if(info.getADLVersion() == ADLVersion.VERSION_1_4) {
             CodeAction action1 = new CodeAction("convert this file to ADL 2");

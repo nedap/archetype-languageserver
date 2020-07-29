@@ -10,10 +10,13 @@ import com.nedap.archie.archetypevalidator.ArchetypeValidator;
 import com.nedap.archie.archetypevalidator.ValidationResult;
 import com.nedap.archie.flattener.InMemoryFullArchetypeRepository;
 import com.nedap.openehr.lsp.ADL2TextDocumentService;
+import com.nedap.openehr.lsp.FileFormat;
+import com.nedap.openehr.lsp.FileFormatDetector;
+import com.nedap.openehr.lsp.aql.AQLStorage;
 import com.nedap.openehr.lsp.document.ADLVersion;
 import com.nedap.openehr.lsp.document.DocumentInformation;
 import com.nedap.openehr.lsp.symbolextractor.ADL2SymbolExtractor;
-import com.nedap.openehr.lsp.document.HoverInfo;
+import com.nedap.openehr.lsp.document.ArchetypeHoverInfo;
 import com.nedap.openehr.lsp.symbolextractor.SymbolNameFromTerminologyHelper;
 import com.nedap.openehr.lsp.symbolextractor.adl14.ADL14SymbolExtractor;
 import org.eclipse.lsp4j.*;
@@ -40,6 +43,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
     Map<String, TextDocumentItem> documentsByArchetypeId = new ConcurrentHashMap<>();
     private ArchetypeValidator validator = new ArchetypeValidator(BuiltinReferenceModels.getMetaModels());
     private final ADL14ConvertingStorage adl14Storage;
+    private AQLStorage aqlStorage = new AQLStorage(this);
     private boolean compile = true;
 
 
@@ -76,24 +80,30 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
      * @param textDocumentItem
      */
     private void handleChanged(TextDocumentItem textDocumentItem) {
-        if(textDocumentItem.getText().trim().isEmpty()) {
-            //not an ADL file
+        FileFormat fileFormat = new FileFormatDetector().detectFileFormat(textDocumentItem);
+        if(fileFormat == FileFormat.AQL) {
+            aqlStorage.addOrUpdate(textDocumentItem);
             return;
-        }
-        boolean adl14 = false;
-        if(textDocumentItem.getText().contains("\n")) {
-            int firstLineEnding = Math.min(textDocumentItem.getText().indexOf("\n"), textDocumentItem.getText().indexOf("\r"));
-            if(firstLineEnding == -1) {
-                firstLineEnding = textDocumentItem.getText().indexOf("\n");
+        } else {
+            if (textDocumentItem.getText().trim().isEmpty()) {
+                //not an ADL file
+                return;
             }
-            String firstLine = textDocumentItem.getText().substring(0, firstLineEnding);
-            adl14 = adl14Pattern.matcher(firstLine).matches();
+            boolean adl14 = false;
+            if (textDocumentItem.getText().contains("\n")) {
+                int firstLineEnding = Math.min(textDocumentItem.getText().indexOf("\n"), textDocumentItem.getText().indexOf("\r"));
+                if (firstLineEnding == -1) {
+                    firstLineEnding = textDocumentItem.getText().indexOf("\n");
+                }
+                String firstLine = textDocumentItem.getText().substring(0, firstLineEnding);
+                adl14 = adl14Pattern.matcher(firstLine).matches();
+            }
+            if (adl14) {
+                extractADL14Info(textDocumentItem);
+                return;
+            }
+            extractADL2Info(textDocumentItem);
         }
-        if(adl14) {
-            extractADL14Info(textDocumentItem);
-            return;
-        }
-        extractADL2Info(textDocumentItem);
 
     }
 
@@ -126,7 +136,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                     if(language == null) {
                         language = "en";
                     }
-                    documentInformation.setHoverInfo(new HoverInfo(documentInformation, archetype, archetypeForTerms, language));
+                    documentInformation.setHoverInfo(new ArchetypeHoverInfo(documentInformation, archetype, archetypeForTerms, language));
                     SymbolNameFromTerminologyHelper.giveNames(documentInformation.getSymbols(), archetypeForTerms, language);
                     //diagnostics will now be pushed from within the invalidateArchetypesAndRecompile method
                 } catch (Exception ex) {
@@ -251,6 +261,8 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
 
     public Hover getHover(HoverParams params) {
         DocumentInformation documentInformation = this.symbolsByUri.get(params.getTextDocument().getUri());
+        if(documentInformation == null) {
+            return aqlStorage.getHover(params);    }
         return documentInformation == null ? null: documentInformation.getHoverInfo(params);
     }
 
