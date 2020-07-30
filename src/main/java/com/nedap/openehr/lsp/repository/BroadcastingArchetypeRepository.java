@@ -426,4 +426,8 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
     public List<? extends CodeLens> codeLens(CodeLensParams params) {
         return aqlStorage.getCodeLens(params);
     }
+
+    public Either<List<CompletionItem>, CompletionList> completion(CompletionParams position) {
+        return aqlStorage.completion(position);
+    }
 }

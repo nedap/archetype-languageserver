@@ -5,8 +5,10 @@ import com.nedap.archie.aom.Archetype;
 import com.nedap.archie.aom.ArchetypeModelObject;
 import com.nedap.archie.aom.CAttribute;
 import com.nedap.archie.aom.CObject;
+import com.nedap.archie.aom.utils.AOMUtils;
 import com.nedap.archie.archetypevalidator.ValidationResult;
 import com.nedap.archie.paths.PathSegment;
+import com.nedap.archie.rminfo.MetaModels;
 import com.nedap.healthcare.aqlparser.AQLLexer;
 import com.nedap.healthcare.aqlparser.AQLParser;
 import com.nedap.healthcare.aqlparser.exception.AQLRuntimeException;
@@ -22,6 +24,12 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.lsp4j.util.Ranges;
+import org.openehr.bmm.core.BmmClass;
+import org.openehr.bmm.core.BmmProperty;
+import org.openehr.bmm.persistence.validation.BmmDefinitions;
+import org.openehr.referencemodels.BuiltinReferenceModels;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -48,6 +56,7 @@ public class AQLStorage {
 
     private void extractHoverInfo(AQLDocument document) {
         HoverInfo hoverInfo = new HoverInfo("aql");
+        MetaModels metaModels = BuiltinReferenceModels.getMetaModels();
         for(ArchetypePathReference reference:document.getArchetypePathReferences()) {
             if(reference.getArchetypeId() == null) {
                 continue;
@@ -56,6 +65,7 @@ public class AQLStorage {
                 ValidationResult validationResult = archetypeRepository.getValidationResult(reference.getArchetypeId());//TODO: get operational template here. I think that should be cached?
                 if (validationResult != null) {
                     Archetype flattened = validationResult.getFlattened();
+                    metaModels.selectModel(flattened);
                     if (flattened != null) {
                         PartialAOMPathQuery aomPathQuery = new PartialAOMPathQuery(reference.getPath());
                         PartialAOMPathQuery.PartialMatch partial = aomPathQuery.findPartial(flattened.getDefinition());
@@ -63,14 +73,30 @@ public class AQLStorage {
                             ArchetypeModelObject archetypeModelObject = partial.getMatches().get(0);
                             String content = null;
                             String description = null;
+                            String typeName = "";
                             if(archetypeModelObject instanceof CAttribute) {
+                                CAttribute attribute = (CAttribute) archetypeModelObject;
                                 content = findNearestText((CAttribute) archetypeModelObject);
                                 description = findNearestDescription((CAttribute) archetypeModelObject);
+                                CObject parent = attribute.getParent();
+                                if(partial.getRemainingQuery().isEmpty()) { //TODO: proper path lookup here
+                                    BmmClass classDefinition = metaModels.getSelectedBmmModel().getClassDefinition(BmmDefinitions.typeNameToClassKey(parent.getRmTypeName()));
+                                    if (classDefinition != null) {
+                                        BmmProperty bmmProperty = classDefinition.flattenBmmClass().getProperties().get(attribute.getRmAttributeName());
+                                        if (bmmProperty != null) {
+                                            bmmProperty.getType().toDisplayString();
+                                        }
+                                    }
+                                }
                             } else if (archetypeModelObject instanceof CObject){
                                 content = findNearestText((CObject) archetypeModelObject);
                                 description = findNearestDescription((CObject) archetypeModelObject);
+                                if(partial.getRemainingQuery().isEmpty()) { //TODO: proper path lookup here.
+                                    typeName = ((CObject) archetypeModelObject).getRmTypeName();
+                                }
                             }
                             String text = content + partial.getRemainingQuery().stream().map(PathSegment::toString).collect(Collectors.joining("/"));
+                            text += "\n\n" + typeName;
                             text += "\n\n" + description;
                             text += "\n\nIn Archetype " + flattened.getDefinition().getTerm().getText() + " (" + reference.getArchetypeId() +")";
                             hoverInfo.getHoverRanges().addRange(reference.getRange(), new Hover(new MarkupContent(HoverInfo.MARKDOWN, text)));
@@ -224,5 +250,77 @@ public class AQLStorage {
             }
         }
         return result;
+    }
+
+    public Either<List<CompletionItem>, CompletionList> completion(CompletionParams position) {
+        String uri = position.getTextDocument().getUri();
+        AQLDocument aqlDocument = this.aqlDocumentsByUri.get(uri);
+        if(aqlDocument == null) {
+            return Either.forRight(new CompletionList());
+        }
+        List<CompletionItem> items = new ArrayList<>();
+        CompletionList result = new CompletionList(items);
+        MetaModels metaModels = BuiltinReferenceModels.getMetaModels();
+        for(ArchetypePathReference reference:aqlDocument.getArchetypePathReferences()) {
+            //copy the range, adding one because typing at the end of course
+            Range range = new Range();
+            range.setStart(new Position(reference.getRange().getStart().getLine(), reference.getRange().getStart().getCharacter()));
+            range.setEnd(new Position(reference.getRange().getEnd().getLine(), reference.getRange().getEnd().getCharacter()+1));
+            if(reference.getArchetypeId() != null && Ranges.containsPosition(range, position.getPosition())) {
+                ValidationResult validationResult = archetypeRepository.getValidationResult(reference.getArchetypeId());//TODO: get operational template here. I think that should be cached?
+                if(validationResult != null && validationResult.getFlattened() != null) {
+                    //ok we have code completion!
+                    //now to find the correct archetype path
+                    Archetype flat = validationResult.getFlattened();
+                    metaModels.selectModel(flat);
+                    PartialAOMPathQuery partialAOMPathQuery = new PartialAOMPathQuery(reference.getPath());
+                    PartialAOMPathQuery.PartialMatch partial = partialAOMPathQuery.findPartial(flat.getDefinition());//TODO: get path UP TO where we are typing!
+                    //TODO: add BMM path traversal here as well, so you can do /value/magnitude
+                    for(ArchetypeModelObject object:partial.getMatches()) {
+                        if(object instanceof CObject) {
+                            for(CAttribute attribute:((CObject) object).getAttributes()) {
+                                for(CObject child:attribute.getChildren()) {
+                                    if(child.getNodeId() != null && !"id9999".equalsIgnoreCase(child.getNodeId())) {
+                                        String text = child.getTerm() == null ?
+                                                attribute.getRmAttributeName() + "[" + child.getNodeId() + "] (" + child.getRmTypeName() + ")" :
+                                                child.getTerm().getText() + " (" + attribute.getRmAttributeName() + " " + child.getRmTypeName() + "[" + child.getNodeId()+"])";
+                                        CompletionItem completionItem = new CompletionItem(text);
+                                        completionItem.setInsertText(attribute.getRmAttributeName() + "[" + child.getNodeId() + "]");
+                                        completionItem.setFilterText(attribute.getRmAttributeName() + "[" + child.getNodeId() + "]" + text);
+                                        completionItem.setSortText(attribute.getRmAttributeName()+ "0" + text); //the 0 is to sort this before others
+                                        completionItem.setKind(CompletionItemKind.Reference);
+                                        items.add(completionItem);
+                                    }
+                                }
+                            }
+                            BmmClass classDefinition = metaModels.getSelectedBmmModel().getClassDefinition(BmmDefinitions.typeNameToClassKey(((CObject) object).getRmTypeName()));
+                            if(classDefinition != null) {
+                                for (BmmProperty property : classDefinition.flattenBmmClass().getProperties().values()) {
+                                    CompletionItem completionItem = new CompletionItem(property.getName() + "(" + property.getType().toDisplayString() + ")");
+                                    completionItem.setInsertText(property.getName());
+                                    completionItem.setSortText(property.getName() + "zzzz"); //sort this last please
+                                    completionItem.setKind(CompletionItemKind.Reference);
+                                    items.add(completionItem);
+                                }
+                            }
+                        } else if (object instanceof CAttribute) {
+                            for(CObject child: ((CAttribute) object).getChildren()) {
+                                if(child.getNodeId() != null && !child.getNodeId().equalsIgnoreCase("id9999")) {
+                                    CompletionItem completionItem = new CompletionItem();
+                                    completionItem.setLabel(child.getTerm() == null ? child.getRmTypeName() : child.getTerm().getText());
+                                    completionItem.setInsertText("[" + child.getNodeId() + "]");
+                                    completionItem.setKind(CompletionItemKind.Reference);
+                                    //completionItem.setInsertText();
+                                    items.add(completionItem);
+                                }
+                            }
+                        }
+
+                    }
+
+                }
+            }
+        }
+        return Either.forRight(result);
     }
 }

@@ -37,6 +37,8 @@ public class ADL2LanguageServer implements LanguageServer {
         capabilities.setCodeLensProvider(new CodeLensOptions(false));//no resolve provider for now
         capabilities.setDocumentLinkProvider(new DocumentLinkOptions(true));
 
+        capabilities.setCompletionProvider(new CompletionOptions());
+
 
         capabilities.setCodeActionProvider(new CodeActionOptions(Lists.newArrayList(
                 ADL2TextDocumentService.ADL2_COMMAND,

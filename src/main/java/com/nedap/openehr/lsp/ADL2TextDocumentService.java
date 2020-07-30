@@ -186,21 +186,6 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
     }
 
     /**
-     * The Completion request is sent from the client to the server to compute
-     * completion items at a given cursor position. Completion items are
-     * presented in the IntelliSense user interface. If computing complete
-     * completion items is expensive servers can additional provide a handler
-     * for the resolve completion item request. This request is sent when a
-     * completion item is selected in the user interface.
-     *
-     * Registration Options: CompletionRegistrationOptions
-     */
-    @Override
-    public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
      * The document links request is sent from the client to the server to request the location of links in a document.
      *
      * Registration Options: DocumentLinkRegistrationOptions
@@ -379,6 +364,20 @@ public class ADL2TextDocumentService implements TextDocumentService, WorkspaceSe
     @JsonRequest
     public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
         return CompletableFuture.completedFuture(storage.codeLens(params));
+    }
+    /**
+     * The Completion request is sent from the client to the server to compute
+     * completion items at a given cursor position. Completion items are
+     * presented in the IntelliSense user interface. If computing complete
+     * completion items is expensive servers can additional provide a handler
+     * for the resolve completion item request. This request is sent when a
+     * completion item is selected in the user interface.
+     *
+     * Registration Options: CompletionRegistrationOptions
+     */
+    @JsonRequest
+    public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
+        return CompletableFuture.completedFuture(storage.completion(position));
     }
 
     public void setRemoteEndPoint(RemoteEndpoint remoteEndpoint) {

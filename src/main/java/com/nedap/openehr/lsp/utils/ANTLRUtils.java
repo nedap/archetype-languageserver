@@ -21,7 +21,7 @@ public class ANTLRUtils {
 
     public static Range createRange(ParserRuleContext ctx) {
         Position start = new Position(ctx.getStart().getLine()-1, ctx.getStart().getCharPositionInLine());
-        Position end = new Position(ctx.getStop().getLine()-1, ctx.getStop().getCharPositionInLine());
+        Position end = new Position(ctx.getStop().getLine()-1, ctx.getStop().getCharPositionInLine() + ctx.getStop().getText().length());
         if(start.equals(end)) {
             //not good :)
             end.setCharacter(end.getCharacter()+1);
