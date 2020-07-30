@@ -182,7 +182,7 @@ public class AQLStorage {
             PublishDiagnosticsParams params = new PublishDiagnosticsParams(uri, diagnostics);
             archetypeRepository.getTextDocumentService().publishDiagnostics(params);
             errorFound = true;
-        } catch (Exception e) {
+        } catch (Exception ex) {
             List<Diagnostic> diagnostics = new ArrayList<>();
             diagnostics.add(new Diagnostic(
                     new Range(new Position(0, 0), new Position(0, 50)),
