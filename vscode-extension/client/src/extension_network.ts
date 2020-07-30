@@ -22,7 +22,7 @@ export function activate(context: ExtensionContext) {
     };
     
     let clientOptions: LanguageClientOptions = {
-        documentSelector: ['ADL'],
+        documentSelector: ['ADL', 'AQL'],
         synchronize: {
             fileEvents: workspace.createFileSystemWatcher('**/*.*')
         }
