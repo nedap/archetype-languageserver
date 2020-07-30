@@ -305,7 +305,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
     }
 
     public void addFile(String uri, File file) {
-        if (hasAdlsExtension(file)) {
+        if (hasAdlsExtension(file) || hasAqlExtension(file)) {
             try {
                 TextDocumentItem adl = new TextDocumentItem(uri, "adl", 0, new String(Files.readAllBytes(file.toPath()), Charsets.UTF_8));
                 addDocument(adl);
@@ -314,6 +314,10 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                 e.printStackTrace();
             }
         }
+    }
+
+    private boolean hasAqlExtension(File file) {
+        return file.getName().toLowerCase().endsWith(".aql");
     }
 
     private boolean hasAdlsExtension(File file) {
@@ -325,7 +329,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
     }
 
     public void fileChanged(String uri, File file) {
-        if(hasAdlsExtension(file)) {
+        if(hasAdlsExtension(file) || hasAqlExtension(file)) {
             try {
                 updateDocument(uri, 0, new String(Files.readAllBytes(file.toPath()), Charsets.UTF_8));
             } catch (Exception e) {
