@@ -16,6 +16,7 @@ plugins {
     id "com.github.johnrengelman.shadow" version "5.2.0"
     //id "com.palantir.graal" version "0.7.1"
     id "org.beryx.runtime" version "1.9.1"
+    id "antlr"
 
 }
 
@@ -27,6 +28,7 @@ repositories {
 }
 
 dependencies {
+    antlr group: 'org.antlr', name: 'antlr4', version: '4.8-1'
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:28.2-jre'
 
@@ -41,6 +43,10 @@ dependencies {
 
     // Use JUnit Jupiter Engine for testing.
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.6.0'
+}
+
+generateGrammarSource {
+    arguments += ["-visitor", "-package", "com.nedap.healthcare.tolerantaqlparser"]
 }
 
 java {

@@ -15,7 +15,14 @@ import java.util.stream.Collectors;
 
 public class PartialAOMPathQuery extends AOMPathQuery  {
     public PartialAOMPathQuery(String query) {
-        super(query);
+        super(stripLastSlash(query));
+    }
+
+    private static String stripLastSlash(String query) {
+        if(query.length() > 1 && query.endsWith("/")) {
+            return query.substring(0, query.length()-1);
+        }
+        return query;
     }
 
     public PartialMatch findPartial(CComplexObject root) {

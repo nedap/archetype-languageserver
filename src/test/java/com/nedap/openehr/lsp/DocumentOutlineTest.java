@@ -45,6 +45,6 @@ public class DocumentOutlineTest extends LanguageServerTestBase {
         DocumentSymbol nl = DocumentSymbolUtils.getDocumentSymbolOrThrow(termDefinitions, "\"nl\"");
         DocumentSymbol id1 = DocumentSymbolUtils.getDocumentSymbolOrThrow(nl, "\"id1\"");
         assertEquals("<\"A test cluster\">", id1.getDetail());//might be better to remove the <""> here, but that's quite annoying code to write
-        assertEquals(new Range(new Position(32, 12), new Position(35, 12)), id1.getRange());
+        assertEquals(new Range(new Position(32, 12), new Position(35, 13)), id1.getRange());
     }
 }

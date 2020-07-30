@@ -1,17 +1,15 @@
 package com.nedap.openehr.lsp.aql;
 
-import com.nedap.healthcare.aqlparser.AQLBaseListener;
-import com.nedap.healthcare.aqlparser.AQLParser;
+import com.nedap.healthcare.tolerantaqlparser.ErrorTolerantAQLBaseListener;
+import com.nedap.healthcare.tolerantaqlparser.ErrorTolerantAQLParser;
 import com.nedap.openehr.lsp.utils.ANTLRUtils;
-import org.eclipse.lsp4j.DocumentHighlight;
-import org.eclipse.lsp4j.DocumentHighlightKind;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AQLSymbolListener extends AQLBaseListener {
+public class AQLSymbolListener extends ErrorTolerantAQLBaseListener {
 
     private Map<String, String> symbolToArchetypeIdMap = new LinkedHashMap<>();
 //    private Map<String, DocumentHighlight> variableBoundToArchetypeIdUse = new LinkedHashMap<>();
@@ -21,9 +19,9 @@ public class AQLSymbolListener extends AQLBaseListener {
     /**
      * enter a class expression operand. This is where the archetype ids potentially get bound to variables, or at least noted.
      */
-    @Override public void enterClassExprOperand(AQLParser.ClassExprOperandContext ctx) {
+    @Override public void enterClassExprOperand(ErrorTolerantAQLParser.ClassExprOperandContext ctx) {
         if(ctx.archetypePredicate() != null) {
-            AQLParser.ArchetypePredicateExprContext archetypePredicateExprContext = ctx.archetypePredicate().archetypePredicateExpr();
+            ErrorTolerantAQLParser.ArchetypePredicateExprContext archetypePredicateExprContext = ctx.archetypePredicate().archetypePredicateExpr();
             if(archetypePredicateExprContext.ARCHETYPEID() != null && ctx.IDENTIFIER().size() == 2) { //we have an archetype and a variable.
                 //we have an archetype!
                 String variableName = ctx.IDENTIFIER(1).getText();
@@ -33,7 +31,7 @@ public class AQLSymbolListener extends AQLBaseListener {
 
     }
 
-    @Override public void enterIdentifiedPath(AQLParser.IdentifiedPathContext ctx) {
+    @Override public void enterIdentifiedPath(ErrorTolerantAQLParser.IdentifiedPathContext ctx) {
         String symbolName = ctx.IDENTIFIER().getText();
         String archetypeId = symbolToArchetypeIdMap.get(symbolName);
 
@@ -46,7 +44,7 @@ public class AQLSymbolListener extends AQLBaseListener {
 
     }
 
-    @Override public void exitQueryClause(AQLParser.QueryClauseContext ctx) {
+    @Override public void exitQueryClause(ErrorTolerantAQLParser.QueryClauseContext ctx) {
         //finish things up: set the archetype references
         for(ArchetypePathReference reference:archetypePathReferences) {
             String archetypeId = symbolToArchetypeIdMap.get(reference.getSymbolName());

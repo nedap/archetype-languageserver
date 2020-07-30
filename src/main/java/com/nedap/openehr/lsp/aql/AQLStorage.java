@@ -17,6 +17,8 @@ import com.nedap.healthcare.aqlparser.exception.AQLValidationException;
 import com.nedap.healthcare.aqlparser.model.Lookup;
 import com.nedap.healthcare.aqlparser.model.clause.QueryClause;
 import com.nedap.healthcare.aqlparser.parser.QOMParser;
+import com.nedap.healthcare.tolerantaqlparser.ErrorTolerantAQLLexer;
+import com.nedap.healthcare.tolerantaqlparser.ErrorTolerantAQLParser;
 import com.nedap.openehr.lsp.ADL2TextDocumentService;
 import com.nedap.openehr.lsp.document.HoverInfo;
 import com.nedap.openehr.lsp.repository.BroadcastingArchetypeRepository;
@@ -140,8 +142,8 @@ public class AQLStorage {
     }
 
     private AQLDocument createAQLDocument(String uri, String text) {
-        AQLLexer lexer = new AQLLexer(CharStreams.fromString(text));
-        AQLParser aqlParser = new AQLParser(new CommonTokenStream(lexer));
+        ErrorTolerantAQLLexer lexer = new ErrorTolerantAQLLexer(CharStreams.fromString(text));
+        ErrorTolerantAQLParser aqlParser = new ErrorTolerantAQLParser(new CommonTokenStream(lexer));
         AQLSymbolListener aqlSymbolListener = new AQLSymbolListener();
         new ParseTreeWalker().walk(aqlSymbolListener, aqlParser.queryClause());
 

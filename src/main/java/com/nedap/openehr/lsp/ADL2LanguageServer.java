@@ -37,7 +37,7 @@ public class ADL2LanguageServer implements LanguageServer {
         capabilities.setCodeLensProvider(new CodeLensOptions(false));//no resolve provider for now
         capabilities.setDocumentLinkProvider(new DocumentLinkOptions(true));
 
-        capabilities.setCompletionProvider(new CompletionOptions());
+        capabilities.setCompletionProvider(new CompletionOptions(false, Lists.newArrayList("/")));//add '/' to trigger code completion on paths as well as the usual things.
 
 
         capabilities.setCodeActionProvider(new CodeActionOptions(Lists.newArrayList(

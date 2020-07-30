@@ -22,7 +22,7 @@ public abstract class LanguageServerTestBase {
     public void setup() {
         testClient = new TestClient();
         adl2LanguageServer = new ADL2LanguageServer();
-        adl2LanguageServer.connect(testClient, launcher.getRemoteEndpoint());
+        adl2LanguageServer.connect(testClient, null);
         InitializeParams initializeParams = new InitializeParams();
         InitializedParams initializedParams = new InitializedParams();
         adl2LanguageServer.initialize(initializeParams);
