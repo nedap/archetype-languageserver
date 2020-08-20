@@ -26,7 +26,7 @@ public class DocumentInformation {
     public static final String DESCRIPTION_SECTION_NAME = "description section";
     public static final String ANNOTATIONS_SECTION_NAME = "annotations section";
     public static final String RULES_SECTION_NAME = "rules section";
-    public static final String TERM_DEFINITIONS_NAME = "term definitions";
+    public static final String TERM_DEFINITIONS_NAME = "term_definitions";
 
 
     private String archetypeId;

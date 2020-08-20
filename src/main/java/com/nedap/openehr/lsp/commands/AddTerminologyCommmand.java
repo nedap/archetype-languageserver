@@ -52,7 +52,8 @@ public class AddTerminologyCommmand {
         DocumentSymbol termDefinitions = getDocumentSymbolOrThrow(terminology.getChildren(), DocumentInformation.TERM_DEFINITIONS_NAME);
         List<TextEdit> editCommands = new ArrayList<>();
         for (DocumentSymbol languageSymbol : Lists.reverse(termDefinitions.getChildren())) {
-            Position insertBefore = languageSymbol.getRange().getEnd();
+            Position endOfTranslation = languageSymbol.getRange().getEnd();
+            Position insertBefore = new Position(endOfTranslation.getLine(), Math.max(0, endOfTranslation.getCharacter()-1));
             StringBuilder text = new StringBuilder();
             //TODO: better indenting :) perhaps retrieve from last character of symbol position in line?
             text.append("    [\"");
