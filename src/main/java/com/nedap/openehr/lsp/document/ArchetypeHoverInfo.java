@@ -143,8 +143,7 @@ public class ArchetypeHoverInfo extends HoverInfo {
 
             BmmClass classDefinition = metaModels.getSelectedBmmModel().getClassDefinition(flatAttribute.getParent().getRmTypeName());
             if (classDefinition != null) {
-                BmmClass flatClass = classDefinition.flattenBmmClass();
-                BmmProperty bmmProperty = flatClass.getProperties().get(flatAttribute.getRmAttributeName());
+                BmmProperty bmmProperty = classDefinition.getFlatProperties().get(flatAttribute.getRmAttributeName());
                 if (bmmProperty != null) {
                     content.append("\n\nRM type name: *" + bmmProperty.getType().toDisplayString() + "*");
                 }

@@ -84,7 +84,7 @@ public class AQLStorage {
                                 if(partial.getRemainingQuery().isEmpty()) { //TODO: proper path lookup here
                                     BmmClass classDefinition = metaModels.getSelectedBmmModel().getClassDefinition(BmmDefinitions.typeNameToClassKey(parent.getRmTypeName()));
                                     if (classDefinition != null) {
-                                        BmmProperty bmmProperty = classDefinition.flattenBmmClass().getProperties().get(attribute.getRmAttributeName());
+                                        BmmProperty bmmProperty = classDefinition.getFlatProperties().get(attribute.getRmAttributeName());
                                         if (bmmProperty != null) {
                                             bmmProperty.getType().toDisplayString();
                                         }
@@ -305,7 +305,7 @@ public class AQLStorage {
                             }
                             BmmClass classDefinition = metaModels.getSelectedBmmModel().getClassDefinition(BmmDefinitions.typeNameToClassKey(((CObject) object).getRmTypeName()));
                             if(classDefinition != null) {
-                                for (BmmProperty property : classDefinition.flattenBmmClass().getProperties().values()) {
+                                for (BmmProperty property : classDefinition.getFlatProperties().values()) {
                                     CompletionItem completionItem = new CompletionItem(property.getName() + "(" + property.getType().toDisplayString() + ")");
                                     completionItem.setInsertText(property.getName());
                                     completionItem.setSortText(property.getName() + "zzzz"); //sort this last please
