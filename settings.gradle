@@ -8,5 +8,5 @@
  */
 
 rootProject.name = 'archie-lsp'
-//includeBuild '../archie'
+includeBuild '../archie'
 includeBuild '../aqlparser'
