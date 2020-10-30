@@ -2,7 +2,7 @@
 A language server for OpenEHR archetypes, to be used in your favorite IDE. Packaged as a vscode-extension. Can be found in the vscode marketplace.
 
 # Build instructions
-- clone github.com/nedap/aqlparser, 
+- clone https://github.com/nedap/aqlparser, 
 - make sure `settings.gradle` points to where you checked out aql parser.
 - download the mac, linux, and windows openJDK binaries, version 14 or newer
 - copy `gradle.example.properties` to `gradle.properties`
