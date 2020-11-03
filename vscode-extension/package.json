@@ -3,8 +3,9 @@
 	"displayName": "OpenEHR ADL & AQL support",
 	"description": "OpenEHR ADL support, including syntax highlighting and validation",
 	"author": "Nedap Healthcare",
-	"license": "Commercial",
-	"version": "0.2.4",
+	"license": "Apache 2.0",
+	"version": "0.2.5",
+	"icon": "openehr-square-256x256.png",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/nedap/archetype-languageserver"
