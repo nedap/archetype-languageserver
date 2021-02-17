@@ -34,7 +34,7 @@
 		},
 		"number": {
 			"name": "constant.numeric",
-			"match": "-?\\d+\\.(\\d+([eE][-+]?\\d+)?)?"
+			"match": "-?\\d+(\\.\\d+([eE][-+]?\\d+)?)?"
 		},
 		"sections": {
 			"name": "markup.heading",
@@ -196,21 +196,21 @@
 			}
 		},
 		"assertions": {
-			"patterns": [
-				{"include": "#operator"},
+			"patterns": [				
 				{"include": "#pathsegment"},
 				{"include": "#variableDeclaration"},
-				{"include": "#idcode"}
+				{"include": "#idcode"},
+				{"include": "#operator"},
+				{"include": "#number"}
 			]
 		},
 		"operator": {
-			"match": "(::=|implies|for_all)",
-			"comment": "(::=|+|-|\\*|/|\\%|\\^|<|<=|≤|>|>=|≥|=|!=|≠|matches|∈|is_in|not|\\!|∼|¬|and|∧|or|∨|xor|⊻|implies|⇒|for_all|∀|every|exists|∃)",
-			"name": "keyword.operator.comparison"
+			"match": "(::=|\\+|\\-|\\*|/|\\%|\\^|<|<=|≤|>|>=|≥|=|\\!=|≠|matches|∈|is_in|not|\\!|∼|¬|and|∧|or|∨|xor|⊻|implies|⇒|for_all|∀|every|exists|∃)",
+			"name": "keyword.operator.rules"
 		},
 		"pathsegment": {
 			"name": "entity.name.type.path",
-            "match": "(/[a-zA-Z0-9]+)+"
+            "match": "(/[a-zA-Z][a-zA-Z0-9_]*)+"
 		},
 		"idcode": {
 			"name": "entity.name.tag",
