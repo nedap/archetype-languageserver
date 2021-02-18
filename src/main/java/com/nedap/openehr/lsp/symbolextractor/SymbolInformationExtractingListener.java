@@ -3,6 +3,7 @@ package com.nedap.openehr.lsp.symbolextractor;
 import com.nedap.archie.adlparser.antlr.AdlBaseListener;
 import com.nedap.archie.adlparser.antlr.AdlLexer;
 import com.nedap.archie.adlparser.antlr.AdlParser;
+import com.nedap.openehr.lsp.paths.ArchetypePathReference;
 import com.nedap.openehr.lsp.document.CodeRangeIndex;
 import com.nedap.openehr.lsp.document.DocumentInformation;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -18,8 +19,10 @@ import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
@@ -37,6 +40,14 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     private CodeRangeIndex<DocumentSymbol> cTerminologyCodes = new CodeRangeIndex<>();
 
     private DocumentSymbolStack stack = new DocumentSymbolStack();
+
+    /** Contains all the references to the archetype for the rules */
+    private List<ArchetypePathReference> modelReferences = new ArrayList<>();
+
+    private Map<String, String> variableToPathMap = new LinkedHashMap<>();
+    private Stack<String> forAllVariables = new Stack<>();
+
+    private String currentOverlayid;
 
     public SymbolInformationExtractingListener(String documentUri, AdlLexer lexer) {
         this.documentUri = documentUri;
@@ -64,7 +75,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     public void enterArchetype(AdlParser.ArchetypeContext ctx) {
         stack.addSymbol(ctx.SYM_ARCHETYPE(), ctx, "archetype", SymbolKind.Constant, StackAction.PUSH);
         stack.addSymbol(ctx.ARCHETYPE_HRID(), null, "archetype id", SymbolKind.File);
-        this.archetypeId = ctx.ARCHETYPE_HRID().getText();
+        setArchetypeId(ctx.ARCHETYPE_HRID());
     }
 
     @Override
@@ -94,8 +105,18 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     @Override public void enterTemplate(AdlParser.TemplateContext ctx) {
         stack.addSymbol(ctx.SYM_TEMPLATE(), ctx, "archetype", SymbolKind.Constant, StackAction.PUSH);
         stack.addSymbol(ctx.ARCHETYPE_HRID(), "archetype id", SymbolKind.Class);
-        this.archetypeId = ctx.ARCHETYPE_HRID().getText();
+        setArchetypeId(ctx.ARCHETYPE_HRID());
     }
+
+    private void setArchetypeId(TerminalNode terminalNode) {
+        this.archetypeId = terminalNode.getText();
+        this.currentOverlayid = archetypeId;
+    }
+
+    private void setOverlayId(TerminalNode terminalNode) {
+        this.currentOverlayid = archetypeId;
+    }
+
     /**
      * {@inheritDoc}
      *
@@ -114,6 +135,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
         stack.addSymbol(ctx.SYM_TEMPLATE_OVERLAY(), ctx, "archetype", SymbolKind.Constant, StackAction.PUSH);
         stack.addSymbol(ctx.ARCHETYPE_HRID(), "archetype id", SymbolKind.Class);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
+        setOverlayId(ctx.ARCHETYPE_HRID());
     }
 
     @Override public void exitTemplate_overlay(AdlParser.Template_overlayContext ctx) {
@@ -123,7 +145,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     @Override public void enterOperational_template(AdlParser.Operational_templateContext ctx) {
         stack.addSymbol(ctx.SYM_OPERATIONAL_TEMPLATE(), ctx, "operational template", SymbolKind.Constant, StackAction.PUSH);
         stack.addSymbol(ctx.ARCHETYPE_HRID(), "archetype id", SymbolKind.Class);
-        this.archetypeId = ctx.ARCHETYPE_HRID().getText();
+        setArchetypeId(ctx.ARCHETYPE_HRID());
     }
 
     @Override public void exitOperational_template(AdlParser.Operational_templateContext ctx) {
@@ -404,6 +426,78 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
         popStack();
     }
 
+
+    @Override public void enterAdlRulesPath(AdlParser.AdlRulesPathContext ctx) {
+        //this is a model reference
+        String path = ctx.ADL_PATH().getText();
+        if(ctx.SYM_VARIABLE_START() != null) {
+            //if the path starts with a variable, replace it with the actual path if present in the variable map
+            int firstSlash = path.indexOf('/');
+            String variable = path.substring(0, firstSlash);
+            String mappedpath = variableToPathMap.get("$" + variable);
+            path = path.substring(firstSlash);
+            if(mappedpath != null) {
+                path = mappedpath + path;
+                addArchetypePathReference(ctx, path);
+            } else {
+                addArchetypePathReference(ctx, path, "variable " + variable + " could not be resolved");
+            }
+        } else {
+            addArchetypePathReference(ctx, path);
+        }
+
+        if(currentVariableDeclaration != null && ctx.SYM_VARIABLE_START() == null) {
+            currentVariablePaths.add(path);
+        }
+    }
+
+    private void addArchetypePathReference(AdlParser.AdlRulesPathContext ctx, String path) {
+        addArchetypePathReference(ctx, path, null);
+    }
+
+    private void addArchetypePathReference(AdlParser.AdlRulesPathContext ctx, String path, String extraInformation) {
+        ArchetypePathReference archetypePathReference = new ArchetypePathReference(null, path, createRange(ctx));
+        archetypePathReference.setExtraInformation(extraInformation);
+        archetypePathReference.setArchetypeId(currentOverlayid);
+        this.modelReferences.add(archetypePathReference);
+    }
+
+    @Override public void enterBooleanForAllExpression(AdlParser.BooleanForAllExpressionContext ctx) {
+        if(ctx.SYM_FOR_ALL() != null && ctx.identifier() != null && ctx.adlRulesPath() != null) {
+            variableToPathMap.put("$" + ctx.identifier().getText(), ctx.adlRulesPath().getText());
+            forAllVariables.push("$" + ctx.identifier().getText());
+        }
+    }
+
+    @Override public void exitBooleanForAllExpression(AdlParser.BooleanForAllExpressionContext ctx) {
+        if(ctx.SYM_FOR_ALL() != null && ctx.identifier() != null && ctx.adlRulesPath() != null) {
+            variableToPathMap.remove(forAllVariables.pop());
+        }
+    }
+
+    private String currentVariableDeclaration;
+    private List<String> currentVariablePaths;
+
+    @Override public void enterVariableDeclaration(AdlParser.VariableDeclarationContext ctx) {
+        //if a variable declaration contains just one path, store it for later use
+        currentVariableDeclaration = ctx.VARIABLE_DECLARATION().getText();
+        int splitIndex = currentVariableDeclaration.indexOf(':');
+        if(splitIndex >= 0) {
+            currentVariableDeclaration = currentVariableDeclaration.substring(0, splitIndex);
+        }
+        currentVariablePaths = new ArrayList<>();
+    }
+
+    @Override public void exitVariableDeclaration(AdlParser.VariableDeclarationContext ctx) {
+        if(currentVariablePaths.size() == 1) {
+            //store for use in other paths.
+            //could be something else, as in variable = path + 3, but that's ok, that won't be used in subpaths
+            variableToPathMap.put(currentVariableDeclaration, currentVariablePaths.get(0));
+        }
+        currentVariableDeclaration = null;
+        currentVariablePaths = null;
+    }
+
     public String getArchetypeId() {
         return archetypeId;
     }
@@ -418,5 +512,9 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
 
     public CodeRangeIndex<DocumentSymbol> getCTerminologyCodes() {
         return cTerminologyCodes;
+    }
+
+    public List<ArchetypePathReference> getModelReferences() {
+        return modelReferences;
     }
 }

@@ -1,4 +1,4 @@
-package com.nedap.openehr.lsp.aql;
+package com.nedap.openehr.lsp.paths;
 
 import org.eclipse.lsp4j.Range;
 
@@ -7,6 +7,7 @@ public class ArchetypePathReference {
     private String symbolName;
     private String path;
     private Range range;
+    private String extraInformation;
 
     public ArchetypePathReference() {
 
@@ -48,5 +49,13 @@ public class ArchetypePathReference {
 
     public void setSymbolName(String symbolName) {
         this.symbolName = symbolName;
+    }
+
+    public String getExtraInformation() {
+        return extraInformation;
+    }
+
+    public void setExtraInformation(String extraInformation) {
+        this.extraInformation = extraInformation;
     }
 }

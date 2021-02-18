@@ -2,6 +2,7 @@ package com.nedap.openehr.lsp.aql;
 
 import com.nedap.healthcare.tolerantaqlparser.ErrorTolerantAQLBaseListener;
 import com.nedap.healthcare.tolerantaqlparser.ErrorTolerantAQLParser;
+import com.nedap.openehr.lsp.paths.ArchetypePathReference;
 import com.nedap.openehr.lsp.utils.ANTLRUtils;
 
 import java.util.ArrayList;

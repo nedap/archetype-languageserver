@@ -19,6 +19,8 @@ import com.nedap.archie.aom.utils.AOMUtils;
 import com.nedap.archie.base.Cardinality;
 import com.nedap.archie.base.MultiplicityInterval;
 import com.nedap.archie.rminfo.MetaModels;
+import com.nedap.openehr.lsp.paths.ArchetypePathReference;
+import com.nedap.openehr.lsp.paths.PathUtils;
 import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.HoverParams;
@@ -48,6 +50,11 @@ public class ArchetypeHoverInfo extends HoverInfo {
             for(TemplateOverlay overlay:template.getTemplateOverlays()) {
                 extractHoverInfo(documentInformation, overlay.getDefinition(), archetypeForTerms);
             }
+        }
+
+        for(ArchetypePathReference reference:documentInformation.getModelReferences()) {
+            //TODO: Template Overlays need some extra work here!
+            PathUtils.createHoverInfo(this, metaModels, reference, archetypeForTerms);
         }
 
     }

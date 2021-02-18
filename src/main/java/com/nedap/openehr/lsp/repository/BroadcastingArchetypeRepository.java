@@ -12,9 +12,12 @@ import com.nedap.archie.flattener.InMemoryFullArchetypeRepository;
 import com.nedap.openehr.lsp.ADL2TextDocumentService;
 import com.nedap.openehr.lsp.FileFormat;
 import com.nedap.openehr.lsp.FileFormatDetector;
+import com.nedap.openehr.lsp.aql.AQLDocument;
 import com.nedap.openehr.lsp.aql.AQLStorage;
 import com.nedap.openehr.lsp.document.ADLVersion;
 import com.nedap.openehr.lsp.document.DocumentInformation;
+import com.nedap.openehr.lsp.paths.ArchetypePathReference;
+import com.nedap.openehr.lsp.paths.PathUtils;
 import com.nedap.openehr.lsp.symbolextractor.ADL2SymbolExtractor;
 import com.nedap.openehr.lsp.document.ArchetypeHoverInfo;
 import com.nedap.openehr.lsp.symbolextractor.SymbolNameFromTerminologyHelper;
@@ -428,7 +431,35 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
     }
 
     public List<? extends CodeLens> codeLens(CodeLensParams params) {
-        return aqlStorage.getCodeLens(params);
+        if(this.symbolsByUri.containsKey(params.getTextDocument().getUri())) {
+            return createADL2CodeLenses(params);
+        } else {
+            return aqlStorage.getCodeLens(params);
+        }
+    }
+
+    private List<? extends CodeLens> createADL2CodeLenses(CodeLensParams params) {
+        DocumentInformation documentInformation = this.symbolsByUri.get(params.getTextDocument().getUri());
+        if(documentInformation == null) {
+            return new ArrayList<>();
+        }
+        List<CodeLens> result = new ArrayList<>();
+        for(ArchetypePathReference reference:documentInformation.getModelReferences()) {
+            if(reference.getArchetypeId() == null) {
+                continue;
+            }
+            try {
+                ValidationResult validationResult = getValidationResult(documentInformation.getArchetypeId());
+                if (validationResult != null) {
+                    PathUtils.createCodeLenses(result, reference, validationResult);
+                } else {
+                }
+            } catch (Exception e) {
+                //ok... report as diagnostics or log
+                e.printStackTrace();
+            }
+        }
+        return result;
     }
 
     public Either<List<CompletionItem>, CompletionList> completion(CompletionParams position) {

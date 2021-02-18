@@ -1,6 +1,7 @@
 package com.nedap.openehr.lsp.aql;
 
 import com.nedap.openehr.lsp.document.HoverInfo;
+import com.nedap.openehr.lsp.paths.ArchetypePathReference;
 import org.eclipse.lsp4j.DocumentHighlight;
 
 import java.util.List;
