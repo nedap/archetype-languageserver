@@ -53,7 +53,8 @@ public class ArchetypeHoverInfo extends HoverInfo {
         }
 
         for(ArchetypePathReference reference:documentInformation.getModelReferences()) {
-            //TODO: Template Overlays need some extra work here!
+            //no rules in template overlays, so no hoverinfo needed for path references from rules
+            //could become necessary when we add path references from use_node in the same way
             PathUtils.createHoverInfo(this, metaModels, reference, archetypeForTerms);
         }
 
