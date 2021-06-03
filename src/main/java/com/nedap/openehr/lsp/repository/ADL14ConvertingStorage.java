@@ -6,6 +6,7 @@ import com.nedap.archie.adl14.ADL14Converter;
 import com.nedap.archie.adl14.ADL14Parser;
 import com.nedap.archie.adl14.ADL2ConversionResult;
 import com.nedap.archie.adl14.ADL2ConversionResultList;
+import com.nedap.archie.adlparser.ADLParseException;
 import com.nedap.archie.aom.Archetype;
 import com.nedap.archie.archetypevalidator.ValidationResult;
 import com.nedap.archie.serializer.adl.ADLArchetypeSerializer;
@@ -34,12 +35,13 @@ public class ADL14ConvertingStorage {
 
     public void addFile(TextDocumentItem item) {
         ADL14Parser adl14Parser = new ADL14Parser(BuiltinReferenceModels.getMetaModels());
-        Archetype archetype = adl14Parser.parse(item.getText(), configuration);
-        if(adl14Parser.getErrors().hasErrors()) {
-            textService.pushDiagnostics(new VersionedTextDocumentIdentifier(item.getUri(), item.getVersion()),  adl14Parser.getErrors());
-        } else {
+        Archetype archetype = null;
+        try {
+            archetype = adl14Parser.parse(item.getText(), configuration);
             textService.pushDiagnostics(new VersionedTextDocumentIdentifier(item.getUri(), item.getVersion()),  null, new ValidationResult(archetype));
             adl14Files.put(item.getUri(), archetype);
+        } catch (ADLParseException parseException) {
+            textService.pushDiagnostics(new VersionedTextDocumentIdentifier(item.getUri(), item.getVersion()), adl14Parser.getErrors());
         }
     }
 

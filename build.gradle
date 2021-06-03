@@ -32,7 +32,7 @@ dependencies {
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:28.2-jre'
 
-    implementation 'com.nedap.healthcare.archie:archie-all:0.17.0'
+    implementation 'com.nedap.healthcare.archie:archie-all:1.0.0'
     implementation 'org.eclipse.lsp4j:org.eclipse.lsp4j:0.9.0'
     implementation 'org.slf4j:slf4j-nop:1.7.9'
 
