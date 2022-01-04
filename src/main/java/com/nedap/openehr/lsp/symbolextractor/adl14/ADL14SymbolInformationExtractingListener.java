@@ -306,16 +306,16 @@ public class ADL14SymbolInformationExtractingListener extends Adl14BaseListener 
             if(parent.getKind() == SymbolKind.Key && idCodePattern.matcher(parent.getName()).matches()) {
                 //do not add things like 'text' and 'description', they aren't useful at all!
                 //TODO: maybe move this to a post-processor?
-                if(ctx.attribute_id().getText().equalsIgnoreCase("text")) {
+                if(ctx.odin_object_key().getText().equalsIgnoreCase("text")) {
                     if(ctx.object_block() != null) {
                         parent.setDetail(ctx.object_block().getText());
                     }
                 }
             } else {
-                addSymbol(ctx.attribute_id().ALPHA_LC_ID(), ctx, ctx.attribute_id().getText(), SymbolKind.Field, StackAction.PUSH);
+                addSymbol(ctx.odin_object_key().ALPHA_UNDERSCORE_ID(), ctx, ctx.odin_object_key().getText(), SymbolKind.Field, StackAction.PUSH);
             }
         } else {
-            addSymbol(ctx.attribute_id().ALPHA_LC_ID(), ctx, ctx.attribute_id().getText(), SymbolKind.Field, StackAction.PUSH);
+            addSymbol(ctx.odin_object_key().ALPHA_UNDERSCORE_ID(), ctx, ctx.odin_object_key().getText(), SymbolKind.Field, StackAction.PUSH);
         }
     }
 

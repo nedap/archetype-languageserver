@@ -110,23 +110,23 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     }
 
 
-    @Override public void enterTemplate_overlay(AdlParser.Template_overlayContext ctx) {
+    @Override public void enterTemplateOverlay(AdlParser.TemplateOverlayContext ctx) {
         stack.addSymbol(ctx.SYM_TEMPLATE_OVERLAY(), ctx, "archetype", SymbolKind.Constant, StackAction.PUSH);
         stack.addSymbol(ctx.ARCHETYPE_HRID(), "archetype id", SymbolKind.Class);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
 
-    @Override public void exitTemplate_overlay(AdlParser.Template_overlayContext ctx) {
+    @Override public void exitTemplateOverlay(AdlParser.TemplateOverlayContext ctx) {
         popStack();
     }
 
-    @Override public void enterOperational_template(AdlParser.Operational_templateContext ctx) {
+    @Override public void enterOperationalTemplate(AdlParser.OperationalTemplateContext ctx) {
         stack.addSymbol(ctx.SYM_OPERATIONAL_TEMPLATE(), ctx, "operational template", SymbolKind.Constant, StackAction.PUSH);
         stack.addSymbol(ctx.ARCHETYPE_HRID(), "archetype id", SymbolKind.Class);
         this.archetypeId = ctx.ARCHETYPE_HRID().getText();
     }
 
-    @Override public void exitOperational_template(AdlParser.Operational_templateContext ctx) {
+    @Override public void exitOperationalTemplate(AdlParser.OperationalTemplateContext ctx) {
         popStack();
     }
 
@@ -135,7 +135,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      *
      * <p>The default implementation does nothing.</p>
      */
-    @Override public void enterSpecialization_section(AdlParser.Specialization_sectionContext ctx) {
+    @Override public void enterSpecializationSection(AdlParser.SpecializationSectionContext ctx) {
         stack.addSymbol(ctx.SYM_SPECIALIZE(), ctx, DocumentInformation.SPECIALISATION_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         TerminalNode terminalNode = ctx.archetype_ref().ARCHETYPE_HRID();
         if(terminalNode == null) {
@@ -147,7 +147,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
         addFoldingRange(ctx);
     }
 
-    @Override public void exitSpecialization_section(AdlParser.Specialization_sectionContext ctx) {
+    @Override public void exitSpecializationSection(AdlParser.SpecializationSectionContext ctx) {
         popStack();
     }
 
@@ -156,7 +156,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      *
      * <p>The default implementation does nothing.</p>
      */
-    @Override public void enterLanguage_section(AdlParser.Language_sectionContext ctx) {
+    @Override public void enterLanguageSection(AdlParser.LanguageSectionContext ctx) {
         stack.addSymbol(ctx.SYM_LANGUAGE(), ctx, DocumentInformation.LANGUAGE_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
@@ -165,7 +165,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      *
      * <p>The default implementation does nothing.</p>
      */
-    @Override public void exitLanguage_section(AdlParser.Language_sectionContext ctx) {
+    @Override public void exitLanguageSection(AdlParser.LanguageSectionContext ctx) {
         popStack();
     }
     /**
@@ -173,12 +173,12 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      *
      * <p>The default implementation does nothing.</p>
      */
-    @Override public void enterDescription_section(AdlParser.Description_sectionContext ctx) {
+    @Override public void enterDescriptionSection(AdlParser.DescriptionSectionContext ctx) {
         stack.addSymbol(ctx.SYM_DESCRIPTION(), ctx, DocumentInformation.DESCRIPTION_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
 
-    @Override public void exitDescription_section(AdlParser.Description_sectionContext ctx) {
+    @Override public void exitDescriptionSection(AdlParser.DescriptionSectionContext ctx) {
         popStack();
     }
 
@@ -201,7 +201,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      *
      * <p>The default implementation does nothing.</p>
      */
-    @Override public void enterDefinition_section(AdlParser.Definition_sectionContext ctx) {
+    @Override public void enterDefinitionSection(AdlParser.DefinitionSectionContext ctx) {
         stack.addSymbol(ctx.SYM_DEFINITION(), ctx, DocumentInformation.DEFINITION_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
@@ -210,7 +210,7 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      *
      * <p>The default implementation does nothing.</p>
      */
-    @Override public void exitDefinition_section(AdlParser.Definition_sectionContext ctx) {
+    @Override public void exitDefinitionSection(AdlParser.DefinitionSectionContext ctx) {
         popStack();
     }
     /**
@@ -218,12 +218,12 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      *
      * <p>The default implementation does nothing.</p>
      */
-    @Override public void enterRules_section(AdlParser.Rules_sectionContext ctx) {
+    @Override public void enterRulesSection(AdlParser.RulesSectionContext ctx) {
         stack.addSymbol(ctx.SYM_RULES(), ctx, DocumentInformation.RULES_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
 
-    @Override public void exitRules_section(AdlParser.Rules_sectionContext ctx) {
+    @Override public void exitRulesSection(AdlParser.RulesSectionContext ctx) {
         popStack();
     }
 
@@ -232,13 +232,13 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      *
      * <p>The default implementation does nothing.</p>
      */
-    @Override public void enterTerminology_section(AdlParser.Terminology_sectionContext ctx) {
+    @Override public void enterTerminologySection(AdlParser.TerminologySectionContext ctx) {
         stack.addSymbol(ctx.SYM_TERMINOLOGY(), ctx, DocumentInformation.TERMINOLOGY_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
 
     }
 
-    @Override public void exitTerminology_section(AdlParser.Terminology_sectionContext ctx) {
+    @Override public void exitTerminologySection(AdlParser.TerminologySectionContext ctx) {
         popStack();
     }
 
@@ -247,12 +247,12 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
      *
      * <p>The default implementation does nothing.</p>
      */
-    @Override public void enterAnnotations_section(AdlParser.Annotations_sectionContext ctx) {
+    @Override public void enterAnnotationsSection(AdlParser.AnnotationsSectionContext ctx) {
         stack.addSymbol(ctx.SYM_ANNOTATIONS(), ctx, DocumentInformation.ANNOTATIONS_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
     }
 
-    @Override public void exitAnnotations_section(AdlParser.Annotations_sectionContext ctx) {
+    @Override public void exitAnnotationsSection(AdlParser.AnnotationsSectionContext ctx) {
         popStack();
     }
 
@@ -352,16 +352,16 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
             if(parent.getKind() == SymbolKind.Key && idCodePattern.matcher(parent.getName()).matches()) {
                 //do not add things like 'text' and 'description', they aren't useful at all!
                 //TODO: maybe move this to a post-processor?
-                if(ctx.attribute_id().getText().equalsIgnoreCase("text")) {
+                if(ctx.odin_object_key().getText().equalsIgnoreCase("text")) {
                     if(ctx.object_block() != null) {
                         parent.setDetail(ctx.object_block().object_value_block().getText());
                     }
                 }
             } else {
-                stack.addSymbol(ctx.attribute_id().ALPHA_LC_ID(), ctx, ctx.attribute_id().getText(), SymbolKind.Field, StackAction.PUSH);
+                stack.addSymbol(ctx.odin_object_key().ALPHA_UNDERSCORE_ID(), ctx, ctx.odin_object_key().getText(), SymbolKind.Field, StackAction.PUSH);
             }
         } else {
-            stack.addSymbol(ctx.attribute_id().ALPHA_LC_ID(), ctx, ctx.attribute_id().getText(), SymbolKind.Field, StackAction.PUSH);
+            stack.addSymbol(ctx.odin_object_key().ALPHA_UNDERSCORE_ID(), ctx, ctx.odin_object_key().getText(), SymbolKind.Field, StackAction.PUSH);
         }
     }
 
