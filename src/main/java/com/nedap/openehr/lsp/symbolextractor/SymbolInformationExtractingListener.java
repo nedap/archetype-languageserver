@@ -228,6 +228,17 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
         popStack();
     }
 
+    @Override
+    public void enterRmOverlaySection(AdlParser.RmOverlaySectionContext ctx) {
+        stack.addSymbol(ctx.SYM_RM_OVERLAY(), ctx, DocumentInformation.RM_OVERLAY_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
+        addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
+    }
+
+    @Override
+    public void exitRmOverlaySection(AdlParser.RmOverlaySectionContext ctx) {
+        popStack();
+    }
+
     /**
      * {@inheritDoc}
      *
@@ -236,7 +247,6 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     @Override public void enterTerminologySection(AdlParser.TerminologySectionContext ctx) {
         stack.addSymbol(ctx.SYM_TERMINOLOGY(), ctx, DocumentInformation.TERMINOLOGY_SECTION_NAME, SymbolKind.Module, StackAction.PUSH);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
-
     }
 
     @Override public void exitTerminologySection(AdlParser.TerminologySectionContext ctx) {

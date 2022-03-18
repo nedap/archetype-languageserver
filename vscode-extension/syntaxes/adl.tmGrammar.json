@@ -37,7 +37,7 @@
 		},
 		"sections": {
 			"name": "markup.heading",
-			"match": "(archetype|template|operational_template|template_overlay|terminology|ontology|component_terminologies|concept|language|specialise|description)"
+			"match": "(archetype|template|operational_template|template_overlay|terminology|ontology|component_terminologies|concept|language|specialise|description|rm_overlay)"
 		},
 		"odinStart": {
 			"name": "meta.structure.odin.start",
@@ -98,7 +98,7 @@
 		"definition": {
 			"name": "meta.structure.definition",
 			"begin": "(definition)(\\s\\n)*",
-			"end": "(rules|terminology|ontology)",
+			"end": "(rules|terminology|ontology|rm_overlay)",
 			"beginCaptures": {
 				"1": {"name": "markup.heading.definition"}
 			},
