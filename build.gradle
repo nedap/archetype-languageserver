@@ -13,9 +13,9 @@ plugins {
 
     // Apply the application plugin to add support for building a CLI application.
     id 'application'
-    id "com.github.johnrengelman.shadow" version "5.2.0"
+    id "com.github.johnrengelman.shadow" version "7.1.2"
     //id "com.palantir.graal" version "0.7.1"
-    id "org.beryx.runtime" version "1.11.4"
+    id "org.beryx.runtime" version "1.12.7"
     id "antlr"
 
 }
@@ -52,8 +52,8 @@ generateGrammarSource {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_14
-    targetCompatibility = JavaVersion.VERSION_14
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 application {
@@ -115,5 +115,17 @@ runtime {
     //java.desktop required because of glassfish JAXB
     targetPlatform('linux-x64', jvm_linux_home)
     targetPlatform('winx64', jvm_windows_home)
-    targetPlatform('macos', jvm_macos_home)
+    targetPlatform('macos-x64', jvm_macos_x86_home)
+    targetPlatform('macos-arm64', jvm_macos_arm_home)
+    launcher {
+        jvmArgs = ['--add-opens', 'java.base/java.lang=ALL-UNNAMED'
+                   , '--add-opens', 'java.base/java.lang.invoke=ALL-UNNAMED'
+                   , '--add-opens', 'java.base/java.net=ALL-UNNAMED'
+                   , '--add-opens', 'java.base/java.nio=ALL-UNNAMED'
+                   , '--add-opens', 'java.base/java.time=ALL-UNNAMED'
+                   , '--add-opens', 'java.base/java.util=ALL-UNNAMED'
+                   , '--add-opens', 'java.base/java.util.concurrent.atomic=ALL-UNNAMED'
+                   , '--add-opens', 'java.base/sun.nio.ch=ALL-UNNAMED'
+                   , '--add-opens', 'java.base/sun.util.calendar=ALL-UNNAMED']
+    }
 }
