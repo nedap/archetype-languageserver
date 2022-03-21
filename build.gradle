@@ -28,23 +28,23 @@ repositories {
 }
 
 dependencies {
-    antlr group: 'org.antlr', name: 'antlr4', version: '4.8-1'
+    antlr group: 'org.antlr', name: 'antlr4', version: '4.9.3'
     // This dependency is used by the application.
-    implementation 'com.google.guava:guava:28.2-jre'
+    implementation 'com.google.guava:guava:31.0.1-jre'
 
     implementation 'com.nedap.healthcare.archie:archie-all:2.0.0'
-    implementation 'org.eclipse.lsp4j:org.eclipse.lsp4j:0.9.0'
-    implementation 'org.slf4j:slf4j-nop:1.7.9'
+    implementation 'org.eclipse.lsp4j:org.eclipse.lsp4j:0.12.0'
+    implementation 'org.slf4j:slf4j-nop:1.7.36'
 
     implementation 'com.nedap.healthcare:aqlparser:*'
 
     // Use JUnit Jupiter API for testing.
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
 
     testImplementation 'commons-io:commons-io:2.11.0'
 
     // Use JUnit Jupiter Engine for testing.
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.6.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
 }
 
 generateGrammarSource {
