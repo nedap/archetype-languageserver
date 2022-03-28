@@ -13,9 +13,9 @@ plugins {
 
     // Apply the application plugin to add support for building a CLI application.
     id 'application'
-    id "com.github.johnrengelman.shadow" version "5.2.0"
+    id "com.github.johnrengelman.shadow" version "7.1.2"
     //id "com.palantir.graal" version "0.7.1"
-    id "org.beryx.runtime" version "1.11.4"
+    id "org.beryx.runtime" version "1.12.7"
     id "antlr"
 
 }
@@ -28,21 +28,23 @@ repositories {
 }
 
 dependencies {
-    antlr group: 'org.antlr', name: 'antlr4', version: '4.8-1'
+    antlr group: 'org.antlr', name: 'antlr4', version: '4.9.3'
     // This dependency is used by the application.
-    implementation 'com.google.guava:guava:28.2-jre'
+    implementation 'com.google.guava:guava:31.0.1-jre'
 
-    implementation 'com.nedap.healthcare.archie:archie-all:0.17.0'
-    implementation 'org.eclipse.lsp4j:org.eclipse.lsp4j:0.9.0'
-    implementation 'org.slf4j:slf4j-nop:1.7.9'
+    implementation 'com.nedap.healthcare.archie:archie-all:2.0.0'
+    implementation 'org.eclipse.lsp4j:org.eclipse.lsp4j:0.12.0'
+    implementation 'org.slf4j:slf4j-nop:1.7.36'
 
     implementation 'com.nedap.healthcare:aqlparser:*'
 
     // Use JUnit Jupiter API for testing.
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+
+    testImplementation 'commons-io:commons-io:2.11.0'
 
     // Use JUnit Jupiter Engine for testing.
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.6.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
 }
 
 generateGrammarSource {
@@ -50,8 +52,8 @@ generateGrammarSource {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_14
-    targetCompatibility = JavaVersion.VERSION_14
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 application {
@@ -113,5 +115,17 @@ runtime {
     //java.desktop required because of glassfish JAXB
     targetPlatform('linux-x64', jvm_linux_home)
     targetPlatform('winx64', jvm_windows_home)
-    targetPlatform('macos', jvm_macos_home)
+    targetPlatform('macos-x64', jvm_macos_x86_home)
+    targetPlatform('macos-arm64', jvm_macos_arm_home)
+    launcher {
+        jvmArgs = ['--add-opens', 'java.base/java.lang=ALL-UNNAMED'
+                   , '--add-opens', 'java.base/java.lang.invoke=ALL-UNNAMED'
+                   , '--add-opens', 'java.base/java.net=ALL-UNNAMED'
+                   , '--add-opens', 'java.base/java.nio=ALL-UNNAMED'
+                   , '--add-opens', 'java.base/java.time=ALL-UNNAMED'
+                   , '--add-opens', 'java.base/java.util=ALL-UNNAMED'
+                   , '--add-opens', 'java.base/java.util.concurrent.atomic=ALL-UNNAMED'
+                   , '--add-opens', 'java.base/sun.nio.ch=ALL-UNNAMED'
+                   , '--add-opens', 'java.base/sun.util.calendar=ALL-UNNAMED']
+    }
 }

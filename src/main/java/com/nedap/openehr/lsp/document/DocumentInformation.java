@@ -21,6 +21,7 @@ public class DocumentInformation {
 
     public static final String DEFINITION_SECTION_NAME = "definition section";
     public static final String TERMINOLOGY_SECTION_NAME = "terminology section";
+    public static final String RM_OVERLAY_SECTION_NAME = "rm_overlay section";
     public static final String LANGUAGE_SECTION_NAME = "language section";
     public static final String SPECIALISATION_SECTION_NAME = "specialisation section";
     public static final String DESCRIPTION_SECTION_NAME = "description section";
