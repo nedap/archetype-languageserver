@@ -4,7 +4,7 @@ import * as net from 'net';
 import * as path from 'path';
 import {Trace} from 'vscode-jsonrpc';
 import { window, workspace, commands, ExtensionContext, Uri } from 'vscode';
-import { LanguageClient, LanguageClientOptions, ExecutableOptions, Executable, StreamInfo, Position as LSPosition, Location as LSLocation, TransportKind } from 'vscode-languageclient';
+import { LanguageClient, LanguageClientOptions} from 'vscode-languageclient/node';
 
 export function activate(context: ExtensionContext) {
     // The server is a started as a separate app and listens on port 1278
