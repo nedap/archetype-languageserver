@@ -47,10 +47,10 @@ export function activate(context: ExtensionContext) {
     } else if(process.platform == 'darwin' && process.arch == 'arm64') {
          serverOptions = {
              run: {
-                 command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-macos-arm64', 'bin', 'archie-lsp')
+                 command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-macos-x64', 'bin', 'archie-lsp')
              },
              debug: {
-                 command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-macos-arm64', 'bin', 'archie-lsp')
+                 command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-macos-x64', 'bin', 'archie-lsp')
              }
          };
      }
@@ -64,7 +64,7 @@ export function activate(context: ExtensionContext) {
             }
         };
     } else {
-        throw 'unsupported platform, this extension only runs on windows, macos or linux on x86 CPUs: ' + process.platform
+        throw 'unsupported platform, this extension only runs on windows, macos or linux on x86 CPUs, plus mac os on ARM CPUs: ' + process.platform
     }
     
     let clientOptions: LanguageClientOptions = {

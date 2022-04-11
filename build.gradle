@@ -32,7 +32,7 @@ dependencies {
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:31.0.1-jre'
 
-    implementation 'com.nedap.healthcare.archie:archie-all:2.0.0'
+    implementation('com.nedap.healthcare.archie:archie-all:2.0.1')
     implementation 'org.eclipse.lsp4j:org.eclipse.lsp4j:0.12.0'
     implementation 'org.slf4j:slf4j-nop:1.7.36'
 
@@ -65,25 +65,7 @@ test {
     // Use junit platform for unit tests
     useJUnitPlatform()
 }
-//
-//graal {
-//    outputName 'archetype-lsp'
-//    mainClass 'com.nedap.openehr.lsp.App'
-//    javaVersion '11'
-//    option '--no-fallback'
-//    option '-H:IncludeResources=.*\\.(bmm|arp)'
-//    graalVersion '20.1.0'
-//}
-//jar {
-//    manifest {
-//        attributes(
-//                'Main-Class': 'com.nedap.openehr.lsp.App'
-//        )
-//    }
-//    from {
-//        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-//    }
-//}
+
 task buildExtension() {
     dependsOn build
 
@@ -116,7 +98,7 @@ runtime {
     targetPlatform('linux-x64', jvm_linux_home)
     targetPlatform('winx64', jvm_windows_home)
     targetPlatform('macos-x64', jvm_macos_x86_home)
-    targetPlatform('macos-arm64', jvm_macos_arm_home)
+  //  targetPlatform('macos-arm64', jvm_macos_arm_home)
     launcher {
         jvmArgs = ['--add-opens', 'java.base/java.lang=ALL-UNNAMED'
                    , '--add-opens', 'java.base/java.lang.invoke=ALL-UNNAMED'
