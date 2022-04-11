@@ -116,6 +116,9 @@ runtime {
     targetPlatform('macos-x64', jvm_macos_x86_home)
     targetPlatform('macos-arm64', jvm_macos_arm_home)
     launcher {
+        //To set the classpath to the single included jar file, instead of one per distribution, the start scripts
+        //are customized. Taken from https://github.com/beryx/badass-runtime-plugin/blob/master/src/main/resources/
+        //and only the CLASSPATH is changed to point at APP_HOME/../app/* to pick up the archie-lsp-all.jar
         unixScriptTemplate = file("$projectDir/unixScriptTemplate.txt")
         windowsScriptTemplate = file("$projectDir/windowsScriptTemplate.txt")
         jvmArgs = ['--add-opens', 'java.base/java.lang=ALL-UNNAMED'
