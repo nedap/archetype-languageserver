@@ -47,10 +47,10 @@ export function activate(context: ExtensionContext) {
     } else if(process.platform == 'darwin' && process.arch == 'arm64') {
          serverOptions = {
              run: {
-                 command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-macos-x64', 'bin', 'archie-lsp')
+                 command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-macos-arm64', 'bin', 'archie-lsp')
              },
              debug: {
-                 command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-macos-x64', 'bin', 'archie-lsp')
+                 command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-macos-arm64', 'bin', 'archie-lsp')
              }
          };
      }

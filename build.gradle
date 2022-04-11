@@ -70,11 +70,27 @@ task buildExtension() {
     dependsOn build
 
     doLast {
+        mkdir "$projectDir/build/image/app"
+
+        //now copy it all to the vscode extension dir
         delete "$projectDir/vscode-extension/lsp-images"
+
         copy {
             from "$projectDir/build/image"
             into "$projectDir/vscode-extension/lsp-images"
         }
+
+        //copy the jar file to a common directory so it does not get included multiple times
+        copy {
+            from "$projectDir/vscode-extension/lsp-images/archie-lsp-macos-x64/lib/archie-lsp-all.jar"
+            into "$projectDir/vscode-extension/lsp-images/app"
+        }
+        //then remove all the other jar files to save space. The custom start script template will fix the classpath
+        delete "$projectDir/vscode-extension/lsp-images/archie-lsp-macos-x64/lib/archie-lsp-all.jar"
+        delete "$projectDir/vscode-extension/lsp-images/archie-lsp-macos-arm64/lib/archie-lsp-all.jar"
+        delete "$projectDir/vscode-extension/lsp-images/archie-lsp-linux-x64/lib/archie-lsp-all.jar"
+        delete "$projectDir/vscode-extension/lsp-images/archie-lsp-winx64/lib/archie-lsp-all.jar"
+
         exec {
             workingDir "$projectDir/vscode-extension"
             commandLine "npm", "install"
@@ -98,8 +114,10 @@ runtime {
     targetPlatform('linux-x64', jvm_linux_home)
     targetPlatform('winx64', jvm_windows_home)
     targetPlatform('macos-x64', jvm_macos_x86_home)
-  //  targetPlatform('macos-arm64', jvm_macos_arm_home)
+    targetPlatform('macos-arm64', jvm_macos_arm_home)
     launcher {
+        unixScriptTemplate = file("$projectDir/unixScriptTemplate.txt")
+        windowsScriptTemplate = file("$projectDir/windowsScriptTemplate.txt")
         jvmArgs = ['--add-opens', 'java.base/java.lang=ALL-UNNAMED'
                    , '--add-opens', 'java.base/java.lang.invoke=ALL-UNNAMED'
                    , '--add-opens', 'java.base/java.net=ALL-UNNAMED'
