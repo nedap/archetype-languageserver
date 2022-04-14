@@ -95,6 +95,7 @@ public class ArchetypeHoverInfo extends HoverInfo {
         hover.setContents(new MarkupContent(MARKDOWN, content.toString()));
         Range range = getHoverRange(documentInformation, definition);
         if(range != null) {
+            hover.setRange(range);
             hoverRanges.addRange(range, hover);
         }
     }
@@ -230,6 +231,7 @@ public class ArchetypeHoverInfo extends HoverInfo {
             Hover hover = new Hover();
             hover.setContents(new MarkupContent(MARKDOWN, content.toString()));
             Range range = terminologyCodeSymbol.getRange();
+            hover.setRange(range);
             hoverRanges.addRange(range, hover);
         }
     }

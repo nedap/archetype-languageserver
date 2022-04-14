@@ -1,8 +1,6 @@
 package com.nedap.openehr.lsp;
 
-import org.eclipse.lsp4j.CodeLens;
-import org.eclipse.lsp4j.CodeLensParams;
-import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.*;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -24,17 +22,23 @@ public class RulesCodeLensTest extends LanguageServerTestBase {
         assertEquals(2, codeLens.size());
         CodeLens lens1 = codeLens.get(0);
         CodeLens lens2 = codeLens.get(1);
-        System.out.println(lens1);
-        assertEquals(37, lens1.getRange().getStart().getLine());
-        assertEquals(11, lens1.getRange().getStart().getCharacter());
-        assertEquals(37, lens1.getRange().getEnd().getLine());
-        assertEquals(42, lens1.getRange().getEnd().getCharacter());
+
+        assertEquals(new Range(new Position(37, 11), new Position(37,42)), lens1.getRange());
         assertEquals("Element 1/value\n\nIn Archetype A test cluster (openEHR-EHR-CLUSTER.simple_sum.v0.0.1)", lens1.getCommand().getArguments().get(0));
 
-        assertEquals(37, lens2.getRange().getStart().getLine());
-        assertEquals(62, lens2.getRange().getStart().getCharacter());
-        assertEquals(37, lens2.getRange().getEnd().getLine());
-        assertEquals(73, lens2.getRange().getEnd().getCharacter());
+        assertEquals(new Range(new Position(37, 62), new Position(37,73)), lens2.getRange());
         assertEquals("Element 2\n\nIn Archetype A test cluster (openEHR-EHR-CLUSTER.simple_sum.v0.0.1)", lens2.getCommand().getArguments().get(0));
+
+        CompletableFuture<Hover> hover = adl2LanguageServer.getTextDocumentService().hover(new HoverParams(new TextDocumentIdentifier("uri"), new Position(37, 30)));
+        Hover hover1 = hover.get();
+        assertEquals("markdown", hover1.getContents().getRight().getKind());
+        assertEquals("Element 1/value/defining_code\n" +
+                "\n" +
+                "\n" +
+                "\n" +
+                "Element 1/value\n" +
+                "\n" +
+                "In Archetype A test cluster (openEHR-EHR-CLUSTER.simple_sum.v0.0.1)", hover1.getContents().getRight().getValue());
+        assertEquals(new Range(new Position(37, 11), new Position(37,42)), hover1.getRange());
     }
 }
