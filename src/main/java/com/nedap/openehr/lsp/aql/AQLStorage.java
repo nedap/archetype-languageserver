@@ -195,7 +195,7 @@ public class AQLStorage {
                     Archetype flat = validationResult.getFlattened();
                     metaModels.selectModel(flat);
                     PartialAOMPathQuery partialAOMPathQuery = new PartialAOMPathQuery(reference.getPath());
-                    PartialAOMPathQuery.PartialMatch partial = partialAOMPathQuery.findPartial(flat.getDefinition());//TODO: get path UP TO where we are typing!
+                    PartialAOMPathQuery.PartialMatch partial = partialAOMPathQuery.findLSPPartial(flat.getDefinition());//TODO: get path UP TO where we are typing!
                     //TODO: add BMM path traversal here as well, so you can do /value/magnitude
                     for(ArchetypeModelObject object:partial.getMatches()) {
                         if(object instanceof CObject) {

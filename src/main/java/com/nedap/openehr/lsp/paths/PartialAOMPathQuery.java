@@ -25,7 +25,8 @@ public class PartialAOMPathQuery extends AOMPathQuery  {
         return query;
     }
 
-    public PartialMatch findPartial(CComplexObject root) {
+    //TODO: check if/how this is different from AOMPathQuery.findPartial, and potentially remove
+    public PartialMatch findLSPPartial(CComplexObject root) {
         List<ArchetypeModelObject> result = new ArrayList<>();
         boolean findThroughDifferentialPaths = true, matchSpecializedNodes = true;
         result.add(root);

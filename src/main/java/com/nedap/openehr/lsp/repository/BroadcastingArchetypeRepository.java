@@ -2,6 +2,7 @@ package com.nedap.openehr.lsp.repository;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
+import com.nedap.archie.adlparser.ADLParseException;
 import com.nedap.archie.adlparser.ADLParser;
 import com.nedap.archie.aom.Archetype;
 import com.nedap.archie.aom.Template;
@@ -142,6 +143,9 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                     documentInformation.setHoverInfo(new ArchetypeHoverInfo(documentInformation, archetype, archetypeForTerms, language));
                     SymbolNameFromTerminologyHelper.giveNames(documentInformation.getSymbols(), archetypeForTerms, language);
                     //diagnostics will now be pushed from within the invalidateArchetypesAndRecompile method
+                } catch (ADLParseException e) {
+                    //this should have been checked in the previous step. But still, it could happen.
+                    textDocumentService.pushDiagnostics(new VersionedTextDocumentIdentifier(textDocumentItem.getUri(), textDocumentItem.getVersion()), e.getErrors());
                 } catch (Exception ex) {
                     //this particular exce[tion is a parse error, usually when extracting JSON. be sure to post taht
                     textDocumentService.pushDiagnostics(new VersionedTextDocumentIdentifier(textDocumentItem.getUri(), textDocumentItem.getVersion()), ex);

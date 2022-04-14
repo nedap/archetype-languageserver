@@ -3,6 +3,8 @@
  */
 package com.nedap.openehr.lsp;
 
+import com.google.gson.InstanceCreator;
+import org.eclipse.lsp4j.SemanticTokensCapabilities;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
@@ -10,8 +12,10 @@ import org.eclipse.lsp4j.services.LanguageClient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Type;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.function.Consumer;
 
 public class App {
 
@@ -30,7 +34,25 @@ public class App {
         OutputStream out = System.out;
 
         ADL2LanguageServer server = new ADL2LanguageServer();
-        Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
+        Launcher<LanguageClient> launcher =  new LSPLauncher.Builder<LanguageClient>()
+                .setLocalService(server)
+                .setRemoteInterface(LanguageClient.class)
+                .setInput(in)
+                .setOutput(out)
+                .configureGson(gsonBuilder -> {
+                    gsonBuilder.registerTypeAdapter(
+                            SemanticTokensCapabilities.class,
+                            new InstanceCreator<SemanticTokensCapabilities>() {
+
+                                @Override
+                                public SemanticTokensCapabilities createInstance(Type type) {
+                                    return new SemanticTokensCapabilities(null);
+                                }
+                            }
+                    );
+                })
+                .create();
+        //Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
         server.connect(launcher.getRemoteProxy(), launcher.getRemoteEndpoint());
 
         launcher.startListening();
@@ -49,7 +71,25 @@ public class App {
                                 OutputStream out = socket.getOutputStream();
 
                                 ADL2LanguageServer server = new ADL2LanguageServer();
-                                Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
+                                Launcher<LanguageClient> launcher =  new LSPLauncher.Builder<LanguageClient>()
+                                        .setLocalService(server)
+                                        .setRemoteInterface(LanguageClient.class)
+                                        .setInput(in)
+                                        .setOutput(out)
+                                        .configureGson(gsonBuilder -> {
+                                            gsonBuilder.registerTypeAdapter(
+                                                    SemanticTokensCapabilities.class,
+                                                    new InstanceCreator<SemanticTokensCapabilities>() {
+
+                                                        @Override
+                                                        public SemanticTokensCapabilities createInstance(Type type) {
+                                                            return new SemanticTokensCapabilities(null);
+                                                        }
+                                                    }
+                                            );
+                                        })
+                                        .create();
+                                //Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
                                 server.connect(launcher.getRemoteProxy(), launcher.getRemoteEndpoint());
 
 

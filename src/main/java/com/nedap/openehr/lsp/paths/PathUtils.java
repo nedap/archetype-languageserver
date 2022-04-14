@@ -27,7 +27,7 @@ public class PathUtils {
         Archetype flattened = validationResult.getFlattened();
         if (flattened != null) {
             PartialAOMPathQuery aomPathQuery = new PartialAOMPathQuery(reference.getPath());
-            PartialAOMPathQuery.PartialMatch partial = aomPathQuery.findPartial(flattened.getDefinition());
+            PartialAOMPathQuery.PartialMatch partial = aomPathQuery.findLSPPartial(flattened.getDefinition());
             if (partial.getMatches().size() > 0) {
                 ArchetypeModelObject archetypeModelObject = partial.getMatches().get(0);
                 String content = null;
@@ -45,6 +45,7 @@ public class PathUtils {
                 if(reference.getExtraInformation() != null) {
                     text += " " + reference.getExtraInformation();
                 }
+
                 //result.add(new CodeLens(reference.getRange(), new Command(text, ADL2TextDocumentService.SHOW_INFO_COMMAND, Lists.newArrayList(extraText)), null));
                 result.add(new CodeLens(reference.getRange(), new Command(text, ADL2TextDocumentService.SHOW_INFO_COMMAND, Lists.newArrayList(extraText)), null));
             } else {
@@ -60,7 +61,7 @@ public class PathUtils {
         metaModels.selectModel(flattened);
         if (flattened != null) {
             PartialAOMPathQuery aomPathQuery = new PartialAOMPathQuery(reference.getPath());
-            PartialAOMPathQuery.PartialMatch partial = aomPathQuery.findPartial(flattened.getDefinition());
+            PartialAOMPathQuery.PartialMatch partial = aomPathQuery.findLSPPartial(flattened.getDefinition());
             if (partial.getMatches().size() > 0) {
                 ArchetypeModelObject archetypeModelObject = partial.getMatches().get(0);
                 String content = null;
@@ -68,8 +69,8 @@ public class PathUtils {
                 String typeName = "";
                 if(archetypeModelObject instanceof CAttribute) {
                     CAttribute attribute = (CAttribute) archetypeModelObject;
-                    content = PathUtils.findNearestText((CAttribute) archetypeModelObject);
-                    description = PathUtils.findNearestDescription((CAttribute) archetypeModelObject);
+                    content = findNearestText((CAttribute) archetypeModelObject);
+                    description = findNearestDescription((CAttribute) archetypeModelObject);
                     CObject parent = attribute.getParent();
                     if(partial.getRemainingQuery().isEmpty()) { //TODO: proper path lookup here
                         BmmClass classDefinition = metaModels.getSelectedBmmModel().getClassDefinition(BmmDefinitions.typeNameToClassKey(parent.getRmTypeName()));
@@ -81,8 +82,8 @@ public class PathUtils {
                         }
                     }
                 } else if (archetypeModelObject instanceof CObject){
-                    content = PathUtils.findNearestText((CObject) archetypeModelObject);
-                    description = PathUtils.findNearestDescription((CObject) archetypeModelObject);
+                    content = findNearestText((CObject) archetypeModelObject);
+                    description = findNearestDescription((CObject) archetypeModelObject);
                     if(partial.getRemainingQuery().isEmpty()) { //TODO: proper path lookup here.
                         typeName = ((CObject) archetypeModelObject).getRmTypeName();
                     }

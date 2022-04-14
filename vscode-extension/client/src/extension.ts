@@ -4,7 +4,7 @@ import * as net from 'net';
 import * as path from 'path';
 import {Trace} from 'vscode-jsonrpc';
 import { window, workspace, commands, ExtensionContext, Uri } from 'vscode';
-import { LanguageClient, LanguageClientOptions, ExecutableOptions, Executable, StreamInfo, Position as LSPosition, Location as LSLocation, TransportKind } from 'vscode-languageclient';
+import { LanguageClient, LanguageClientOptions} from 'vscode-languageclient/node';
 
 export function activate(context: ExtensionContext) {
     // The server is a started as a separate app and listens on port 1278
@@ -22,7 +22,7 @@ export function activate(context: ExtensionContext) {
     // };
 
     let serverOptions;
-    if(process.arch != 'x32' && process.arch != 'x64') {
+    if(process.arch != 'x32' && process.arch != 'x64' && !(process.arch == 'arm64' && process.platform == 'darwin')) {
         throw 'unsupported CPU, this extension only runs on windows, macos or linux on x86 CPUs: ' + process.arch
     }
     if (process.platform == 'win32') {
@@ -35,16 +35,26 @@ export function activate(context: ExtensionContext) {
             }
         };
     }
-    else if(process.platform == 'darwin') {
+    else if(process.platform == 'darwin' && process.arch == 'x64') {
         serverOptions = {
             run: {
-                command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-macos', 'bin', 'archie-lsp')
+                command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-macos-x64', 'bin', 'archie-lsp')
             },
             debug: {
-                command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-macos', 'bin', 'archie-lsp')
+                command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-macos-x64', 'bin', 'archie-lsp')
             }
         };
-    } else if (process.platform == 'linux') {
+    } else if(process.platform == 'darwin' && process.arch == 'arm64') {
+         serverOptions = {
+             run: {
+                 command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-macos-arm64', 'bin', 'archie-lsp')
+             },
+             debug: {
+                 command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-macos-arm64', 'bin', 'archie-lsp')
+             }
+         };
+     }
+     else if (process.platform == 'linux') {
         serverOptions = {
             run: {
                 command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-linux-x64', 'bin', 'archie-lsp')
