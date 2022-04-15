@@ -32,7 +32,7 @@ dependencies {
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:31.0.1-jre'
 
-    implementation 'com.nedap.healthcare.archie:archie-all:2.0.0'
+    implementation('com.nedap.healthcare.archie:archie-all:2.0.1')
     implementation 'org.eclipse.lsp4j:org.eclipse.lsp4j:0.12.0'
     implementation 'org.slf4j:slf4j-nop:1.7.36'
 
@@ -65,34 +65,32 @@ test {
     // Use junit platform for unit tests
     useJUnitPlatform()
 }
-//
-//graal {
-//    outputName 'archetype-lsp'
-//    mainClass 'com.nedap.openehr.lsp.App'
-//    javaVersion '11'
-//    option '--no-fallback'
-//    option '-H:IncludeResources=.*\\.(bmm|arp)'
-//    graalVersion '20.1.0'
-//}
-//jar {
-//    manifest {
-//        attributes(
-//                'Main-Class': 'com.nedap.openehr.lsp.App'
-//        )
-//    }
-//    from {
-//        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-//    }
-//}
+
 task buildExtension() {
     dependsOn build
 
     doLast {
+        mkdir "$projectDir/build/image/app"
+
+        //now copy it all to the vscode extension dir
         delete "$projectDir/vscode-extension/lsp-images"
+
         copy {
             from "$projectDir/build/image"
             into "$projectDir/vscode-extension/lsp-images"
         }
+
+        //copy the jar file to a common directory so it does not get included multiple times
+        copy {
+            from "$projectDir/vscode-extension/lsp-images/archie-lsp-macos-x64/lib/archie-lsp-all.jar"
+            into "$projectDir/vscode-extension/lsp-images/app"
+        }
+        //then remove all the other jar files to save space. The custom start script template will fix the classpath
+        delete "$projectDir/vscode-extension/lsp-images/archie-lsp-macos-x64/lib/archie-lsp-all.jar"
+        delete "$projectDir/vscode-extension/lsp-images/archie-lsp-macos-arm64/lib/archie-lsp-all.jar"
+        delete "$projectDir/vscode-extension/lsp-images/archie-lsp-linux-x64/lib/archie-lsp-all.jar"
+        delete "$projectDir/vscode-extension/lsp-images/archie-lsp-winx64/lib/archie-lsp-all.jar"
+
         exec {
             workingDir "$projectDir/vscode-extension"
             commandLine "npm", "install"
@@ -118,6 +116,11 @@ runtime {
     targetPlatform('macos-x64', jvm_macos_x86_home)
     targetPlatform('macos-arm64', jvm_macos_arm_home)
     launcher {
+        //To set the classpath to the single included jar file, instead of one per distribution, the start scripts
+        //are customized. Taken from https://github.com/beryx/badass-runtime-plugin/blob/master/src/main/resources/
+        //and only the CLASSPATH is changed to point at APP_HOME/../app/* to pick up the archie-lsp-all.jar
+        unixScriptTemplate = file("$projectDir/unixScriptTemplate.txt")
+        windowsScriptTemplate = file("$projectDir/windowsScriptTemplate.txt")
         jvmArgs = ['--add-opens', 'java.base/java.lang=ALL-UNNAMED'
                    , '--add-opens', 'java.base/java.lang.invoke=ALL-UNNAMED'
                    , '--add-opens', 'java.base/java.net=ALL-UNNAMED'

@@ -64,7 +64,7 @@ export function activate(context: ExtensionContext) {
             }
         };
     } else {
-        throw 'unsupported platform, this extension only runs on windows, macos or linux on x86 CPUs: ' + process.platform
+        throw 'unsupported platform, this extension only runs on windows, macos or linux on x86 CPUs, plus mac os on ARM CPUs: ' + process.platform
     }
     
     let clientOptions: LanguageClientOptions = {
