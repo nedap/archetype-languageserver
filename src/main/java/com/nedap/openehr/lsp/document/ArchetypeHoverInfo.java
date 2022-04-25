@@ -19,6 +19,8 @@ import com.nedap.archie.aom.utils.AOMUtils;
 import com.nedap.archie.base.Cardinality;
 import com.nedap.archie.base.MultiplicityInterval;
 import com.nedap.archie.rminfo.MetaModels;
+import com.nedap.openehr.lsp.paths.ArchetypePathReference;
+import com.nedap.openehr.lsp.paths.PathUtils;
 import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.HoverParams;
@@ -48,6 +50,12 @@ public class ArchetypeHoverInfo extends HoverInfo {
             for(TemplateOverlay overlay:template.getTemplateOverlays()) {
                 extractHoverInfo(documentInformation, overlay.getDefinition(), archetypeForTerms);
             }
+        }
+
+        for(ArchetypePathReference reference:documentInformation.getModelReferences()) {
+            //no rules in template overlays, so no hoverinfo needed for path references from rules
+            //could become necessary when we add path references from use_node in the same way
+            PathUtils.createHoverInfo(this, metaModels, reference, archetypeForTerms);
         }
 
     }
@@ -87,6 +95,7 @@ public class ArchetypeHoverInfo extends HoverInfo {
         hover.setContents(new MarkupContent(MARKDOWN, content.toString()));
         Range range = getHoverRange(documentInformation, definition);
         if(range != null) {
+            hover.setRange(range);
             hoverRanges.addRange(range, hover);
         }
     }
@@ -222,6 +231,7 @@ public class ArchetypeHoverInfo extends HoverInfo {
             Hover hover = new Hover();
             hover.setContents(new MarkupContent(MARKDOWN, content.toString()));
             Range range = terminologyCodeSymbol.getRange();
+            hover.setRange(range);
             hoverRanges.addRange(range, hover);
         }
     }

@@ -1,0 +1,60 @@
+archetype (adl_version=2.0.4; rm_release=1.0.4)
+    openEHR-EHR-CLUSTER.simple_sum.v0.0.1
+
+language
+    original_language = <[ISO_639-1::nl]>
+
+description
+    lifecycle_state = <"unmanaged">
+    copyright = <"">
+    details = <
+        ["nl"] = <
+            language = <[ISO_639-1::nl]>
+            purpose = <"">
+        >
+    >
+
+definition
+    CLUSTER[id1]  matches {    -- A test cluster
+        items matches {
+            ELEMENT[id2] matches {
+                value matches {
+                    DV_CODED_TEXT[id3] matches {
+                        defining_code matches {[at4]}
+                    }
+                }
+            }
+             ELEMENT[id4] matches {
+                value matches {
+                    DV_CODED_TEXT[id5] matches {
+                        defining_code matches {[at4]}
+                    }
+                }
+            }
+        }
+    }
+
+rules
+    exists /items[id2]/value/defining_code implies not exists /items[id4]
+
+terminology
+    term_definitions = <
+        ["nl"] = <
+            ["id1"] = <
+                text = <"A test cluster">  --test
+                description = <"A test cluster">
+            >
+            ["id2"] = <
+                text =<"Element 1">
+                description =<"Element 1">
+            >
+            ["id4"] = <
+                text =<"Element 2">
+                description =<"Element 2">
+            >
+            ["at4"] = <
+                text =<"Missing translation">
+                description =<"Missing translation">
+            >
+        >
+    >

@@ -1,16 +1,12 @@
 package com.nedap.openehr.lsp.aql;
 
-import com.google.common.collect.Lists;
 import com.nedap.archie.aom.Archetype;
 import com.nedap.archie.aom.ArchetypeModelObject;
 import com.nedap.archie.aom.CAttribute;
 import com.nedap.archie.aom.CObject;
-import com.nedap.archie.aom.utils.AOMUtils;
 import com.nedap.archie.archetypevalidator.ValidationResult;
 import com.nedap.archie.paths.PathSegment;
 import com.nedap.archie.rminfo.MetaModels;
-import com.nedap.healthcare.aqlparser.AQLLexer;
-import com.nedap.healthcare.aqlparser.AQLParser;
 import com.nedap.healthcare.aqlparser.exception.AQLRuntimeException;
 import com.nedap.healthcare.aqlparser.exception.AQLUnsupportedFeatureException;
 import com.nedap.healthcare.aqlparser.exception.AQLValidationException;
@@ -19,8 +15,10 @@ import com.nedap.healthcare.aqlparser.model.clause.QueryClause;
 import com.nedap.healthcare.aqlparser.parser.QOMParser;
 import com.nedap.healthcare.tolerantaqlparser.ErrorTolerantAQLLexer;
 import com.nedap.healthcare.tolerantaqlparser.ErrorTolerantAQLParser;
-import com.nedap.openehr.lsp.ADL2TextDocumentService;
 import com.nedap.openehr.lsp.document.HoverInfo;
+import com.nedap.openehr.lsp.paths.ArchetypePathReference;
+import com.nedap.openehr.lsp.paths.PartialAOMPathQuery;
+import com.nedap.openehr.lsp.paths.PathUtils;
 import com.nedap.openehr.lsp.repository.BroadcastingArchetypeRepository;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -66,48 +64,7 @@ public class AQLStorage {
             try {
                 ValidationResult validationResult = archetypeRepository.getValidationResult(reference.getArchetypeId());//TODO: get operational template here. I think that should be cached?
                 if (validationResult != null) {
-                    Archetype flattened = validationResult.getFlattened();
-                    metaModels.selectModel(flattened);
-                    if (flattened != null) {
-                        PartialAOMPathQuery aomPathQuery = new PartialAOMPathQuery(reference.getPath());
-                        PartialAOMPathQuery.PartialMatch partial = aomPathQuery.findLSPPartial(flattened.getDefinition());
-                        if (partial.getMatches().size() > 0) {
-                            ArchetypeModelObject archetypeModelObject = partial.getMatches().get(0);
-                            String content = null;
-                            String description = null;
-                            String typeName = "";
-                            if(archetypeModelObject instanceof CAttribute) {
-                                CAttribute attribute = (CAttribute) archetypeModelObject;
-                                content = findNearestText((CAttribute) archetypeModelObject);
-                                description = findNearestDescription((CAttribute) archetypeModelObject);
-                                CObject parent = attribute.getParent();
-                                if(partial.getRemainingQuery().isEmpty()) { //TODO: proper path lookup here
-                                    BmmClass classDefinition = metaModels.getSelectedBmmModel().getClassDefinition(BmmDefinitions.typeNameToClassKey(parent.getRmTypeName()));
-                                    if (classDefinition != null) {
-                                        BmmProperty bmmProperty = classDefinition.getFlatProperties().get(attribute.getRmAttributeName());
-                                        if (bmmProperty != null) {
-                                            bmmProperty.getType().toDisplayString();
-                                        }
-                                    }
-                                }
-                            } else if (archetypeModelObject instanceof CObject){
-                                content = findNearestText((CObject) archetypeModelObject);
-                                description = findNearestDescription((CObject) archetypeModelObject);
-                                if(partial.getRemainingQuery().isEmpty()) { //TODO: proper path lookup here.
-                                    typeName = ((CObject) archetypeModelObject).getRmTypeName();
-                                }
-                            }
-                            String text = content + partial.getRemainingQuery().stream().map(PathSegment::toString).collect(Collectors.joining("/"));
-                            text += "\n\n" + typeName;
-                            text += "\n\n" + description;
-                            text += "\n\nIn Archetype " + flattened.getDefinition().getTerm().getText() + " (" + reference.getArchetypeId() +")";
-                            hoverInfo.getHoverRanges().addRange(reference.getRange(), new Hover(new MarkupContent(HoverInfo.MARKDOWN, text)));
-                        } else {
-                            hoverInfo.getHoverRanges().addRange(reference.getRange(), new Hover(new MarkupContent(HoverInfo.MARKDOWN, "path " + reference.getPath() + " not found")));
-                        }
-                    } else {
-                        hoverInfo.getHoverRanges().addRange(reference.getRange(), new Hover(new MarkupContent(HoverInfo.MARKDOWN, "flattened archetype not found")));
-                    }
+                    PathUtils.createHoverInfo(hoverInfo, metaModels, reference, validationResult.getFlattened());
                 } else {
                     hoverInfo.getHoverRanges().addRange(reference.getRange(), new Hover(new MarkupContent(HoverInfo.MARKDOWN, "archetype not found")));
                 }
@@ -119,27 +76,7 @@ public class AQLStorage {
         document.setHoverInfo(hoverInfo);
     }
 
-    private String findNearestText(CAttribute attribute) {
-        return findNearestText(attribute.getParent()) + "/" + attribute.getRmAttributeName();
-    }
 
-    private String findNearestText(CObject cObject) {
-        if(cObject.getTerm() != null) {
-            return cObject.getTerm().getText();
-        }
-        return findNearestText(cObject.getParent());
-    }
-
-    private String findNearestDescription(CAttribute attribute) {
-        return findNearestText(attribute.getParent());
-    }
-
-    private String findNearestDescription(CObject cObject) {
-        if(cObject.getTerm() != null) {
-            return cObject.getTerm().getDescription();
-        }
-        return findNearestText(cObject.getParent());
-    }
 
     private AQLDocument createAQLDocument(String uri, String text) {
         ErrorTolerantAQLLexer lexer = new ErrorTolerantAQLLexer(CharStreams.fromString(text));
@@ -224,33 +161,7 @@ public class AQLStorage {
             try {
                 ValidationResult validationResult = archetypeRepository.getValidationResult(reference.getArchetypeId());//TODO: get operational template here. I think that should be cached?
                 if (validationResult != null) {
-                    Archetype flattened = validationResult.getFlattened();
-                    if (flattened != null) {
-                        PartialAOMPathQuery aomPathQuery = new PartialAOMPathQuery(reference.getPath());
-                        PartialAOMPathQuery.PartialMatch partial = aomPathQuery.findLSPPartial(flattened.getDefinition());
-                        if (partial.getMatches().size() > 0) {
-                            ArchetypeModelObject archetypeModelObject = partial.getMatches().get(0);
-                            String content = null;
-                            String description = null;
-                            if(archetypeModelObject instanceof CAttribute) {
-                                content = findNearestText((CAttribute) archetypeModelObject);
-                                description = findNearestDescription((CAttribute) archetypeModelObject);
-                            } else if (archetypeModelObject instanceof CObject){
-                                content = findNearestText((CObject) archetypeModelObject);
-                                description = findNearestDescription((CObject) archetypeModelObject);
-                            }
-                            String text = content + partial.getRemainingQuery().stream().map(PathSegment::toString).collect(Collectors.joining("/"));
-                            String extraText = description;
-                            extraText += "\n\nIn Archetype " + flattened.getDefinition().getTerm().getText() + " (" + reference.getArchetypeId() +")";
-                            //result.add(new CodeLens(reference.getRange(), new Command(text, ADL2TextDocumentService.SHOW_INFO_COMMAND, Lists.newArrayList(extraText)), null));
-                            result.add(new CodeLens(reference.getRange(), new Command(text, ADL2TextDocumentService.SHOW_INFO_COMMAND, Lists.newArrayList(extraText)), null));
-                        } else {
-
-                            //hoverInfo.getHoverRanges().addRange(reference.getRange(), new Hover(new MarkupContent(HoverInfo.MARKDOWN, "path " + reference.getPath() + " not found")));
-                        }
-                    } else {
-                        //hoverInfo.getHoverRanges().addRange(reference.getRange(), new Hover(new MarkupContent(HoverInfo.MARKDOWN, "flattened archetype not found")));
-                    }
+                    PathUtils.createCodeLenses(result, reference, validationResult);
                 } else {
                     //hoverInfo.getHoverRanges().addRange(reference.getRange(), new Hover(new MarkupContent(HoverInfo.MARKDOWN, "archetype not found")));
                 }

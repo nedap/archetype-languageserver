@@ -1,4 +1,4 @@
-package com.nedap.openehr.lsp.aql;
+package com.nedap.openehr.lsp.paths;
 
 import com.google.common.collect.Lists;
 import com.nedap.archie.aom.ArchetypeModelObject;
@@ -63,7 +63,7 @@ public class PartialAOMPathQuery extends AOMPathQuery  {
         return new PartialMatch(pathSegments, new ArrayList<>(), returnValue);
     }
 
-    class PartialMatch {
+    public class PartialMatch {
         private final List<PathSegment> entireQuery;
         private final List<PathSegment> remainingQuery;
         private final List<ArchetypeModelObject> matches;

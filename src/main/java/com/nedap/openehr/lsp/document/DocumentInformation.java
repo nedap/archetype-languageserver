@@ -3,6 +3,7 @@ package com.nedap.openehr.lsp.document;
 import com.nedap.archie.antlr.errors.ANTLRParserErrors;
 import com.nedap.archie.paths.PathSegment;
 import com.nedap.archie.query.APathQuery;
+import com.nedap.openehr.lsp.paths.ArchetypePathReference;
 import com.nedap.openehr.lsp.utils.DocumentSymbolUtils;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DocumentLink;
@@ -13,6 +14,7 @@ import org.eclipse.lsp4j.HoverParams;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,7 +31,6 @@ public class DocumentInformation {
     public static final String RULES_SECTION_NAME = "rules section";
     public static final String TERM_DEFINITIONS_NAME = "term_definitions";
 
-
     private String archetypeId;
     private ADLVersion adlVersion;
     private ANTLRParserErrors errors;
@@ -40,15 +41,17 @@ public class DocumentInformation {
     /** the current list of diagnostics for this archetype file */
     private List<Diagnostic> diagnostics;
     private final CodeRangeIndex<DocumentSymbol> cTerminologyCodes;
+    /** all path references in rules */
+    private final List<ArchetypePathReference> modelReferences;
 
     public DocumentInformation(String archetypeId, ADLVersion adlVersion, ANTLRParserErrors errors,
                                List<Either<SymbolInformation, DocumentSymbol>> symbols,
                                List<FoldingRange> foldingRanges,
                                List<DocumentLink> documentLinks) {
-        this(archetypeId, adlVersion, errors, symbols, foldingRanges, documentLinks, new CodeRangeIndex<>());
+        this(archetypeId, adlVersion, errors, symbols, foldingRanges, documentLinks, new CodeRangeIndex<>(), new ArrayList<>());
     }
 
-    public DocumentInformation(String archetypeId, ADLVersion adlVersion, ANTLRParserErrors errors, List<Either<SymbolInformation, DocumentSymbol>> symbols, List<FoldingRange> foldingRanges, List<DocumentLink> documentLinks, CodeRangeIndex<DocumentSymbol> cTerminologyCodes) {
+    public DocumentInformation(String archetypeId, ADLVersion adlVersion, ANTLRParserErrors errors, List<Either<SymbolInformation, DocumentSymbol>> symbols, List<FoldingRange> foldingRanges, List<DocumentLink> documentLinks, CodeRangeIndex<DocumentSymbol> cTerminologyCodes, List<ArchetypePathReference> modelReferences) {
         this.archetypeId = archetypeId;
         this.adlVersion = adlVersion;
         this.errors = errors;
@@ -56,6 +59,7 @@ public class DocumentInformation {
         this.foldingRanges = foldingRanges;
         this.documentLinks = new DocumentLinks(documentLinks);
         this.cTerminologyCodes = cTerminologyCodes;
+        this.modelReferences = modelReferences;
     }
 
     public String getArchetypeId() {
@@ -267,5 +271,9 @@ public class DocumentInformation {
 
     public CodeRangeIndex<DocumentSymbol> getcTerminologyCodes() {
         return cTerminologyCodes;
+    }
+
+    public List<ArchetypePathReference> getModelReferences() {
+        return modelReferences;
     }
 }
