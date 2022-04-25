@@ -115,7 +115,9 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
     }
 
     private void setOverlayId(TerminalNode terminalNode) {
-        this.currentOverlayid = archetypeId;
+        this.currentOverlayid = terminalNode == null ?
+                archetypeId /* shouldn't happen, just defensive programming */ :
+                terminalNode.getText();
     }
 
     /**

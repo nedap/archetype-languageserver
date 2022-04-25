@@ -456,7 +456,6 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                 ValidationResult validationResult = getValidationResult(documentInformation.getArchetypeId());
                 if (validationResult != null) {
                     PathUtils.createCodeLenses(result, reference, validationResult);
-                } else {
                 }
             } catch (Exception e) {
                 //ok... report as diagnostics or log
