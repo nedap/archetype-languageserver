@@ -12,8 +12,7 @@ A language server for OpenEHR archetypes, to be used in your favorite IDE. Packa
 
 The output will be in the .vsix file in `./vscode-extension`. 
 
-It contains a linked windows, linux and macos JRE from the OpenJDK project, so should run on whatever OS needed, but x86 only for now.
-If you want ARM, very easy as well, just download the ARM openJDK and change the runtime config in build.gradle
+It contains a linked windows, linux and macos x64 JRE from the OpenJDK project, plus an Arm Mac OS one. So it should run on whatever OS needed. If you want Arm support for Linux of Windows, this is very possible, but requires a bit of extra work, so create an issue if you need this.
 
 # Running in development
 
