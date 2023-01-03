@@ -70,20 +70,28 @@ public class DiagnosticsConverter {
 
         if(validationResult != null) {
             if(validationResult.hasWarningsOrErrors()) {
-                for(ValidationMessage message:validationResult.getErrors()) {
-                    DocumentSymbol documentSymbol = null;
-                    if(message.getPathInArchetype() != null) {
-                        documentSymbol = docInfo.lookupCObjectOrAttribute(message.getPathInArchetype());
-                    }
-                    if(documentSymbol != null) {
-                        Range range = documentSymbol.getSelectionRange();
-                        diagnostics.add(new Diagnostic(range, toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
-                    } else {
-                        Range range = new Range(
-                                new Position(0, 1),
-                                new Position(0, 50)
-                        );
-                        diagnostics.add(new Diagnostic(range, toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
+                pushValidationMessages(docInfo, validationResult, diagnostics);
+
+                if(validationResult.getOverlayValidations() != null) {
+                    for (ValidationResult overlayResult : validationResult.getOverlayValidations()) {
+                        if(overlayResult.hasWarningsOrErrors()) {
+                            for(ValidationMessage message: overlayResult.getErrors()) {
+                                DocumentSymbol documentSymbol = null;
+                                //if(message.getPathInArchetype() != null) {
+                                //    documentSymbol = docInfo.lookupCObjectOrAttribute(message.getPathInArchetype());
+                                //}
+                                if(documentSymbol != null) {
+                                    Range range = documentSymbol.getSelectionRange();
+                                    diagnostics.add(new Diagnostic(range, toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
+                                } else {
+                                    Range range = new Range(
+                                            new Position(0, 1),
+                                            new Position(0, 50)
+                                    );
+                                    diagnostics.add(new Diagnostic(range, "Error in templte overlay " +overlayResult.getArchetypeId()  + ": " + toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -91,6 +99,25 @@ public class DiagnosticsConverter {
         diagnosticsParams.setDiagnostics(diagnostics);
         setBasicDiagnostics(textDocumentItem, diagnosticsParams);
         return diagnosticsParams;
+    }
+
+    private static void pushValidationMessages(DocumentInformation docInfo, ValidationResult validationResult, List<Diagnostic> diagnostics) {
+        for(ValidationMessage message: validationResult.getErrors()) {
+            DocumentSymbol documentSymbol = null;
+            if(message.getPathInArchetype() != null) {
+                documentSymbol = docInfo.lookupCObjectOrAttribute(message.getPathInArchetype());
+            }
+            if(documentSymbol != null) {
+                Range range = documentSymbol.getSelectionRange();
+                diagnostics.add(new Diagnostic(range, toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
+            } else {
+                Range range = new Range(
+                        new Position(0, 1),
+                        new Position(0, 50)
+                );
+                diagnostics.add(new Diagnostic(range, toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
+            }
+        }
     }
 
     private static Diagnostic createParserDiagnostic(ANTLRParserMessage error, DiagnosticSeverity warning) {
