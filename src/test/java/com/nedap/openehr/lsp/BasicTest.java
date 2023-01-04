@@ -30,10 +30,6 @@ public class BasicTest extends LanguageServerTestBase {
         assertTrue(testClient.getDiagnostics().get("uri").getDiagnostics().isEmpty());
     }
 
-
-
-
-
     @Test
     public void syntaxError() throws IOException {
 
@@ -46,6 +42,56 @@ public class BasicTest extends LanguageServerTestBase {
         assertEquals(new Position(17, 18), diagnostic.getRange().getStart());
         assertEquals(new Position(17, 53), diagnostic.getRange().getEnd());
         assertTrue(diagnostic.getMessage().contains("matchess"));
+    }
+
+    /**
+     * test that a template error gets syntax highlighting at the correct range
+     * @throws IOException
+     */
+    @Test
+    public void templateErrorInDefinition() throws IOException {
+        openResource("test_archetype.adls");
+        openResource("template_definition_error_in_ovl.adlt");
+        System.out.println(testClient.getDiagnostics());
+        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("uri").getDiagnostics();
+        assertFalse(diagnostics.isEmpty());
+        //the error that one of the template overlay validations failed
+        Diagnostic prettyMuchUselessError = diagnostics.get(0);
+        assertEquals("ADL validation", prettyMuchUselessError.getSource());
+        assertEquals(new Position(25, 4), prettyMuchUselessError.getRange().getStart());
+        assertEquals(new Position(25, 11), prettyMuchUselessError.getRange().getEnd());
+        assertTrue(prettyMuchUselessError.getMessage().contains("The validation of a template overlay failed"));
+        //the actual error
+        Diagnostic diagnostic = diagnostics.get(1);
+        assertEquals("ADL validation", diagnostic.getSource());
+        assertEquals(new Position(47, 12), diagnostic.getRange().getStart());
+        assertEquals(new Position(47, 19), diagnostic.getRange().getEnd());
+        assertTrue(diagnostic.getMessage().contains("Attribute CLUSTER.items cannot contain type DV_TEXT"));
+    }
+
+    /**
+     * test that a template error gets syntax highlighting at the correct range
+     * @throws IOException
+     */
+    @Test
+    public void templateErrorElsewhere() throws IOException {
+        openResource("test_archetype.adls");
+        openResource("template_non_definition_error.adlt");
+        System.out.println(testClient.getDiagnostics());
+        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("uri").getDiagnostics();
+        assertFalse(diagnostics.isEmpty());
+        //the error that one of the template overlay validations failed
+        Diagnostic prettyMuchUselessError = diagnostics.get(0);
+        assertEquals("ADL validation", prettyMuchUselessError.getSource());
+        assertEquals(new Position(25, 4), prettyMuchUselessError.getRange().getStart());
+        assertEquals(new Position(25, 11), prettyMuchUselessError.getRange().getEnd());
+        assertTrue(prettyMuchUselessError.getMessage().contains("The validation of a template overlay failed"));
+        //the actual error
+        Diagnostic diagnostic = diagnostics.get(1);
+        assertEquals("ADL validation", diagnostic.getSource());
+        assertEquals(new Position(39, 4), diagnostic.getRange().getStart());
+        assertEquals(new Position(39, 45), diagnostic.getRange().getEnd());
+        assertTrue(diagnostic.getMessage().contains("Id code qf1.1 in terminology is not a valid term code, should be id, ac or at, followed by digits"));
     }
 
     @Test
