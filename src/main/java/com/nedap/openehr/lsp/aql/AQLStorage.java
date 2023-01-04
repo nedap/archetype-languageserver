@@ -139,8 +139,7 @@ public class AQLStorage {
     }
 
     public Hover getHover(HoverParams hoverParams) {
-        String uri = hoverParams.getTextDocument() == null ?
-                hoverParams.getUri() : hoverParams.getTextDocument().getUri();
+        String uri = hoverParams.getTextDocument().getUri();
         AQLDocument aqlDocument = aqlDocumentsByUri.get(uri);
         if(aqlDocument == null || aqlDocument.getHoverInfo() == null) {
             return null;
