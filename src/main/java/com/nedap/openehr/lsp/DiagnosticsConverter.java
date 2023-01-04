@@ -71,34 +71,59 @@ public class DiagnosticsConverter {
         if(validationResult != null) {
             if(validationResult.hasWarningsOrErrors()) {
                 pushValidationMessages(docInfo, validationResult, diagnostics);
-
-                if(validationResult.getOverlayValidations() != null) {
-                    for (ValidationResult overlayResult : validationResult.getOverlayValidations()) {
-                        if(overlayResult.hasWarningsOrErrors()) {
-                            for(ValidationMessage message: overlayResult.getErrors()) {
-                                DocumentSymbol documentSymbol = null;
-                                //if(message.getPathInArchetype() != null) {
-                                //    documentSymbol = docInfo.lookupCObjectOrAttribute(message.getPathInArchetype());
-                                //}
-                                if(documentSymbol != null) {
-                                    Range range = documentSymbol.getSelectionRange();
-                                    diagnostics.add(new Diagnostic(range, toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
-                                } else {
-                                    Range range = new Range(
-                                            new Position(0, 1),
-                                            new Position(0, 50)
-                                    );
-                                    diagnostics.add(new Diagnostic(range, "Error in templte overlay " +overlayResult.getArchetypeId()  + ": " + toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
-                                }
-                            }
-                        }
-                    }
-                }
+                pushOverlayValidations(docInfo, validationResult, diagnostics);
             }
         }
         diagnosticsParams.setDiagnostics(diagnostics);
         setBasicDiagnostics(textDocumentItem, diagnosticsParams);
         return diagnosticsParams;
+    }
+
+    private static void pushOverlayValidations(DocumentInformation docInfo, ValidationResult validationResult, List<Diagnostic> diagnostics) {
+        if(validationResult.getOverlayValidations() != null) {
+            for (ValidationResult overlayResult : validationResult.getOverlayValidations()) {
+                if(overlayResult.hasWarningsOrErrors()) {
+                    for(ValidationMessage message: overlayResult.getErrors()) {
+                        DocumentSymbol documentSymbol = null;
+                        String templateOverlayId = overlayResult.getArchetypeId();
+                        if(message.getPathInArchetype() != null) {
+                            documentSymbol = docInfo.lookupCObjectOrAttributeInOverlay(templateOverlayId,
+                                    message.getPathInArchetype(),
+                                    true);
+                        }
+                        if(documentSymbol != null) {
+                            Range range = documentSymbol.getSelectionRange();
+                            diagnostics.add(new Diagnostic(range, "Error in template overlay " +overlayResult.getArchetypeId()  + ": " + toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
+                        } else {
+                            Range range = new Range(
+                                    new Position(0, 1),
+                                    new Position(0, 50)
+                            );
+                            DocumentSymbol templateOverlayRootSymbol = docInfo.getTemplateOverlayRootSymbol(templateOverlayId);
+                            if (templateOverlayRootSymbol != null) {
+                                templateOverlayRootSymbol = getArchetypeIdSymbolFromTemplateOverlay(templateOverlayRootSymbol);
+                                range = templateOverlayRootSymbol.getSelectionRange();
+                            }
+                            diagnostics.add(new Diagnostic(range, "Error in template overlay " +overlayResult.getArchetypeId()  + ": " + toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * From a template overlay DocumentSymbol, get the first Archetype section DocumentSymbol.
+     * otherwise it will point to a rather empty bit of ADL file
+     * @param templateOverlayRootSymbol
+     * @return the archetype section DocumentSymbol within, or null if it cannot be found
+     */
+    private static DocumentSymbol getArchetypeIdSymbolFromTemplateOverlay(DocumentSymbol templateOverlayRootSymbol) {
+        if(templateOverlayRootSymbol != null && !templateOverlayRootSymbol.getChildren().isEmpty()) {
+            //the first symbol of a template overlay will be the archetype section + archetype id. Use that here
+            templateOverlayRootSymbol = templateOverlayRootSymbol.getChildren().get(0);
+        }
+        return templateOverlayRootSymbol;
     }
 
     private static void pushValidationMessages(DocumentInformation docInfo, ValidationResult validationResult, List<Diagnostic> diagnostics) {
