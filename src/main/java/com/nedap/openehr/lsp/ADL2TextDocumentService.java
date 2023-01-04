@@ -6,7 +6,6 @@ import com.google.gson.JsonPrimitive;
 import com.nedap.archie.antlr.errors.ANTLRParserErrors;
 import com.nedap.archie.archetypevalidator.ErrorType;
 import com.nedap.archie.archetypevalidator.ValidationResult;
-import com.nedap.openehr.lsp.aql.AQLStorage;
 import com.nedap.openehr.lsp.commands.AddTerminologyCommmand;
 import com.nedap.openehr.lsp.commands.ConvertToOptCommand;
 import com.nedap.openehr.lsp.commands.GenerateExampleCommand;
