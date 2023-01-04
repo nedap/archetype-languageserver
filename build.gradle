@@ -15,7 +15,7 @@ plugins {
     id 'application'
     id "com.github.johnrengelman.shadow" version "7.1.2"
     //id "com.palantir.graal" version "0.7.1"
-    id "org.beryx.runtime" version "1.12.7"
+    id "org.beryx.runtime" version "1.13.0"
     id "antlr"
 
 }
@@ -28,9 +28,9 @@ repositories {
 }
 
 dependencies {
-    antlr group: 'org.antlr', name: 'antlr4', version: '4.9.3'
+    antlr group: 'org.antlr', name: 'antlr4', version: '4.9.3' //kept at 4.9.3 for now, update when Archie updates this
     // This dependency is used by the application.
-    implementation 'com.google.guava:guava:31.0.1-jre'
+    implementation 'com.google.guava:guava:31.1-jre'
 
 
     implementation('com.nedap.healthcare.archie:archie-all:2.1.0')
@@ -41,12 +41,12 @@ dependencies {
     implementation 'com.nedap.healthcare:aqlparser:*'
 
     // Use JUnit Jupiter API for testing.
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
 
     testImplementation 'commons-io:commons-io:2.11.0'
 
     // Use JUnit Jupiter Engine for testing.
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.1'
 }
 
 generateGrammarSource {
