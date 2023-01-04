@@ -35,8 +35,10 @@
 			"patterns": [
 				{ "include": "#string" },			
 				{ "include": "#number"  },
+				{ "include": "#as_name"  },
 				{ "include": "#keywords"  },
 				{ "include": "#path_segment"  },
+
 				{ "include": "#contains"  }
 			]
 		},
@@ -52,6 +54,13 @@
 				"3": {"name": "entity.other.attribute-name.path_segment"},
 				"4": {"name": "entity.name.tag.predicates"}
 			}	
+		},
+		"as_name": {
+			"match": "([aA][sS]) +([a-zA-Z][a-zA-Z0-9_]*)",
+			"captures": {
+				"1": {"name": "keyword.operator.as_operator"},
+				"2": {"name": "variable.other.identifier"}
+			}
 		},
 		"contains": {
 			"match": "(?i:contains)\\s*([a-zA-Z0-9-_]+)\\s*([a-zA-Z0-9-_]+)?\\s*\\[([^\\]]+)\\]",
