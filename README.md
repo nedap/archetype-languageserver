@@ -4,7 +4,7 @@ A language server for OpenEHR archetypes, to be used in your favorite IDE. Packa
 # Build instructions
 - clone https://github.com/nedap/aqlparser, checkout the branch jdk17
 - make sure `settings.gradle` points to where you checked out aql parser.
-- download the mac, linux, and windows openJDK binaries, version 14 or newer
+- download the mac, linux, and windows openJDK binaries, version 17 or newer
 - copy `gradle.example.properties` to `gradle.properties`
 - change the JDK locations in the gradle properties file
 - use one of the version 17 openJDK vms to compile the project
