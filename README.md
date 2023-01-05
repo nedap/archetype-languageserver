@@ -7,7 +7,7 @@ A language server for OpenEHR archetypes, to be used in your favorite IDE. Packa
 - download the mac, linux, and windows openJDK binaries, version 14 or newer
 - copy `gradle.example.properties` to `gradle.properties`
 - change the JDK locations in the gradle properties file
-- use one of the version 14 openJDK vms to compile the project
+- use one of the version 17 openJDK vms to compile the project
 - `./gradlew clean build runtime buildExtension`
 
 The output will be in the .vsix file in `./vscode-extension`. 
