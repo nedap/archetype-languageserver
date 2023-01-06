@@ -5,16 +5,9 @@ import com.nedap.archie.paths.PathSegment;
 import com.nedap.archie.query.APathQuery;
 import com.nedap.openehr.lsp.paths.ArchetypePathReference;
 import com.nedap.openehr.lsp.utils.DocumentSymbolUtils;
-import org.eclipse.lsp4j.Diagnostic;
-import org.eclipse.lsp4j.DocumentLink;
-import org.eclipse.lsp4j.DocumentSymbol;
-import org.eclipse.lsp4j.FoldingRange;
-import org.eclipse.lsp4j.Hover;
-import org.eclipse.lsp4j.HoverParams;
-import org.eclipse.lsp4j.SymbolInformation;
+import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
-import javax.swing.text.Document;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

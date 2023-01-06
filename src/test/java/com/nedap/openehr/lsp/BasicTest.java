@@ -10,7 +10,6 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -19,8 +18,7 @@ public class BasicTest extends LanguageServerTestBase {
     @Test
     public void testBasics() throws IOException {
         openResource("test_archetype.adls");
-        Supplier<String> messageSupplier = () -> testClient.getDiagnostics().toString();
-        assertTrue(testClient.getDiagnostics().get("uri").getDiagnostics().isEmpty(), messageSupplier);
+        assertTrue(testClient.getDiagnostics().get("uri").getDiagnostics().isEmpty(), diagnosticsMessageSupplier);
     }
 
     @Test
