@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import static com.nedap.openehr.lsp.TestArchetypes.TEST_ARCHETYPE_ADLS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DocumentOutlineTest extends LanguageServerTestBase {
@@ -24,8 +25,9 @@ public class DocumentOutlineTest extends LanguageServerTestBase {
     @Test
     public void testDocumentOutline() throws IOException, ExecutionException, InterruptedException {
 
-        openResource("test_archetype.adls");
-        CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> uri = adl2LanguageServer.getTextDocumentService().documentSymbol(new DocumentSymbolParams(new TextDocumentIdentifier("test_archetype.adls")));
+        openResource(TEST_ARCHETYPE_ADLS.getFilename());
+        CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> uri =
+                adl2LanguageServer.getTextDocumentService().documentSymbol(new DocumentSymbolParams(new TextDocumentIdentifier(TEST_ARCHETYPE_ADLS.getFilename())));
         List<Either<SymbolInformation, DocumentSymbol>> eitherSymbols = uri.get();
         List<DocumentSymbol> documentSymbols = DocumentSymbolUtils.getDocumentSymbols(eitherSymbols);
         //System.out.println(documentSymbols);

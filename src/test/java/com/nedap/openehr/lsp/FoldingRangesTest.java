@@ -10,14 +10,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import static com.nedap.openehr.lsp.TestArchetypes.TEST_ARCHETYPE_ADLS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class FoldingRangesTest extends LanguageServerTestBase {
 
     @Test
     public void testFoldingRanges() throws Exception {
-        openResource("test_archetype.adls");
-        List<FoldingRange> foldingRanges = adl2LanguageServer.getTextDocumentService().foldingRange(new FoldingRangeRequestParams(new TextDocumentIdentifier("test_archetype.adls"))).get();
+        openResource(TEST_ARCHETYPE_ADLS.getFilename());
+        List<FoldingRange> foldingRanges = adl2LanguageServer.getTextDocumentService().foldingRange(
+                new FoldingRangeRequestParams(new TextDocumentIdentifier(TEST_ARCHETYPE_ADLS.getFilename()))).get();
         System.out.println(foldingRanges);
         List<FoldingRange> expected = new ArrayList<>();
         expected.add(new FoldingRange(3, 4)); //language section
@@ -41,5 +43,4 @@ public class FoldingRangesTest extends LanguageServerTestBase {
 
         assertEquals(expected, foldingRanges.subList(0, expected.size()));
     }
-
 }
