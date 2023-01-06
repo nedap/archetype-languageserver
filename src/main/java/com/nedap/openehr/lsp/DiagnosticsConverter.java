@@ -2,10 +2,8 @@ package com.nedap.openehr.lsp;
 
 import com.nedap.archie.antlr.errors.ANTLRParserErrors;
 import com.nedap.archie.antlr.errors.ANTLRParserMessage;
-import com.nedap.archie.aom.ArchetypeModelObject;
 import com.nedap.archie.archetypevalidator.ValidationMessage;
 import com.nedap.archie.archetypevalidator.ValidationResult;
-import com.nedap.archie.query.AOMPathQuery;
 import com.nedap.openehr.lsp.document.DocumentInformation;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
@@ -14,7 +12,6 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.eclipse.lsp4j.TextDocumentItem;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 
 import java.util.ArrayList;
@@ -25,10 +22,7 @@ public class DiagnosticsConverter {
     public static PublishDiagnosticsParams createDiagnostics(TextDocumentIdentifier document, Exception exception) {
         PublishDiagnosticsParams diagnosticsParams = new PublishDiagnosticsParams();
         List<Diagnostic> diagnostics = new ArrayList<>();
-        Range range = new Range(
-                new Position(0, 1),
-                new Position(0, 50)
-        );
+        Range range = getTopOfDocumentRange();
         exception.printStackTrace();
         diagnostics.add(new Diagnostic(range, exception.getMessage() == null ? exception.toString() : exception.getMessage(),  DiagnosticSeverity.Error, "Error processing file"));
         diagnosticsParams.setDiagnostics(diagnostics);
@@ -91,23 +85,24 @@ public class DiagnosticsConverter {
                                     message.getPathInArchetype(),
                                     true);
                         }
-                        if(documentSymbol != null) {
-                            Range range = documentSymbol.getSelectionRange();
-                            diagnostics.add(new Diagnostic(range, "Error in template overlay " +overlayResult.getArchetypeId()  + ": " + toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
-                        } else {
-                            Range range = new Range(
-                                    new Position(0, 1),
-                                    new Position(0, 50)
-                            );
-                            DocumentSymbol templateOverlayRootSymbol = docInfo.getTemplateOverlayRootSymbol(templateOverlayId);
-                            if (templateOverlayRootSymbol != null) {
-                                templateOverlayRootSymbol = getArchetypeIdSymbolFromTemplateOverlay(templateOverlayRootSymbol);
-                                range = templateOverlayRootSymbol.getSelectionRange();
-                            }
-                            diagnostics.add(new Diagnostic(range, "Error in template overlay " +overlayResult.getArchetypeId()  + ": " + toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
-                        }
+                        Range range = getOverlayDocumentRange(docInfo, documentSymbol, templateOverlayId);
+                        diagnostics.add(new Diagnostic(range, "Error in template overlay " +overlayResult.getArchetypeId()  + ": " + toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
                     }
                 }
+            }
+        }
+    }
+
+    private static Range getOverlayDocumentRange(DocumentInformation docInfo, DocumentSymbol documentSymbol, String templateOverlayId) {
+        if(documentSymbol != null) {
+            return documentSymbol.getSelectionRange();
+        } else {
+            DocumentSymbol templateOverlayRootSymbol = docInfo.getTemplateOverlayRootSymbol(templateOverlayId);
+            if (templateOverlayRootSymbol != null) {
+                templateOverlayRootSymbol = getArchetypeIdSymbolFromTemplateOverlay(templateOverlayRootSymbol);
+                return templateOverlayRootSymbol.getSelectionRange();
+            } else {
+                return getTopOfDocumentRange();
             }
         }
     }
@@ -132,17 +127,16 @@ public class DiagnosticsConverter {
             if(message.getPathInArchetype() != null) {
                 documentSymbol = docInfo.lookupCObjectOrAttribute(message.getPathInArchetype());
             }
-            if(documentSymbol != null) {
-                Range range = documentSymbol.getSelectionRange();
-                diagnostics.add(new Diagnostic(range, toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
-            } else {
-                Range range = new Range(
-                        new Position(0, 1),
-                        new Position(0, 50)
-                );
-                diagnostics.add(new Diagnostic(range, toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
-            }
+            Range range = documentSymbol != null ? documentSymbol.getSelectionRange() : getTopOfDocumentRange();
+            diagnostics.add(new Diagnostic(range, toMessage(message), message.isWarning() ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, "ADL validation", message.getType().toString()));
         }
+    }
+
+    private static Range getTopOfDocumentRange() {
+        return new Range(
+                new Position(0, 1),
+                new Position(0, 50)
+        );
     }
 
     private static Diagnostic createParserDiagnostic(ANTLRParserMessage error, DiagnosticSeverity warning) {
