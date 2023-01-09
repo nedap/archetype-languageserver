@@ -5,17 +5,10 @@ import com.nedap.archie.paths.PathSegment;
 import com.nedap.archie.query.APathQuery;
 import com.nedap.openehr.lsp.paths.ArchetypePathReference;
 import com.nedap.openehr.lsp.utils.DocumentSymbolUtils;
-import org.eclipse.lsp4j.Diagnostic;
-import org.eclipse.lsp4j.DocumentLink;
-import org.eclipse.lsp4j.DocumentSymbol;
-import org.eclipse.lsp4j.FoldingRange;
-import org.eclipse.lsp4j.Hover;
-import org.eclipse.lsp4j.HoverParams;
-import org.eclipse.lsp4j.SymbolInformation;
+import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,15 +36,22 @@ public class DocumentInformation {
     private final CodeRangeIndex<DocumentSymbol> cTerminologyCodes;
     /** all path references in rules */
     private final List<ArchetypePathReference> modelReferences;
+    private final Map<String, DocumentSymbol> templateOverlays;
 
     public DocumentInformation(String archetypeId, ADLVersion adlVersion, ANTLRParserErrors errors,
                                List<Either<SymbolInformation, DocumentSymbol>> symbols,
                                List<FoldingRange> foldingRanges,
                                List<DocumentLink> documentLinks) {
-        this(archetypeId, adlVersion, errors, symbols, foldingRanges, documentLinks, new CodeRangeIndex<>(), new ArrayList<>());
+        this(archetypeId, adlVersion, errors, symbols, foldingRanges, documentLinks, new CodeRangeIndex<>(), new ArrayList<>(), new LinkedHashMap<>());
     }
 
-    public DocumentInformation(String archetypeId, ADLVersion adlVersion, ANTLRParserErrors errors, List<Either<SymbolInformation, DocumentSymbol>> symbols, List<FoldingRange> foldingRanges, List<DocumentLink> documentLinks, CodeRangeIndex<DocumentSymbol> cTerminologyCodes, List<ArchetypePathReference> modelReferences) {
+    public DocumentInformation(String archetypeId, ADLVersion adlVersion, ANTLRParserErrors errors,
+                               List<Either<SymbolInformation, DocumentSymbol>> symbols,
+                               List<FoldingRange> foldingRanges,
+                               List<DocumentLink> documentLinks,
+                               CodeRangeIndex<DocumentSymbol> cTerminologyCodes,
+                               List<ArchetypePathReference> modelReferences,
+                               Map<String, DocumentSymbol> templateOverlays) {
         this.archetypeId = archetypeId;
         this.adlVersion = adlVersion;
         this.errors = errors;
@@ -60,6 +60,7 @@ public class DocumentInformation {
         this.documentLinks = new DocumentLinks(documentLinks);
         this.cTerminologyCodes = cTerminologyCodes;
         this.modelReferences = modelReferences;
+        this.templateOverlays = templateOverlays;
     }
 
     public String getArchetypeId() {
@@ -122,20 +123,59 @@ public class DocumentInformation {
 
     private static final Pattern cComplexObjectPattern = Pattern.compile("(?<type>.*)\\[(?<code>.*)\\]");
 
-
+    /**
+     * Archetype path lookup. Definition only for now. Returns a result higher up the tree if it cannot be found
+     *
+     * @param path the path to lookup
+     * @return the DocumentSymbol corresponding with the given CObject or CAttribute
+     */
     public DocumentSymbol lookupCObjectOrAttribute(String path) {
         return lookupCObjectOrAttribute(path, true);
     }
 
     /**
      * Archetype path lookup. Definition only for now. Sorry for the ugly code, but this works rather well :)
-     * @param path
-     * @return
+     * @param path the path to lookup
+     * @param returnResultSoFar if true, if the path cannot be found, return a DocumentSymbol higher up the tree so the syntax
+     *                         highlighting is as close as possible. If false, in that case returns null
+     * @return the DocumentSymbol corresponding with the given CObject or CAttribute
      */
     public DocumentSymbol lookupCObjectOrAttribute(String path, boolean returnResultSoFar) {
+        List<DocumentSymbol> documentSymbols = DocumentSymbolUtils.getDocumentSymbols(symbols);
+        return lookupCObjectOrAttribute(path, returnResultSoFar, documentSymbols);
+    }
+
+    /**
+     * Archetype path lookup. Definition only for now.
+     * @param templateOverlayId the archetype id of the template overlay
+     * @param path the path to lookup
+     * @param returnResultSoFar if true, if the path cannot be found, return a DocumentSymbol higher up the tree so the syntax
+     *                         highlighting is as close as possible. If false, in that case returns null
+     * @return the DocumentSymbol corresponding with the given CObject or CAttribute
+     */
+    public DocumentSymbol lookupCObjectOrAttributeInOverlay(String templateOverlayId,
+                                                            String path,
+                                                            boolean returnResultSoFar) {
+        DocumentSymbol documentSymbol = getTemplateOverlayRootSymbol(templateOverlayId);
+        if(documentSymbol == null) {
+            return null;
+        }
+        return lookupCObjectOrAttribute(path, returnResultSoFar, Collections.singletonList(documentSymbol));
+    }
+
+    /**
+     * Archetype path lookup in a given list of DocumentSymbols. Inner method for use in root or template overlay.
+     * @param path the path to lookup
+     * @param returnResultSoFar if true, if the path cannot be found, return a DocumentSymbol higher up the tree so the syntax
+     *                         highlighting is as close as possible. If false, in that case returns null
+     * @param documentSymbols the list of symbols to start performing the lookup in (usually only one symbol).
+     * @return the DocumentSymbol corresponding with the given CObject or CAttribute
+     */
+    private DocumentSymbol lookupCObjectOrAttribute(String path,
+                                                   boolean returnResultSoFar,
+                                                   List<DocumentSymbol> documentSymbols) {
         APathQuery query = new APathQuery(path);
         List<PathSegment> pathSegments = query.getPathSegments();
-        List<DocumentSymbol> documentSymbols = DocumentSymbolUtils.getDocumentSymbols(symbols);
 
         if(documentSymbols.isEmpty()) {
             return null;
@@ -269,11 +309,28 @@ public class DocumentInformation {
         return returnResultSoFar ? currentSymbol : null;
     }
 
+    /**
+     * finds the root symbol of a given template overlay id
+     * @param templateOverlayId the template overlay archetype id to search for
+     * @return the root DocumentSymbol of the template overlay, or null if it cannot be found
+     */
+    public DocumentSymbol getTemplateOverlayRootSymbol(String templateOverlayId) {
+        return templateOverlays.get(templateOverlayId);
+    }
+
     public CodeRangeIndex<DocumentSymbol> getcTerminologyCodes() {
         return cTerminologyCodes;
     }
 
     public List<ArchetypePathReference> getModelReferences() {
         return modelReferences;
+    }
+
+    public ADLVersion getAdlVersion() {
+        return adlVersion;
+    }
+
+    public Map<String, DocumentSymbol> getTemplateOverlays() {
+        return templateOverlays;
     }
 }

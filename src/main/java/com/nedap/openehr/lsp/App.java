@@ -34,25 +34,7 @@ public class App {
         OutputStream out = System.out;
 
         ADL2LanguageServer server = new ADL2LanguageServer();
-        Launcher<LanguageClient> launcher =  new LSPLauncher.Builder<LanguageClient>()
-                .setLocalService(server)
-                .setRemoteInterface(LanguageClient.class)
-                .setInput(in)
-                .setOutput(out)
-                .configureGson(gsonBuilder -> {
-                    gsonBuilder.registerTypeAdapter(
-                            SemanticTokensCapabilities.class,
-                            new InstanceCreator<SemanticTokensCapabilities>() {
-
-                                @Override
-                                public SemanticTokensCapabilities createInstance(Type type) {
-                                    return new SemanticTokensCapabilities(null);
-                                }
-                            }
-                    );
-                })
-                .create();
-        //Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
+        Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
         server.connect(launcher.getRemoteProxy(), launcher.getRemoteEndpoint());
 
         launcher.startListening();
@@ -71,25 +53,7 @@ public class App {
                                 OutputStream out = socket.getOutputStream();
 
                                 ADL2LanguageServer server = new ADL2LanguageServer();
-                                Launcher<LanguageClient> launcher =  new LSPLauncher.Builder<LanguageClient>()
-                                        .setLocalService(server)
-                                        .setRemoteInterface(LanguageClient.class)
-                                        .setInput(in)
-                                        .setOutput(out)
-                                        .configureGson(gsonBuilder -> {
-                                            gsonBuilder.registerTypeAdapter(
-                                                    SemanticTokensCapabilities.class,
-                                                    new InstanceCreator<SemanticTokensCapabilities>() {
-
-                                                        @Override
-                                                        public SemanticTokensCapabilities createInstance(Type type) {
-                                                            return new SemanticTokensCapabilities(null);
-                                                        }
-                                                    }
-                                            );
-                                        })
-                                        .create();
-                                //Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
+                                Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
                                 server.connect(launcher.getRemoteProxy(), launcher.getRemoteEndpoint());
 
 

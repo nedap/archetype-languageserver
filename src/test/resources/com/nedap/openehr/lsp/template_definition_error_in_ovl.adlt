@@ -1,0 +1,64 @@
+template (adl_version=2.0.5; rm_release=1.0.4; generated)
+    openEHR-EHR-CLUSTER.test_template.v0.1.2
+
+specialize
+    openEHR-EHR-CLUSTER.simple_sum.v0
+
+
+language
+    original_language = <[ISO_639-1::nl]>
+
+
+description
+    original_author = <
+        ["name"] = <"Pieter Bos">
+    >
+    lifecycle_state = <"DRAFT">
+    details = <
+        ["nl"] = <
+            language = <[ISO_639-1::nl]>
+            purpose = <"Een prachtige test-archetype">
+        >
+    >
+
+
+definition
+    CLUSTER[id1.1]
+
+terminology
+    term_definitions = <
+        ["nl"] = <
+            ["id1.1"] = <
+                text = <"test template">
+                description = <"test template">
+            >
+        >
+    >
+
+------------------------------------------------------------------------
+template_overlay
+    openEHR-EHR-CLUSTER.simple_sum-ovl.v0.0.1
+
+specialize
+    openEHR-EHR-CLUSTER.simple_sum.v0
+
+definition
+    CLUSTER[id1.1] matches {
+        items matches {
+            DV_TEXT[id0.5]
+        }
+    }
+
+terminology
+    term_definitions = <
+        ["nl"] = <
+            ["id1.1"] = <
+                text = <"test template">
+                description = <"test template">
+            >
+            ["id0.5"] = <
+                text = <"test template">
+                description = <"test template">
+            >
+        >
+    >

@@ -50,6 +50,8 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
 
     private String currentOverlayid;
 
+    private Map<String, DocumentSymbol> templateOverlays = new LinkedHashMap<>();
+
     public SymbolInformationExtractingListener(String documentUri, AdlLexer lexer) {
         this.documentUri = documentUri;
     }
@@ -136,7 +138,9 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
 
     @Override public void enterTemplateOverlay(AdlParser.TemplateOverlayContext ctx) {
         stack.addSymbol(ctx.SYM_TEMPLATE_OVERLAY(), ctx, "archetype", SymbolKind.Constant, StackAction.PUSH);
+        DocumentSymbol templateSymbol = stack.peek();
         stack.addSymbol(ctx.ARCHETYPE_HRID(), "archetype id", SymbolKind.Class);
+        templateOverlays.put(ctx.ARCHETYPE_HRID().getText(), templateSymbol);
         addFoldingRange(ctx.getStart().getLine(), ctx); //starts with \n, which shouldn't be in result
         setOverlayId(ctx.ARCHETYPE_HRID());
     }
@@ -543,5 +547,9 @@ public class SymbolInformationExtractingListener extends AdlBaseListener {
 
     public List<ArchetypePathReference> getModelReferences() {
         return modelReferences;
+    }
+
+    public Map<String, DocumentSymbol> getTemplateOverlays() {
+        return templateOverlays;
     }
 }
