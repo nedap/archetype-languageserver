@@ -1,12 +1,8 @@
 package com.nedap.openehr.lsp;
 
-import com.nedap.openehr.lsp.document.DocumentInformation;
-import com.nedap.openehr.lsp.utils.DocumentSymbolUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.eclipse.lsp4j.services.TextDocumentService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -14,77 +10,111 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class BasicTest extends LanguageServerTestBase {
 
-
-
     @Test
     public void testBasics() throws IOException {
-
         openResource("test_archetype.adls");
-        System.out.println(testClient.getDiagnostics());
-        assertTrue(testClient.getDiagnostics().get("test_archetype.adls").getDiagnostics().isEmpty());
+        assertTrue(testClient.getDiagnostics().get("test_archetype.adls").getDiagnostics().isEmpty(), diagnosticsMessageSupplier);
     }
-
-
-
-
 
     @Test
     public void syntaxError() throws IOException {
-
         openResource("syntax_error.adls");
-        System.out.println(testClient.getDiagnostics());
         List<Diagnostic> diagnostics = testClient.getDiagnostics().get("syntax_error.adls").getDiagnostics();
         assertFalse(diagnostics.isEmpty());
         Diagnostic diagnostic = diagnostics.get(0);
-        assertEquals("ADL2 syntax", diagnostic.getSource());
-        assertEquals(new Position(17, 18), diagnostic.getRange().getStart());
-        assertEquals(new Position(17, 53), diagnostic.getRange().getEnd());
-        assertTrue(diagnostic.getMessage().contains("matchess"));
+        assertEquals("ADL2 syntax", diagnostic.getSource(), diagnosticsMessageSupplier);
+        assertEquals(new Position(17, 18), diagnostic.getRange().getStart(), diagnosticsMessageSupplier);
+        assertEquals(new Position(17, 53), diagnostic.getRange().getEnd(), diagnosticsMessageSupplier);
+        assertTrue(diagnostic.getMessage().contains("matchess"), diagnosticsMessageSupplier);
+    }
+
+    /**
+     * test that a template error gets syntax highlighting at the correct range
+     * @throws IOException
+     */
+    @Test
+    public void templateErrorInDefinition() throws IOException {
+        openResource("test_archetype.adls");
+        openResource("template_definition_error_in_ovl.adlt");
+
+        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("template_definition_error_in_ovl.adlt").getDiagnostics();
+        assertFalse(diagnostics.isEmpty());
+        //the error that one of the template overlay validations failed
+        Diagnostic templateError = diagnostics.get(0);
+        assertEquals("ADL validation", templateError.getSource(), diagnosticsMessageSupplier);
+        assertEquals(new Position(25, 4), templateError.getRange().getStart(), diagnosticsMessageSupplier);
+        assertEquals(new Position(25, 11), templateError.getRange().getEnd(), diagnosticsMessageSupplier);
+        assertTrue(templateError.getMessage().contains("The validation of a template overlay failed"), diagnosticsMessageSupplier);
+        //the actual error
+        Diagnostic templateOverlayError = diagnostics.get(1);
+        assertEquals("ADL validation", templateOverlayError.getSource(), diagnosticsMessageSupplier);
+        assertEquals(new Position(47, 12), templateOverlayError.getRange().getStart(), diagnosticsMessageSupplier);
+        assertEquals(new Position(47, 19), templateOverlayError.getRange().getEnd(), diagnosticsMessageSupplier);
+        assertTrue(templateOverlayError.getMessage().contains("Attribute CLUSTER.items cannot contain type DV_TEXT"), diagnosticsMessageSupplier);
+    }
+
+    /**
+     * test that a template error gets syntax highlighting at the correct range
+     * @throws IOException
+     */
+    @Test
+    public void templateErrorElsewhere() throws IOException {
+        openResource("test_archetype.adls");
+        openResource("template_non_definition_error.adlt");
+
+        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("template_non_definition_error.adlt").getDiagnostics();
+        assertFalse(diagnostics.isEmpty());
+        //the error that one of the template overlay validations failed
+        Diagnostic prettyMuchUselessError = diagnostics.get(0);
+        assertEquals("ADL validation", prettyMuchUselessError.getSource(), diagnosticsMessageSupplier);
+        assertEquals(new Position(25, 4), prettyMuchUselessError.getRange().getStart(), diagnosticsMessageSupplier);
+        assertEquals(new Position(25, 11), prettyMuchUselessError.getRange().getEnd(), diagnosticsMessageSupplier);
+        assertTrue(prettyMuchUselessError.getMessage().contains("The validation of a template overlay failed"), diagnosticsMessageSupplier);
+        //the actual error
+        Diagnostic diagnostic = diagnostics.get(1);
+        assertEquals("ADL validation", diagnostic.getSource(), diagnosticsMessageSupplier);
+        assertEquals(new Position(39, 4), diagnostic.getRange().getStart(), diagnosticsMessageSupplier);
+        assertEquals(new Position(39, 45), diagnostic.getRange().getEnd(), diagnosticsMessageSupplier);
+        assertTrue(diagnostic.getMessage().contains("Id code qf1.1 in terminology is not a valid term code, should be id, ac or at, followed by digits"), diagnosticsMessageSupplier);
     }
 
     @Test
     public void validationError() throws IOException {
-
         openResource("validation_error.adls");
-        System.out.println(testClient.getDiagnostics());
         List<Diagnostic> diagnostics = testClient.getDiagnostics().get("validation_error.adls").getDiagnostics();
-        assertFalse(diagnostics.isEmpty());
+        assertFalse(diagnostics.isEmpty(), diagnosticsMessageSupplier);
         Diagnostic diagnostic = diagnostics.get(0);
-        assertEquals(DiagnosticSeverity.Error, diagnostic.getSeverity());
-        assertEquals("ADL validation", diagnostic.getSource());
-        assertEquals(new Position(21, 20), diagnostic.getRange().getStart());
-        assertEquals(new Position(21, 25), diagnostic.getRange().getEnd());
+        assertEquals(DiagnosticSeverity.Error, diagnostic.getSeverity(), diagnosticsMessageSupplier);
+        assertEquals("ADL validation", diagnostic.getSource(), diagnosticsMessageSupplier);
+        assertEquals(new Position(21, 20), diagnostic.getRange().getStart(), diagnosticsMessageSupplier);
+        assertEquals(new Position(21, 25), diagnostic.getRange().getEnd(), diagnosticsMessageSupplier);
         assertTrue(diagnostic.getMessage().contains("WRONG"));
         assertTrue(diagnostic.getCode().getLeft().contains("VCORM"));
     }
 
     @Test
     public void jsonError() throws IOException {
-
         openResource("json_error.adls");
-        System.out.println(testClient.getDiagnostics());
         List<Diagnostic> diagnostics = testClient.getDiagnostics().get("json_error.adls").getDiagnostics();
-        assertFalse(diagnostics.isEmpty());
+        assertFalse(diagnostics.isEmpty(), diagnosticsMessageSupplier);
         Diagnostic diagnostic = diagnostics.get(0);
-        assertEquals(DiagnosticSeverity.Error, diagnostic.getSeverity());
-        assertEquals("Error processing file", diagnostic.getSource());
-        assertEquals(new Position(0, 1), diagnostic.getRange().getStart());
-        assertEquals(new Position(0, 50), diagnostic.getRange().getEnd());
-        assertTrue(diagnostic.getMessage().contains("com.fasterxml.jackson.databind.JsonMappingException"));
+        assertEquals(DiagnosticSeverity.Error, diagnostic.getSeverity(), diagnosticsMessageSupplier);
+        assertEquals("Error processing file", diagnostic.getSource(), diagnosticsMessageSupplier);
+        assertEquals(new Position(0, 1), diagnostic.getRange().getStart(), diagnosticsMessageSupplier);
+        assertEquals(new Position(0, 50), diagnostic.getRange().getEnd(), diagnosticsMessageSupplier);
+        assertTrue(diagnostic.getMessage().contains("com.fasterxml.jackson.databind.JsonMappingException"), diagnosticsMessageSupplier);
     }
 
     @Test
     public void adl14() throws Exception {
         openResource("adl14_valid.adl");
-        System.out.println(testClient.getDiagnostics());
         List<Diagnostic> diagnostics = testClient.getDiagnostics().get("adl14_valid.adl").getDiagnostics();
-        assertTrue(diagnostics.isEmpty());
+        assertTrue(diagnostics.isEmpty(), diagnosticsMessageSupplier);
         CompletableFuture<List<Either<Command, CodeAction>>> codeActionsFuture = adl2LanguageServer.getTextDocumentService().codeAction(new CodeActionParams(new TextDocumentIdentifier("adl14_valid.adl"), new Range(new Position(1, 1), new Position(1, 1)), new CodeActionContext()));
         List<Either<Command, CodeAction>> codeActions = codeActionsFuture.get();
         System.out.println(codeActions);
@@ -102,9 +132,8 @@ public class BasicTest extends LanguageServerTestBase {
 
         didOpenTextDocumentParams.setTextDocument(new TextDocumentItem("adl14_valid.adl", "ADL", 1, archetype));
         textDocumentService.didOpen(didOpenTextDocumentParams);
-        System.out.println(testClient.getDiagnostics());
         List<Diagnostic> diagnostics = testClient.getDiagnostics().get("adl14_valid.adl").getDiagnostics();
-        assertTrue(diagnostics.isEmpty());
+        assertTrue(diagnostics.isEmpty(), diagnosticsMessageSupplier);
         CompletableFuture<List<Either<Command, CodeAction>>> codeActionsFuture = adl2LanguageServer.getTextDocumentService().codeAction(new CodeActionParams(new TextDocumentIdentifier("adl14_valid.adl"), new Range(new Position(1, 1), new Position(1, 1)), new CodeActionContext()));
         List<Either<Command, CodeAction>> codeActions = codeActionsFuture.get();
         System.out.println(codeActions);
@@ -123,9 +152,8 @@ public class BasicTest extends LanguageServerTestBase {
 
         didOpenTextDocumentParams.setTextDocument(new TextDocumentItem("adl14_valid.adl", "ADL", 1, archetype));
         textDocumentService.didOpen(didOpenTextDocumentParams);
-        System.out.println(testClient.getDiagnostics());
         List<Diagnostic> diagnostics = testClient.getDiagnostics().get("adl14_valid.adl").getDiagnostics();
-        assertTrue(diagnostics.isEmpty());
+        assertTrue(diagnostics.isEmpty(), diagnosticsMessageSupplier);
         CompletableFuture<List<Either<Command, CodeAction>>> codeActionsFuture = adl2LanguageServer.getTextDocumentService().codeAction(new CodeActionParams(new TextDocumentIdentifier("adl14_valid.adl"), new Range(new Position(1, 1), new Position(1, 1)), new CodeActionContext()));
         List<Either<Command, CodeAction>> codeActions = codeActionsFuture.get();
         System.out.println(codeActions);

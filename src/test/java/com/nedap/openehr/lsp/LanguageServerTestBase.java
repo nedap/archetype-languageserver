@@ -9,10 +9,12 @@ import org.junit.jupiter.api.BeforeEach;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import java.util.function.Supplier;
+
 
 public abstract class LanguageServerTestBase {
 
@@ -20,10 +22,12 @@ public abstract class LanguageServerTestBase {
     protected ADL2LanguageServer adl2LanguageServer;
     protected TextDocumentService textDocumentService;
     protected InitializeResult initializeResult;
+    protected Supplier<String> diagnosticsMessageSupplier;
 
     @BeforeEach
     public void setup() throws ExecutionException, InterruptedException {
         testClient = new TestClient();
+        diagnosticsMessageSupplier = () -> testClient.getDiagnostics().toString();
         adl2LanguageServer = new ADL2LanguageServer();
         adl2LanguageServer.connect(testClient, null);
         InitializeParams initializeParams = new InitializeParams();

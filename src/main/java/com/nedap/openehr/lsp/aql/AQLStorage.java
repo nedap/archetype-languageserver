@@ -5,7 +5,7 @@ import com.nedap.archie.aom.ArchetypeModelObject;
 import com.nedap.archie.aom.CAttribute;
 import com.nedap.archie.aom.CObject;
 import com.nedap.archie.archetypevalidator.ValidationResult;
-import com.nedap.archie.paths.PathSegment;
+
 import com.nedap.archie.rminfo.MetaModels;
 import com.nedap.healthcare.aqlparser.exception.AQLRuntimeException;
 import com.nedap.healthcare.aqlparser.exception.AQLUnsupportedFeatureException;
@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class AQLStorage {
 
@@ -139,8 +138,7 @@ public class AQLStorage {
     }
 
     public Hover getHover(HoverParams hoverParams) {
-        String uri = hoverParams.getTextDocument() == null ?
-                hoverParams.getUri() : hoverParams.getTextDocument().getUri();
+        String uri = hoverParams.getTextDocument().getUri();
         AQLDocument aqlDocument = aqlDocumentsByUri.get(uri);
         if(aqlDocument == null || aqlDocument.getHoverInfo() == null) {
             return null;
