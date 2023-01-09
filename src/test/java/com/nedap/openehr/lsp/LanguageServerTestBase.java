@@ -11,16 +11,19 @@ import org.junit.jupiter.api.BeforeEach;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Supplier;
 
 public abstract class LanguageServerTestBase {
 
     protected TestClient testClient;
     protected ADL2LanguageServer adl2LanguageServer;
     protected TextDocumentService textDocumentService;
+    protected Supplier<String> diagnosticsMessageSupplier;
 
     @BeforeEach
     public void setup() {
         testClient = new TestClient();
+        diagnosticsMessageSupplier = () -> testClient.getDiagnostics().toString();
         adl2LanguageServer = new ADL2LanguageServer();
         adl2LanguageServer.connect(testClient, null);
         InitializeParams initializeParams = new InitializeParams();

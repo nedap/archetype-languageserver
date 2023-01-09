@@ -39,7 +39,8 @@ public class DocumentSymbolStack {
     }
 
     public void addSymbol(TerminalNode node, ParserRuleContext entireRule, String tokenName, SymbolKind symbolKind, StackAction stackAction) {
-
+        //TODO: is this visitedTokens check still necessary? To confirm, needs extensive manual testing.
+        //after that, return the added symbol from this method, as it can be used instead of peek() in at least one occurrence
         if(!this.visitedTokens.contains(node.getSymbol())) {
             DocumentSymbol symbol = createSymbolInformation(tokenName, symbolKind, createRange(node.getSymbol()));
 
