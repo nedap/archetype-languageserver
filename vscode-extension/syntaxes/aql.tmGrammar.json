@@ -55,7 +55,7 @@
 			}	
 		},
 		"as_name": {
-			"match": "([aA][sS]) +([a-zA-Z][a-zA-Z0-9_]*)",
+			"match": "([aA][sS])\\s+([a-zA-Z][a-zA-Z0-9_]*)",
 			"captures": {
 				"1": {"name": "keyword.operator.as_operator"},
 				"2": {"name": "variable.other.identifier"}
