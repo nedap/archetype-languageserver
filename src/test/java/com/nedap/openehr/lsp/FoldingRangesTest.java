@@ -17,7 +17,7 @@ public class FoldingRangesTest extends LanguageServerTestBase {
 
     @Test
     public void testFoldingRanges() throws Exception {
-        openResource(TEST_ARCHETYPE_ADLS.getFilename());
+        openResource(TEST_ARCHETYPE_ADLS);
         List<FoldingRange> foldingRanges = adl2LanguageServer.getTextDocumentService().foldingRange(
                 new FoldingRangeRequestParams(new TextDocumentIdentifier(TEST_ARCHETYPE_ADLS.getFilename()))).get();
         System.out.println(foldingRanges);

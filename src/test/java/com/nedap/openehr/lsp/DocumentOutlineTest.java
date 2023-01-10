@@ -25,7 +25,7 @@ public class DocumentOutlineTest extends LanguageServerTestBase {
     @Test
     public void testDocumentOutline() throws IOException, ExecutionException, InterruptedException {
 
-        openResource(TEST_ARCHETYPE_ADLS.getFilename());
+        openResource(TEST_ARCHETYPE_ADLS);
         CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> uri =
                 adl2LanguageServer.getTextDocumentService().documentSymbol(new DocumentSymbolParams(new TextDocumentIdentifier(TEST_ARCHETYPE_ADLS.getFilename())));
         List<Either<SymbolInformation, DocumentSymbol>> eitherSymbols = uri.get();

@@ -33,11 +33,12 @@ public abstract class LanguageServerTestBase {
         textDocumentService = adl2LanguageServer.getTextDocumentService();
     }
 
-    protected void openResource(String filename) throws IOException {
+    protected void openResource(TestArchetypes file) throws IOException {
         DidOpenTextDocumentParams didOpenTextDocumentParams = new DidOpenTextDocumentParams();
+        String filename = file.getFilename();
         String archetype;
         try (InputStream stream = getClass().getResourceAsStream(filename)) {
-            archetype = IOUtils.toString(stream, StandardCharsets.UTF_8.name());
+            archetype = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
 
         didOpenTextDocumentParams.setTextDocument(new TextDocumentItem(filename, "ADL", 1, archetype));

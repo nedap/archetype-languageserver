@@ -16,7 +16,7 @@ public class RulesCodeLensTest extends LanguageServerTestBase {
     @Test
     public void testRulesCodeLens() throws IOException, ExecutionException, InterruptedException {
 
-        openResource(ARCHETYPE_WITH_RULES_ADLS.getFilename());
+        openResource(ARCHETYPE_WITH_RULES_ADLS);
         System.out.println(testClient.getDiagnostics());
         CompletableFuture<List<? extends CodeLens>> uri = adl2LanguageServer.getTextDocumentService().codeLens(
                 new CodeLensParams(new TextDocumentIdentifier(ARCHETYPE_WITH_RULES_ADLS.getFilename())));

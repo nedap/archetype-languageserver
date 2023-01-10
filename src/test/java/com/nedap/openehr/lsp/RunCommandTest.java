@@ -16,8 +16,8 @@ public class RunCommandTest extends LanguageServerTestBase {
 
     @Test
     public void generateOpt() throws Exception {
-        openResource(TEST_ARCHETYPE_ADLS.getFilename());
-        openResource(CORRECT_TEMPLATE_ADLT.getFilename());
+        openResource(TEST_ARCHETYPE_ADLS);
+        openResource(CORRECT_TEMPLATE_ADLT);
         //check that the archetypes are correct
         assertTrue(testClient.getDiagnostics().get(TEST_ARCHETYPE_ADLS.getFilename()).getDiagnostics().isEmpty());
 
@@ -52,8 +52,8 @@ public class RunCommandTest extends LanguageServerTestBase {
 
     @Test
     public void generateExample() throws Exception {
-        openResource(TEST_ARCHETYPE_ADLS.getFilename());
-        openResource(CORRECT_TEMPLATE_ADLT.getFilename());
+        openResource(TEST_ARCHETYPE_ADLS);
+        openResource(CORRECT_TEMPLATE_ADLT);
 
         //check that the archetypes are correct
         assertTrue(testClient.getDiagnostics().get(CORRECT_TEMPLATE_ADLT.getFilename()).getDiagnostics().isEmpty());
@@ -87,7 +87,7 @@ public class RunCommandTest extends LanguageServerTestBase {
 
     @Test
     public void generateExampleForOpt() throws Exception {
-        openResource(CORRECT_OPT_OPT2.getFilename());
+        openResource(CORRECT_OPT_OPT2);
 
         //check that the archetypes are correct
         assertTrue(testClient.getDiagnostics().get(CORRECT_OPT_OPT2.getFilename()).getDiagnostics().isEmpty());

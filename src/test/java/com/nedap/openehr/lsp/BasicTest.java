@@ -26,7 +26,7 @@ public class BasicTest extends LanguageServerTestBase {
     @Test
     public void testBasics() throws IOException {
 
-        openResource(TEST_ARCHETYPE_ADLS.getFilename());
+        openResource(TEST_ARCHETYPE_ADLS);
         System.out.println(testClient.getDiagnostics());
         assertTrue(testClient.getDiagnostics().get(TEST_ARCHETYPE_ADLS.getFilename()).getDiagnostics().isEmpty());
     }
@@ -34,7 +34,7 @@ public class BasicTest extends LanguageServerTestBase {
     @Test
     public void syntaxError() throws IOException {
 
-        openResource(SYNTAX_ERROR_ADLS.getFilename());
+        openResource(SYNTAX_ERROR_ADLS);
         System.out.println(testClient.getDiagnostics());
         List<Diagnostic> diagnostics = testClient.getDiagnostics().get(SYNTAX_ERROR_ADLS.getFilename()).getDiagnostics();
         assertFalse(diagnostics.isEmpty());
@@ -51,8 +51,8 @@ public class BasicTest extends LanguageServerTestBase {
      */
     @Test
     public void templateErrorInDefinition() throws IOException {
-        openResource(TEST_ARCHETYPE_ADLS.getFilename());
-        openResource(TEMPLATE_DEFINITION_ERROR_IN_OVL_ADLT.getFilename());
+        openResource(TEST_ARCHETYPE_ADLS);
+        openResource(TEMPLATE_DEFINITION_ERROR_IN_OVL_ADLT);
         System.out.println(testClient.getDiagnostics());
         List<Diagnostic> diagnostics = testClient.getDiagnostics().get(TEMPLATE_DEFINITION_ERROR_IN_OVL_ADLT.getFilename()).getDiagnostics();
         assertFalse(diagnostics.isEmpty());
@@ -76,8 +76,8 @@ public class BasicTest extends LanguageServerTestBase {
      */
     @Test
     public void templateErrorElsewhere() throws IOException {
-        openResource(TEST_ARCHETYPE_ADLS.getFilename());
-        openResource(TEMPLATE_NON_DEFINITION_ERROR_ADLT.getFilename());
+        openResource(TEST_ARCHETYPE_ADLS);
+        openResource(TEMPLATE_NON_DEFINITION_ERROR_ADLT);
         System.out.println(testClient.getDiagnostics());
         List<Diagnostic> diagnostics = testClient.getDiagnostics().get(TEMPLATE_NON_DEFINITION_ERROR_ADLT.getFilename()).getDiagnostics();
         assertFalse(diagnostics.isEmpty());
@@ -98,7 +98,7 @@ public class BasicTest extends LanguageServerTestBase {
     @Test
     public void validationError() throws IOException {
 
-        openResource(VALIDATION_ERROR_ADLS.getFilename());
+        openResource(VALIDATION_ERROR_ADLS);
         System.out.println(testClient.getDiagnostics());
         List<Diagnostic> diagnostics = testClient.getDiagnostics().get(VALIDATION_ERROR_ADLS.getFilename()).getDiagnostics();
         assertFalse(diagnostics.isEmpty());
@@ -114,7 +114,7 @@ public class BasicTest extends LanguageServerTestBase {
     @Test
     public void jsonError() throws IOException {
 
-        openResource(JSON_ERROR_ADLS.getFilename());
+        openResource(JSON_ERROR_ADLS);
         System.out.println(testClient.getDiagnostics());
         List<Diagnostic> diagnostics = testClient.getDiagnostics().get(JSON_ERROR_ADLS.getFilename()).getDiagnostics();
         assertFalse(diagnostics.isEmpty());
@@ -128,7 +128,7 @@ public class BasicTest extends LanguageServerTestBase {
 
     @Test
     public void adl14() throws Exception {
-        openResource(ADL14_VALID_ADL.getFilename());
+        openResource(ADL14_VALID_ADL);
         System.out.println(testClient.getDiagnostics());
         List<Diagnostic> diagnostics = testClient.getDiagnostics().get(ADL14_VALID_ADL.getFilename()).getDiagnostics();
         assertTrue(diagnostics.isEmpty());
