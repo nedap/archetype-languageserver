@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.nedap.openehr.lsp.TestArchetypes.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -15,13 +16,14 @@ public class RunCommandTest extends LanguageServerTestBase {
 
     @Test
     public void generateOpt() throws Exception {
-        openResource("test_archetype.adls");
-        openResource("correct_template.adlt");
+        openResource(TEST_ARCHETYPE_ADLS);
+        openResource(CORRECT_TEMPLATE_ADLT);
         //check that the archetypes are correct
-        assertTrue(testClient.getDiagnostics().get("test_archetype.adls").getDiagnostics().isEmpty());
+        assertTrue(testClient.getDiagnostics().get(TEST_ARCHETYPE_ADLS.getFilename()).getDiagnostics().isEmpty());
 
         assertTrue(initializeResult.getCapabilities().getExecuteCommandProvider().getCommands().contains("source.opt"));
-        List<Either<Command, CodeAction>> codeActions = textDocumentService.codeAction(new CodeActionParams(new TextDocumentIdentifier("correct_template.adlt"),
+        List<Either<Command, CodeAction>> codeActions = textDocumentService.codeAction(
+                new CodeActionParams(new TextDocumentIdentifier(CORRECT_TEMPLATE_ADLT.getFilename()),
                 new Range(new Position(1, 1), new Position(1, 15)),
                 new CodeActionContext())).get();
         System.out.println(codeActions);
@@ -50,14 +52,14 @@ public class RunCommandTest extends LanguageServerTestBase {
 
     @Test
     public void generateExample() throws Exception {
-        openResource("test_archetype.adls");
-        openResource("correct_template.adlt");
+        openResource(TEST_ARCHETYPE_ADLS);
+        openResource(CORRECT_TEMPLATE_ADLT);
 
         //check that the archetypes are correct
-        assertTrue(testClient.getDiagnostics().get("correct_template.adlt").getDiagnostics().isEmpty());
+        assertTrue(testClient.getDiagnostics().get(CORRECT_TEMPLATE_ADLT.getFilename()).getDiagnostics().isEmpty());
 
         assertTrue(initializeResult.getCapabilities().getExecuteCommandProvider().getCommands().contains("source.example"));
-        List<Either<Command, CodeAction>> listCompletableFuture = textDocumentService.codeAction(new CodeActionParams(new TextDocumentIdentifier("correct_template.adlt"),
+        List<Either<Command, CodeAction>> listCompletableFuture = textDocumentService.codeAction(new CodeActionParams(new TextDocumentIdentifier(CORRECT_TEMPLATE_ADLT.getFilename()),
                 new Range(new Position(1, 1), new Position(1, 15)),
                 new CodeActionContext())).get();
         CodeAction exampleAction = listCompletableFuture.stream().filter(c -> c.isRight() && c.getRight().getKind().equals("source.example.json")).findFirst().get().getRight();
@@ -85,13 +87,14 @@ public class RunCommandTest extends LanguageServerTestBase {
 
     @Test
     public void generateExampleForOpt() throws Exception {
-        openResource("correct_opt.opt2");
+        openResource(CORRECT_OPT_OPT2);
 
         //check that the archetypes are correct
-        assertTrue(testClient.getDiagnostics().get("correct_opt.opt2").getDiagnostics().isEmpty());
+        assertTrue(testClient.getDiagnostics().get(CORRECT_OPT_OPT2.getFilename()).getDiagnostics().isEmpty());
 
         assertTrue(initializeResult.getCapabilities().getExecuteCommandProvider().getCommands().contains("source.example"));
-        List<Either<Command, CodeAction>> listCompletableFuture = textDocumentService.codeAction(new CodeActionParams(new TextDocumentIdentifier("correct_opt.opt2"),
+        List<Either<Command, CodeAction>> listCompletableFuture = textDocumentService.codeAction(
+                new CodeActionParams(new TextDocumentIdentifier(CORRECT_OPT_OPT2.getFilename()),
                 new Range(new Position(1, 1), new Position(1, 15)),
                 new CodeActionContext())).get();
         CodeAction exampleAction = listCompletableFuture.stream().filter(c -> c.isRight() && c.getRight().getKind().equals("source.example.json")).findFirst().get().getRight();
