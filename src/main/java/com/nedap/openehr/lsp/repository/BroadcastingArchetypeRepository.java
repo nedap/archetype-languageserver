@@ -150,7 +150,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                     //this should have been checked in the previous step. But still, it could happen.
                     textDocumentService.pushDiagnostics(new VersionedTextDocumentIdentifier(textDocumentItem.getUri(), textDocumentItem.getVersion()), e.getErrors());
                 } catch (Exception ex) {
-                    //this particular exce[tion is a parse error, usually when extracting JSON. be sure to post taht
+                    //this particular exce[tion is a parse error, usually when extracting JSON. be sure to post that
                     textDocumentService.pushDiagnostics(new VersionedTextDocumentIdentifier(textDocumentItem.getUri(), textDocumentItem.getVersion()), ex);
                 }
 
