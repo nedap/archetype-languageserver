@@ -45,7 +45,6 @@ public class RunCommandTest extends LanguageServerTestBase {
         assertEquals("/opt/openEHR-EHR-CLUSTER.test_template.v0.1.2.opt2", edit.getTextDocument().getUri());
         assertTrue(edit.getEdits().get(0).getNewText().startsWith("operational_template"));
         System.out.println(edit.getEdits().get(0).getNewText());
-
     }
 
     @Test
@@ -80,7 +79,6 @@ public class RunCommandTest extends LanguageServerTestBase {
         assertEquals("/example/openEHR-EHR-CLUSTER.test_template.v0.1.2_example.json", edit.getTextDocument().getUri());
         //we could do a full parse, but that's ok for now I guess?
         assertTrue(edit.getEdits().get(0).getNewText().startsWith("{"));
-
     }
 
     @Test

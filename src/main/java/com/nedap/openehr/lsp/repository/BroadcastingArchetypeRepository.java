@@ -125,7 +125,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
             if (documentInformation.getErrors().hasNoErrors()) {
                 ADLParser adlParser = new ADLParser(BuiltinReferenceModels.getMetaModels());
                 adlParser.setLogEnabled(false);//no console output please :)
-                Archetype archetype = null;
+                Archetype archetype;
                 try {
                     archetype = adlParser.parse(textDocumentItem.getText());
                     if(archetype instanceof OperationalTemplate) {

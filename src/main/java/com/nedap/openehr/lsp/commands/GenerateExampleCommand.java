@@ -50,7 +50,7 @@ public class GenerateExampleCommand {
         if(archetype == null) {
             archetype = storage.getOperationalTemplate(documentInformation.getArchetypeId());
         }
-        OperationalTemplate opt = null;
+        OperationalTemplate opt;
         if(archetype instanceof OperationalTemplate) {
             opt = (OperationalTemplate) archetype;
         } else {
@@ -109,10 +109,7 @@ public class GenerateExampleCommand {
                 throw new UnsupportedOperationException("unsupported format: " + format);
         }
         int lastSlash = documentUri.lastIndexOf("/");
-        if(lastSlash == -1) {
-            lastSlash = 0;
-        }
-        String uriToWrite = documentUri.substring(0, lastSlash) + "/example/" + opt.getArchetypeId() + extension;
+        String uriToWrite = documentUri.substring(0, lastSlash == -1 ? 0 : lastSlash) + "/example/" + opt.getArchetypeId() + extension;
         textDocumentService.writeFile(uriToWrite, "opt in " + format, serializedExample);
     }
 }
