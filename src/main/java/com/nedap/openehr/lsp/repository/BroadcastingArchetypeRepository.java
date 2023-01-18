@@ -128,33 +128,23 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                 Archetype archetype;
                 try {
                     archetype = adlParser.parse(textDocumentItem.getText());
+                  Archetype archetypeForTerms = archetype;
                     if(archetype instanceof OperationalTemplate) {
                         textDocumentService.pushDiagnostics(new VersionedTextDocumentIdentifier(textDocumentItem.getUri(), textDocumentItem.getVersion()), null, new ValidationResult(archetype));
                         setOperationalTemplate((OperationalTemplate) archetype);
-                        Archetype archetypeForTerms = archetype;
-                        String language = archetype.getOriginalLanguage() != null ? archetype.getOriginalLanguage().getCodeString() : null;
-                        if (language == null) {
-                            language = "en";
-                        }
-                        documentInformation.setHoverInfo(new ArchetypeHoverInfo(documentInformation, archetype, archetypeForTerms, language));
-                        SymbolNameFromTerminologyHelper.giveNames(documentInformation.getSymbols(), archetypeForTerms, language);
                     } else {
                         addArchetype(archetype);
-                        //perform incremental compilation here
 
+                        //perform incremental compilation here
                         invalidateAndRecompileArchetypes(archetype);
                         ValidationResult result = getValidationResult(archetype.getArchetypeId().toString());
-                        Archetype archetypeForTerms = archetype;
                         if (result != null && result.getFlattened() != null) {
                             archetypeForTerms = result.getFlattened();
                         }
-                        String language = archetype.getOriginalLanguage() != null ? archetype.getOriginalLanguage().getCodeString() : null;
-                        if (language == null) {
-                            language = "en";
-                        }
-                        documentInformation.setHoverInfo(new ArchetypeHoverInfo(documentInformation, archetype, archetypeForTerms, language));
-                        SymbolNameFromTerminologyHelper.giveNames(documentInformation.getSymbols(), archetypeForTerms, language);
                     }
+                    String language = archetype.getOriginalLanguage() != null ? archetype.getOriginalLanguage().getCodeString() : "en";
+                    documentInformation.setHoverInfo(new ArchetypeHoverInfo(documentInformation, archetype, archetypeForTerms, language));
+                    SymbolNameFromTerminologyHelper.giveNames(documentInformation.getSymbols(), archetypeForTerms, language);
                     //diagnostics will now be pushed from within the invalidateArchetypesAndRecompile method
                 } catch (ADLParseException e) {
                     //this should have been checked in the previous step. But still, it could happen.
