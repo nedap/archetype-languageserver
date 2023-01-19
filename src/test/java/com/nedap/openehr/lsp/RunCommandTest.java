@@ -19,39 +19,25 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 public class RunCommandTest extends LanguageServerTestBase {
 
-    @Test
-    public void generateOpt() throws Exception {
-        openResource("test_archetype.adls");
-        openResource("correct_template.adlt");
-        //check that the archetypes are correct
-        assertTrue(testClient.getDiagnostics().get("test_archetype.adls").getDiagnostics().isEmpty());
-        assertTrue(testClient.getDiagnostics().get("correct_template.adlt").getDiagnostics().isEmpty());
 
-        runCommand("correct_template.adlt", "source.opt", "source.opt.adl");
-
-        assertEquals(1, testClient.appliedEdits.size());
-        List<Either<TextDocumentEdit, ResourceOperation>> documentChanges = testClient.appliedEdits.get(0).getEdit().getDocumentChanges();
-        assertEquals(2, documentChanges.size());
-        //first a create, then an edit
-        Either<TextDocumentEdit, ResourceOperation> createChange = documentChanges.get(0);
-        Either<TextDocumentEdit, ResourceOperation> optContentChange = documentChanges.get(1);
-        assertEquals("create", createChange.getRight().getKind());
-        CreateFile createFile = (CreateFile) createChange.getRight();
-
-        assertEquals("/opt/openEHR-EHR-CLUSTER.test_template.v0.1.2.opt2", createFile.getUri());
-
-        TextDocumentEdit edit = optContentChange.getLeft();
-        assertEquals("/opt/openEHR-EHR-CLUSTER.test_template.v0.1.2.opt2", edit.getTextDocument().getUri());
-        assertTrue(edit.getEdits().get(0).getNewText().startsWith("operational_template"));
-    }
-
+    /**
+     * runs a test to generate examples and opts
+     * @param archetypeToTest
+     * @param otherArchetypeNames
+     * @param commandIdentifier
+     * @param commandKind
+     * @param createdFileName
+     * @param startsWith
+     * @throws Exception
+     */
     @ParameterizedTest
     @MethodSource("exampleArchetypeProvider")
-    public void generateExample(String archetypeToTest,
+    public void generateFile(String archetypeToTest,
                                 List<String> otherArchetypeNames,
                                 String commandIdentifier,
                                 String commandKind,
-                                String createdFileName) throws Exception {
+                                String createdFileName,
+                                String startsWith) throws Exception {
         for(String otherArchetype:otherArchetypeNames) {
             openResource(otherArchetype);
         }
@@ -79,7 +65,7 @@ public class RunCommandTest extends LanguageServerTestBase {
         TextDocumentEdit edit = optContentChange.getLeft();
         assertEquals(createdFileName, edit.getTextDocument().getUri());
         //we could do a full parse, but that's ok for now I guess?
-        assertTrue(edit.getEdits().get(0).getNewText().startsWith("{"));
+        assertTrue(edit.getEdits().get(0).getNewText().startsWith(startsWith));
     }
 
     static Stream<Arguments> exampleArchetypeProvider() {
@@ -88,13 +74,22 @@ public class RunCommandTest extends LanguageServerTestBase {
                         Arrays.asList("test_archetype.adls"),
                         "source.example",
                         "source.example.json",
-                        "/example/openEHR-EHR-CLUSTER.test_template.v0.1.2_example.json"
+                        "/example/openEHR-EHR-CLUSTER.test_template.v0.1.2_example.json",
+                        "{"
                 ),
                 arguments("correct_opt.opt2",
                         new ArrayList<>(),
                         "source.example",
                         "source.example.json",
-                        "/example/openEHR-EHR-CLUSTER.test_template.v0.1.2_example.json"
+                        "/example/openEHR-EHR-CLUSTER.test_template.v0.1.2_example.json",
+                        "{"
+                ),
+                arguments("correct_template.adlt",
+                        Arrays.asList("test_archetype.adls"),
+                        "source.opt",
+                        "source.opt.adl",
+                        "/opt/openEHR-EHR-CLUSTER.test_template.v0.1.2.opt2",
+                        "operational_template"
                 )
         );
     }
