@@ -21,14 +21,14 @@ public class RunCommandTest extends LanguageServerTestBase {
 
 
     /**
-     * runs a test to generate examples and opts
-     * @param archetypeToTest
-     * @param otherArchetypeNames
-     * @param commandIdentifier
-     * @param commandKind
-     * @param createdFileName
-     * @param startsWith
-     * @throws Exception
+     * A parameterized test that tests generating examples and opts
+     * @param archetypeToTest the filename of the archetype to test
+     * @param otherArchetypeNames file names of other archetypes to load before the archetypeToTest
+     * @param commandIdentifier the identifier of the command to execute, for example source.example
+     * @param commandKind the kind of the command: source.example.json for example
+     * @param createdFileName the file name that should be created
+     * @param startsWith the first characters of the created file
+     * @throws Exception in case something goes wrong and the test fails :)
      */
     @ParameterizedTest
     @MethodSource("exampleArchetypeProvider")
