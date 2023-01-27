@@ -2,7 +2,6 @@ package com.nedap.openehr.lsp;
 
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -22,34 +21,34 @@ public class RunCommandTest extends LanguageServerTestBase {
 
     /**
      * A parameterized test that tests generating examples and opts
-     * @param archetypeToTest the filename of the archetype to test
-     * @param otherArchetypeNames file names of other archetypes to load before the archetypeToTest
+     * @param archetypeFilenameToTest the filename of the archetype to test
+     * @param otherArchetypeFilenames file names of other archetypes to load before the archetypeToTest
      * @param commandIdentifier the identifier of the command to execute, for example source.example
      * @param commandKind the kind of the command: source.example.json for example
-     * @param createdFileName the file name that should be created
-     * @param startsWith the first characters of the created file
+     * @param createdFilename the file name that should be created
+     * @param startsWith the first characters the created file should have
      * @throws Exception in case something goes wrong and the test fails :)
      */
     @ParameterizedTest
     @MethodSource("exampleArchetypeProvider")
-    public void generateFile(String archetypeToTest,
-                                List<String> otherArchetypeNames,
+    public void generateFile(String archetypeFilenameToTest,
+                                List<String> otherArchetypeFilenames,
                                 String commandIdentifier,
                                 String commandKind,
-                                String createdFileName,
+                                String createdFilename,
                                 String startsWith) throws Exception {
-        for(String otherArchetype:otherArchetypeNames) {
+        for(String otherArchetype:otherArchetypeFilenames) {
             openResource(otherArchetype);
         }
-        openResource(archetypeToTest);
+        openResource(archetypeFilenameToTest);
 
         //check that the archetypes are correct
-        assertTrue(testClient.getDiagnostics().get(archetypeToTest).getDiagnostics().isEmpty());
-        for(String otherArchetype:otherArchetypeNames) {
-            assertTrue(testClient.getDiagnostics().get(otherArchetype).getDiagnostics().isEmpty());
+        for(String otherArchetype:otherArchetypeFilenames) {
+            assertTrue(testClient.getDiagnostics().get(otherArchetype).getDiagnostics().isEmpty(), () -> testClient.getDiagnostics().toString());
         }
+        assertTrue(testClient.getDiagnostics().get(archetypeFilenameToTest).getDiagnostics().isEmpty(), () -> testClient.getDiagnostics().toString());
 
-        runCommand(archetypeToTest, commandIdentifier, commandKind);
+        runCommand(archetypeFilenameToTest, commandIdentifier, commandKind);
 
         assertEquals(1, testClient.appliedEdits.size());
         List<Either<TextDocumentEdit, ResourceOperation>> documentChanges = testClient.appliedEdits.get(0).getEdit().getDocumentChanges();
@@ -60,10 +59,10 @@ public class RunCommandTest extends LanguageServerTestBase {
         assertEquals("create", createChange.getRight().getKind());
         CreateFile createFile = (CreateFile) createChange.getRight();
 
-        assertEquals(createdFileName, createFile.getUri());
+        assertEquals(createdFilename, createFile.getUri());
 
         TextDocumentEdit edit = optContentChange.getLeft();
-        assertEquals(createdFileName, edit.getTextDocument().getUri());
+        assertEquals(createdFilename, edit.getTextDocument().getUri());
         //we could do a full parse, but that's ok for now I guess?
         assertTrue(edit.getEdits().get(0).getNewText().startsWith(startsWith));
     }
@@ -96,15 +95,15 @@ public class RunCommandTest extends LanguageServerTestBase {
 
     /**
      * Run the given command from the code actions, asserting that the given command is in the capabilities
-     * @param archetypeToTest URI of the file to run the command against
+     * @param archetypeUriToTest URI of the file to run the command against
      * @param commandIdentifier the identifier of the command in the commands list of the capabilities
      * @param commandKind the kind of the command, to find it in the list of code Actions
      * @throws InterruptedException from the eclipse LSP library
      * @throws ExecutionException from the eclipse LSP library
      */
-    private void runCommand(String archetypeToTest, String commandIdentifier, String commandKind) throws InterruptedException, ExecutionException {
+    private void runCommand(String archetypeUriToTest, String commandIdentifier, String commandKind) throws InterruptedException, ExecutionException {
         assertTrue(initializeResult.getCapabilities().getExecuteCommandProvider().getCommands().contains(commandIdentifier));
-        List<Either<Command, CodeAction>> listCompletableFuture = textDocumentService.codeAction(new CodeActionParams(new TextDocumentIdentifier(archetypeToTest),
+        List<Either<Command, CodeAction>> listCompletableFuture = textDocumentService.codeAction(new CodeActionParams(new TextDocumentIdentifier(archetypeUriToTest),
                 new Range(new Position(1, 1), new Position(1, 15)),
                 new CodeActionContext())).get();
         CodeAction exampleAction = listCompletableFuture.stream().filter(c -> c.isRight() && c.getRight().getKind().equals(commandKind)).findFirst().get().getRight();
