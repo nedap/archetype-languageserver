@@ -5,8 +5,10 @@ import com.google.common.collect.Lists;
 import com.nedap.archie.adlparser.ADLParseException;
 import com.nedap.archie.adlparser.ADLParser;
 import com.nedap.archie.aom.Archetype;
+import com.nedap.archie.aom.OperationalTemplate;
 import com.nedap.archie.aom.Template;
 import com.nedap.archie.aom.TemplateOverlay;
+import com.nedap.archie.aom.utils.ArchetypeParsePostProcesser;
 import com.nedap.archie.archetypevalidator.ArchetypeValidator;
 import com.nedap.archie.archetypevalidator.ValidationResult;
 import com.nedap.archie.flattener.InMemoryFullArchetypeRepository;
@@ -123,23 +125,24 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
             if (documentInformation.getErrors().hasNoErrors()) {
                 ADLParser adlParser = new ADLParser(BuiltinReferenceModels.getMetaModels());
                 adlParser.setLogEnabled(false);//no console output please :)
-                Archetype archetype = null;
+                Archetype archetype;
                 try {
                     archetype = adlParser.parse(textDocumentItem.getText());
+                  Archetype archetypeForTerms = archetype;
+                    if(archetype instanceof OperationalTemplate) {
+                        textDocumentService.pushDiagnostics(new VersionedTextDocumentIdentifier(textDocumentItem.getUri(), textDocumentItem.getVersion()), null, new ValidationResult(archetype));
+                        setOperationalTemplate((OperationalTemplate) archetype);
+                    } else {
+                        addArchetype(archetype);
 
-                    addArchetype(archetype);
-                    //perform incremental compilation here
-
-                    invalidateAndRecompileArchetypes(archetype);
-                    ValidationResult result = getValidationResult(archetype.getArchetypeId().toString());
-                    Archetype archetypeForTerms = archetype;
-                    if(result != null && result.getFlattened() != null) {
-                        archetypeForTerms = result.getFlattened();
+                        //perform incremental compilation here
+                        invalidateAndRecompileArchetypes(archetype);
+                        ValidationResult result = getValidationResult(archetype.getArchetypeId().toString());
+                        if (result != null && result.getFlattened() != null) {
+                            archetypeForTerms = result.getFlattened();
+                        }
                     }
-                    String language = archetype.getOriginalLanguage() != null ? archetype.getOriginalLanguage().getCodeString() : null;
-                    if(language == null) {
-                        language = "en";
-                    }
+                    String language = archetype.getOriginalLanguage() != null ? archetype.getOriginalLanguage().getCodeString() : "en";
                     documentInformation.setHoverInfo(new ArchetypeHoverInfo(documentInformation, archetype, archetypeForTerms, language));
                     SymbolNameFromTerminologyHelper.giveNames(documentInformation.getSymbols(), archetypeForTerms, language);
                     //diagnostics will now be pushed from within the invalidateArchetypesAndRecompile method
@@ -147,7 +150,7 @@ public class BroadcastingArchetypeRepository extends InMemoryFullArchetypeReposi
                     //this should have been checked in the previous step. But still, it could happen.
                     textDocumentService.pushDiagnostics(new VersionedTextDocumentIdentifier(textDocumentItem.getUri(), textDocumentItem.getVersion()), e.getErrors());
                 } catch (Exception ex) {
-                    //this particular exce[tion is a parse error, usually when extracting JSON. be sure to post taht
+                    //this particular exce[tion is a parse error, usually when extracting JSON. be sure to post that
                     textDocumentService.pushDiagnostics(new VersionedTextDocumentIdentifier(textDocumentItem.getUri(), textDocumentItem.getVersion()), ex);
                 }
 

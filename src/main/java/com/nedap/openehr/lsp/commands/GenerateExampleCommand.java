@@ -45,10 +45,18 @@ public class GenerateExampleCommand {
         String documentUri = ((JsonPrimitive) params.getArguments().get(0)).getAsString();
         String format = ((JsonPrimitive) params.getArguments().get(1)).getAsString();
         String serializedExample = null;
-        Flattener flattener = new Flattener(storage, BuiltinReferenceModels.getMetaModels(), FlattenerConfiguration.forOperationalTemplate());
         DocumentInformation documentInformation = storage.getDocumentInformation(documentUri);
         Archetype archetype = storage.getArchetype(documentInformation.getArchetypeId());
-        OperationalTemplate opt = (OperationalTemplate) flattener.flatten(archetype);
+        if(archetype == null) {
+            archetype = storage.getOperationalTemplate(documentInformation.getArchetypeId());
+        }
+        OperationalTemplate opt;
+        if(archetype instanceof OperationalTemplate) {
+            opt = (OperationalTemplate) archetype;
+        } else {
+            Flattener flattener = new Flattener(storage, BuiltinReferenceModels.getMetaModels(), FlattenerConfiguration.forOperationalTemplate());
+            opt = (OperationalTemplate) flattener.flatten(archetype);
+        }
 
         ExampleJsonInstanceGenerator exampleJsonInstanceGenerator = new ExampleJsonInstanceGenerator(BuiltinReferenceModels.getMetaModels(), archetype.getOriginalLanguage().getCodeString());
         Map<String, Object> exampleMap = exampleJsonInstanceGenerator.generate(opt);
@@ -100,7 +108,8 @@ public class GenerateExampleCommand {
             default:
                 throw new UnsupportedOperationException("unsupported format: " + format);
         }
-        String uriToWrite = documentUri.substring(0, documentUri.lastIndexOf("/")) + "/example/" + opt.getArchetypeId() + extension;
+        int lastSlash = documentUri.lastIndexOf("/");
+        String uriToWrite = documentUri.substring(0, lastSlash == -1 ? 0 : lastSlash) + "/example/" + opt.getArchetypeId() + extension;
         textDocumentService.writeFile(uriToWrite, "opt in " + format, serializedExample);
     }
 }

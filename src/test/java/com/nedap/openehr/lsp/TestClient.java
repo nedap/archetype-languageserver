@@ -9,7 +9,9 @@ import org.eclipse.lsp4j.ShowMessageRequestParams;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TestClient implements LanguageClient {
 
     LinkedHashMap<String, PublishDiagnosticsParams> diagnostics = new LinkedHashMap<>();
+    List<ApplyWorkspaceEditParams> appliedEdits = new ArrayList<>();
 
     @Override
     public void telemetryEvent(Object object) {
@@ -41,14 +44,15 @@ public class TestClient implements LanguageClient {
 
     @Override
     public void logMessage(MessageParams message) {
-
+        System.out.println(message);
     }
 
     /**
      * The workspace/applyEdit request is sent from the server to the client to modify resource on the client side.
      */
     public CompletableFuture<ApplyWorkspaceEditResponse> applyEdit(ApplyWorkspaceEditParams params) {
-            return CompletableFuture.completedFuture(null);
+        appliedEdits.add(params);
+        return CompletableFuture.completedFuture(new ApplyWorkspaceEditResponse(true));
     }
 
     public Map<String, PublishDiagnosticsParams> getDiagnostics() {

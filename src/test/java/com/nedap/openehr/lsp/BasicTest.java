@@ -18,14 +18,13 @@ public class BasicTest extends LanguageServerTestBase {
     @Test
     public void testBasics() throws IOException {
         openResource("test_archetype.adls");
-        assertTrue(testClient.getDiagnostics().get("uri").getDiagnostics().isEmpty(), diagnosticsMessageSupplier);
+        assertTrue(testClient.getDiagnostics().get("test_archetype.adls").getDiagnostics().isEmpty(), diagnosticsMessageSupplier);
     }
 
     @Test
     public void syntaxError() throws IOException {
         openResource("syntax_error.adls");
-
-        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("uri").getDiagnostics();
+        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("syntax_error.adls").getDiagnostics();
         assertFalse(diagnostics.isEmpty());
         Diagnostic diagnostic = diagnostics.get(0);
         assertEquals("ADL2 syntax", diagnostic.getSource(), diagnosticsMessageSupplier);
@@ -43,7 +42,7 @@ public class BasicTest extends LanguageServerTestBase {
         openResource("test_archetype.adls");
         openResource("template_definition_error_in_ovl.adlt");
 
-        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("uri").getDiagnostics();
+        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("template_definition_error_in_ovl.adlt").getDiagnostics();
         assertFalse(diagnostics.isEmpty());
         //the error that one of the template overlay validations failed
         Diagnostic templateError = diagnostics.get(0);
@@ -68,7 +67,7 @@ public class BasicTest extends LanguageServerTestBase {
         openResource("test_archetype.adls");
         openResource("template_non_definition_error.adlt");
 
-        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("uri").getDiagnostics();
+        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("template_non_definition_error.adlt").getDiagnostics();
         assertFalse(diagnostics.isEmpty());
         //the error that one of the template overlay validations failed
         Diagnostic prettyMuchUselessError = diagnostics.get(0);
@@ -87,8 +86,7 @@ public class BasicTest extends LanguageServerTestBase {
     @Test
     public void validationError() throws IOException {
         openResource("validation_error.adls");
-
-        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("uri").getDiagnostics();
+        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("validation_error.adls").getDiagnostics();
         assertFalse(diagnostics.isEmpty(), diagnosticsMessageSupplier);
         Diagnostic diagnostic = diagnostics.get(0);
         assertEquals(DiagnosticSeverity.Error, diagnostic.getSeverity(), diagnosticsMessageSupplier);
@@ -102,8 +100,7 @@ public class BasicTest extends LanguageServerTestBase {
     @Test
     public void jsonError() throws IOException {
         openResource("json_error.adls");
-
-        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("uri").getDiagnostics();
+        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("json_error.adls").getDiagnostics();
         assertFalse(diagnostics.isEmpty(), diagnosticsMessageSupplier);
         Diagnostic diagnostic = diagnostics.get(0);
         assertEquals(DiagnosticSeverity.Error, diagnostic.getSeverity(), diagnosticsMessageSupplier);
@@ -116,10 +113,9 @@ public class BasicTest extends LanguageServerTestBase {
     @Test
     public void adl14() throws Exception {
         openResource("adl14_valid.adl");
-
-        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("uri").getDiagnostics();
+        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("adl14_valid.adl").getDiagnostics();
         assertTrue(diagnostics.isEmpty(), diagnosticsMessageSupplier);
-        CompletableFuture<List<Either<Command, CodeAction>>> codeActionsFuture = adl2LanguageServer.getTextDocumentService().codeAction(new CodeActionParams(new TextDocumentIdentifier("uri"), new Range(new Position(1, 1), new Position(1, 1)), new CodeActionContext()));
+        CompletableFuture<List<Either<Command, CodeAction>>> codeActionsFuture = adl2LanguageServer.getTextDocumentService().codeAction(new CodeActionParams(new TextDocumentIdentifier("adl14_valid.adl"), new Range(new Position(1, 1), new Position(1, 1)), new CodeActionContext()));
         List<Either<Command, CodeAction>> codeActions = codeActionsFuture.get();
         System.out.println(codeActions);
         assertEquals(2, codeActions.size());
@@ -134,12 +130,11 @@ public class BasicTest extends LanguageServerTestBase {
         }
         archetype = ensureWindowsLineEndings(archetype);
 
-        didOpenTextDocumentParams.setTextDocument(new TextDocumentItem("uri", "ADL", 1, archetype));
+        didOpenTextDocumentParams.setTextDocument(new TextDocumentItem("adl14_valid.adl", "ADL", 1, archetype));
         textDocumentService.didOpen(didOpenTextDocumentParams);
-
-        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("uri").getDiagnostics();
+        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("adl14_valid.adl").getDiagnostics();
         assertTrue(diagnostics.isEmpty(), diagnosticsMessageSupplier);
-        CompletableFuture<List<Either<Command, CodeAction>>> codeActionsFuture = adl2LanguageServer.getTextDocumentService().codeAction(new CodeActionParams(new TextDocumentIdentifier("uri"), new Range(new Position(1, 1), new Position(1, 1)), new CodeActionContext()));
+        CompletableFuture<List<Either<Command, CodeAction>>> codeActionsFuture = adl2LanguageServer.getTextDocumentService().codeAction(new CodeActionParams(new TextDocumentIdentifier("adl14_valid.adl"), new Range(new Position(1, 1), new Position(1, 1)), new CodeActionContext()));
         List<Either<Command, CodeAction>> codeActions = codeActionsFuture.get();
         System.out.println(codeActions);
         assertEquals(2, codeActions.size());
@@ -155,12 +150,11 @@ public class BasicTest extends LanguageServerTestBase {
         }
         archetype = normalizeLineEndings(archetype);
 
-        didOpenTextDocumentParams.setTextDocument(new TextDocumentItem("uri", "ADL", 1, archetype));
+        didOpenTextDocumentParams.setTextDocument(new TextDocumentItem("adl14_valid.adl", "ADL", 1, archetype));
         textDocumentService.didOpen(didOpenTextDocumentParams);
-
-        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("uri").getDiagnostics();
+        List<Diagnostic> diagnostics = testClient.getDiagnostics().get("adl14_valid.adl").getDiagnostics();
         assertTrue(diagnostics.isEmpty(), diagnosticsMessageSupplier);
-        CompletableFuture<List<Either<Command, CodeAction>>> codeActionsFuture = adl2LanguageServer.getTextDocumentService().codeAction(new CodeActionParams(new TextDocumentIdentifier("uri"), new Range(new Position(1, 1), new Position(1, 1)), new CodeActionContext()));
+        CompletableFuture<List<Either<Command, CodeAction>>> codeActionsFuture = adl2LanguageServer.getTextDocumentService().codeAction(new CodeActionParams(new TextDocumentIdentifier("adl14_valid.adl"), new Range(new Position(1, 1), new Position(1, 1)), new CodeActionContext()));
         List<Either<Command, CodeAction>> codeActions = codeActionsFuture.get();
         System.out.println(codeActions);
         assertEquals(2, codeActions.size());

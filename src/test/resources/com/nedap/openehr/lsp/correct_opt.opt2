@@ -1,0 +1,104 @@
+operational_template (adl_version=2.0.4; rm_release=1.0.4; generated)
+    openEHR-EHR-CLUSTER.test_template.v0.1.2
+
+specialize
+    openEHR-EHR-CLUSTER.simple_sum.v0
+
+language
+    original_language = <[ISO_639-1::nl]>
+
+description
+    original_author = <
+        ["name"] = <"Pieter Bos">
+    >
+    lifecycle_state = <"DRAFT">
+    details = <
+        ["nl"] = <
+            language = <[ISO_639-1::nl]>
+            purpose = <"Een prachtige test-archetype">
+        >
+    >
+
+definition
+    CLUSTER[id1.1] occurrences matches {0..*} matches {    -- test template
+        items matches {
+            ELEMENT[id2] occurrences matches {0..*} matches {    -- Missing translation
+                value matches {
+                    DV_CODED_TEXT[id3] occurrences matches {0..1} matches {
+                        defining_code matches {[at4]}    -- Missing translation
+                    }
+                }
+            }
+            use_archetype CLUSTER[id0.2, openEHR-EHR-CLUSTER.simple_sum-ovl.v0.0.1] occurrences matches {0..*} matches {    -- used archetype
+                items matches {
+                    ELEMENT[id2] occurrences matches {0..*} matches {    -- Missing translation
+                        value matches {
+                            DV_CODED_TEXT[id3] occurrences matches {0..1} matches {
+                                defining_code matches {[at4]}    -- Missing translation
+                            }
+                        }
+                    }
+                    ELEMENT[id0.5] occurrences matches {0..*}     -- test template
+                }
+            }
+        }
+    }
+
+terminology
+    term_definitions = <
+        ["nl"] = <
+            ["id1"] = <
+                text = <"A test cluster">
+                description = <"A test cluster">
+            >
+            ["id2"] = <
+                text = <"Missing translation">
+                description = <"Missing translation">
+            >
+            ["at4"] = <
+                text = <"Missing translation">
+                description = <"Missing translation">
+            >
+            ["id1.1"] = <
+                text = <"test template">
+                description = <"test template">
+            >
+            ["id0.2"] = <
+                text = <"used archetype">
+                description = <"used archetype">
+            >
+        >
+    >
+
+component_terminologies
+    component_terminologies = < ["openEHR-EHR-CLUSTER.simple_sum-ovl.v0.0.1"] = <
+            term_definitions = <
+                ["nl"] = <
+                    ["id1"] = <
+                        text = <"A test cluster">
+                        description = <"A test cluster">
+                    >
+                    ["id2"] = <
+                        text = <"Missing translation">
+                        description = <"Missing translation">
+                    >
+                    ["at4"] = <
+                        text = <"Missing translation">
+                        description = <"Missing translation">
+                    >
+                    ["id1.1"] = <
+                        text = <"test template">
+                        description = <"test template">
+                    >
+                    ["id0.5"] = <
+                        text = <"test template">
+                        description = <"test template">
+                    >
+                    ["openEHR-EHR-CLUSTER.simple_sum-ovl.v0.0.1"] = <
+                        text = <"test template">
+                        description = <"test template">
+                    >
+                >
+            >
+        >
+    >

@@ -71,7 +71,8 @@ public class ConvertToOptCommand {
             default:
                 throw new UnsupportedOperationException("unsupported format: " + format);
         }
-        String uriToWrite = documentUri.substring(0, documentUri.lastIndexOf("/")) + "/opt/" + opt.getArchetypeId() + extension;
+        int lastSlash = documentUri.lastIndexOf("/");
+        String uriToWrite = documentUri.substring(0, lastSlash == -1 ? 0 : lastSlash) + "/opt/" + opt.getArchetypeId() + extension;
         textDocumentService.writeFile(uriToWrite, "opt in " + format, serializedOpt);
     }
 }
