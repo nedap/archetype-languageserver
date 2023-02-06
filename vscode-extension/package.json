@@ -4,7 +4,7 @@
 	"description": "OpenEHR ADL support, including syntax highlighting and validation",
 	"author": "Nedap Healthcare",
 	"license": "Apache 2.0",
-	"version": "0.6.0",
+	"version": "0.6.1",
 	"icon": "openehr-square-256x256.png",
 	"repository": {
 		"type": "git",

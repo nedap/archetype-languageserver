@@ -62,7 +62,7 @@ public class ADL2LanguageServer implements LanguageServer {
 
         ServerInfo serverInfo = new ServerInfo();
         serverInfo.setName("ADL 2 Archetype language server");
-        serverInfo.setVersion("0.6.0");
+        serverInfo.setVersion("0.6.1");
         completableFuture.complete(new InitializeResult(capabilities, serverInfo));
         System.err.println(params.getRootUri());
         System.err.println(params.getWorkspaceFolders());
